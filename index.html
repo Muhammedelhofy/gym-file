@@ -396,6 +396,7 @@ body.hastimer{padding-bottom:calc(176px + env(safe-area-inset-bottom,0px))}
 .recwhy{margin:8px 0 4px;font-size:.88rem;color:var(--muted)}
 .ktag{display:inline-block;vertical-align:middle;margin-left:8px;font-family:var(--display);font-weight:600;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--hud-ink);border:1px solid rgba(var(--hud-rgb),.5);padding:0 6px;line-height:1.5}
 .altline{margin-top:6px;font-size:.82rem;color:var(--muted);overflow-wrap:anywhere}
+.formchk{display:grid;gap:8px;margin:10px 0 6px}.formchk .fc{display:grid;grid-template-columns:4.6rem 1fr;gap:10px;align-items:start;background:var(--surface2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;line-height:1.45}.formchk .fl{font-family:var(--display);font-weight:600;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--hud-ink);padding-top:2px}
 </style>
 </head><body>
 <header class="hdr"><div class="in">
@@ -619,6 +620,67 @@ const ALTS = {
 };
 const LEARN_SESSIONS = 16; // ≈ first 3-4 weeks at 4-5 sessions/week
 const ALT_NOTE = "Recommendation rule: first 16 training sessions (about 3-4 weeks) → machine for squat, bench, RDL and split squat while you learn the movement. After that → free weight. If the free-weight version stalls (no gain in estimated 1RM for 3 sessions in a row) → machine for the next 3 sessions, then back. ⚠️ Assumption, verify: a coach's rule of thumb, not a study-based formula.";
+</script>
+<script>// ===== FORM CHECKPOINTS (authored by Opus) — [joint label, joint cue, back cue] =====
+const FORM = {
+ bench:["Elbows","About 45° from your body, not flared out to 90°. Wrists stacked over elbows.","Small natural arch, shoulder blades pinched, butt stays on the bench."],
+ incDb:["Elbows","About 45° from the body; at the bottom they sit slightly below the bench line.","Upper back pinned to the pad, lower back stays in contact, no big arch."],
+ dbOhp:["Elbows","Start just below shoulder height, slightly in front of the body, press up and slightly in.","Back flat against the upright pad; squeeze glutes so the lower back doesn't arch."],
+ latRaise:["Elbows","Slight bend, locked in; lead with the elbows, stop at shoulder height.","Stand tall, slight forward lean is fine, no swinging from the hips."],
+ pushdown:["Elbows","Pinned to your sides the whole set; only the forearms move.","Chest up, slight forward lean, ribs down."],
+ ohExt:["Elbows","Point forward and stay by your head; don't let them drift wide.","Ribs down and glutes tight so the lower back doesn't arch."],
+ pulldown:["Elbows","Drive them down and back toward your hips; finish beside your ribs.","Chest up toward the bar, small lean back (about 10-15°), no swinging."],
+ cableRow:["Elbows","Close to the body, pull back past your torso.","Tall spine, neutral; don't round forward at the start or lean far back at the end."],
+ facePull:["Elbows","High, at shoulder level or above; finish with hands beside your ears.","Stand tall, ribs down, don't lean back."],
+ hammer:["Elbows","Fixed at your sides; they don't swing forward.","Stand tall, no rocking from the lower back."],
+ bbCurl:["Elbows","Fixed at your sides; they don't drift forward at the top.","Stand tall, glutes tight, no swinging the hips."],
+ squat:["Knees","Track over your toes; don't let them cave inward.","Neutral spine, chest up, brace before each rep; stop depth before the lower back rounds."],
+ rdl:["Knees","Soft bend, fixed; the movement is the hips going back.","Flat back from neck to tailbone, bar close to the legs; stop when you feel the hamstrings stretch."],
+ lyingCurl:["Knees","Just off the pad edge, aligned with the machine pivot.","Hips pressed into the pad; don't lift the butt or arch."],
+ legExt:["Knees","Aligned with the machine pivot point.","Back against the pad, hold the handles, hips down."],
+ calfStand:["Knees","Straight but not locked.","Tall and neutral; shoulders under the pads."],
+ hipThrust:["Knees","Bent to about 90° at the top, pushed slightly out.","Upper back on the bench edge, chin tucked; finish with ribs down, not an arched lower back."],
+ machOhp:["Elbows","Slightly in front of the body, press without locking out.","Back flat against the pad, glutes tight."],
+ dbBench:["Elbows","About 45° from your body; dumbbells end beside the chest.","Shoulder blades pinched, feet planted, butt on the bench."],
+ crossover:["Elbows","Slight fixed bend, like hugging a barrel.","Slight forward lean from the hips, neutral spine."],
+ dipMach:["Elbows","Point back, close to your sides.","Sit tall against the pad, shoulders down away from the ears."],
+ skull:["Elbows","Point at the ceiling and stay still; only the forearms move.","Flat on the bench, feet planted, no arch."],
+ assistPull:["Elbows","Drive them down to your ribs.","Slight lean back, chest to the bar, legs still."],
+ dbRow:["Elbows","Close to the body, pull toward the hip.","Flat back parallel to the floor, supported by the bench hand; no twisting."],
+ revFly:["Elbows","Slight fixed bend, at shoulder height.","Chest on the pad, neutral neck."],
+ incCurl:["Elbows","Hang straight down behind the body and stay there.","Back against the incline pad, shoulders relaxed."],
+ legPress:["Knees","Track over toes; don't lock them at the top.","Lower back and butt stay on the seat; stop depth before the hips curl up."],
+ splitSquat:["Knees","Front knee over the foot; back knee goes straight down.","Upright torso, ribs down, squeeze the back-leg glute."],
+ seatedCurl:["Knees","Aligned with the machine pivot.","Sit back, thigh pad snug, no rocking."],
+ calfSeat:["Knees","Under the pad, bent at 90°.","Sit tall, no bouncing."],
+ hipFlexStr:["Knees","Back knee on a pad, front knee over the ankle.","Tuck the pelvis under first (tailbone down), then shift forward slightly. Don't arch."],
+ quadStr:["Knees","Close together; the pulled knee points straight down.","Tuck the pelvis, squeeze the glute, don't arch."],
+ pelvBridge:["Knees","Hip-width, feet flat.","Flatten the lower back first, then roll up; at the top ribs stay down."],
+ slBridge:["Knees","Working foot under the knee.","Hips level, no twisting, ribs down."],
+ deadBug:["Elbows","Arms straight up over the shoulders.","Lower back pressed into the floor the whole time."],
+ plank:["Elbows","Directly under the shoulders.","Pelvis tucked, glutes squeezed, straight line from head to heels."],
+ glutSqz:["Knees","Feet flat, knees hip-width.","Sit tall, don't slump while squeezing."],
+ pelvTilt:["Knees","Soft, relaxed.","Slow roll of the pelvis only; the upper body stays still."],
+ hipFlexStand:["Knees","Back leg straight, front knee bent.","Tuck the pelvis before leaning; don't arch."],
+ neckStr:["Elbows","Relaxed by your sides.","Sit tall; move the head only."],
+ chestOpen:["Elbows","Slightly bent, at shoulder height.","Ribs down, don't arch the lower back as you open."],
+ pushups:["Elbows","About 45° from the body.","Straight line head to heels, glutes tight, hips don't sag."],
+ bwSquat:["Knees","Over the toes, don't cave in.","Chest up, neutral spine."],
+ revLunge:["Knees","Front knee over the foot.","Upright torso, ribs down."],
+ sidePlank:["Elbows","Under the shoulder.","Straight line, hips up, don't rotate."],
+ catCow:["Elbows","Under the shoulders.","Move segment by segment, slowly."],
+ chestPressMach:["Elbows","About 45° from the body, handles at mid-chest.","Back flat on the pad, shoulder blades back."],
+ incPressMach:["Elbows","About 45°, below the handles.","Back on the pad, no arch."],
+ cableLatRaise:["Elbows","Slight bend, lead with the elbow.","Tall, no lean."],
+ machCurl:["Elbows","On the pad, aligned with the pivot.","Sit tall."],
+ cableHammer:["Elbows","Pinned to your sides.","Tall, no rocking."],
+ hackSquat:["Knees","Over the toes.","Back flat on the pad the whole rep."],
+ pullThrough:["Knees","Soft bend, fixed.","Flat back as you hinge; finish tall with glutes, not by leaning back."],
+ cableTriExt:["Elbows","Beside the head, pointing forward.","Ribs down, no arch."],
+ isoRow:["Elbows","Close to the body, drive back.","Chest stays on the pad."],
+ preacherMach:["Elbows","On the pad, aligned with the pivot.","Armpits snug on the pad."],
+ smithSplit:["Knees","Front knee over the foot.","Upright torso, back-leg glute squeezed."]
+};
 </script>
 <script>
 (function(){
@@ -943,10 +1005,10 @@ wrap.appendChild(h("div",{class:"imgs"},
 h("figure",null,imgEl(ex.img,0,ex.name,"Start"),h("figcaption",null,"Start")),
 h("figure",null,imgEl(ex.img,1,ex.name,"Finish"),h("figcaption",null,"Finish"))));
 } else {
-wrap.appendChild(h("div",{class:"noimg"},"No verified image for this one — use the video."));
+wrap.appendChild(h("div",{class:"noimg"},"No verified image for this one — follow the checkpoints below."));
 }
 wrap.appendChild(h("p",{class:"cue"},ex.cue));
-wrap.appendChild(h("a",{class:"vid",href:yt(ex.q),target:"_blank",rel:"noopener"},"▶ Watch form video"));
+var fm=FORM[key]; if(fm){ wrap.appendChild(h("div",{class:"formchk"},h("div",{class:"fc"},h("span",{class:"fl"},fm[0]),h("span",null,fm[1])),h("div",{class:"fc"},h("span",{class:"fl"},"Back"),h("span",null,fm[2])))); }
 return wrap;
 }
 function explainToggle(key){
