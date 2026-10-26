@@ -1,0 +1,977 @@
+<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1f5c4f"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="ملف الجيم">
+<link rel="manifest" href="manifest.json"><link rel="icon" href="icon.svg">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+</head><body><title>ملف الجيم</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+--bg:#eceee9; --surface:#f7f8f5; --surface2:#eef1ec; --text:#1b2320; --muted:#59645f; --line:#d3d9d1;
+--accent:#0f5e52; --accent-ink:#ffffff; --accent-soft:#d6e8e2;
+--good:#2b7a4b; --good-soft:#d9eddf; --warn:#9a5a06; --warn-soft:#f5e6c8; --bad:#a9372b; --bad-soft:#f4dad6;
+--shadow:0 1px 2px rgba(20,30,25,.06);
+--font:"IBM Plex Sans Arabic","Segoe UI",Tahoma,"Noto Naskh Arabic",system-ui,-apple-system,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+:root:not([data-theme="light"]){
+--bg:#111613; --surface:#19201d; --surface2:#202925; --text:#e5ebe7; --muted:#9aa7a0; --line:#2c3733;
+--accent:#4fb8a2; --accent-ink:#07201b; --accent-soft:#1c3b34;
+--good:#6cc58d; --good-soft:#1c3326; --warn:#e2a84c; --warn-soft:#34291a; --bad:#ec8277; --bad-soft:#3a2420;
+--shadow:none; color-scheme:dark;
+}
+}
+:root[data-theme="dark"]{
+--bg:#111613; --surface:#19201d; --surface2:#202925; --text:#e5ebe7; --muted:#9aa7a0; --line:#2c3733;
+--accent:#4fb8a2; --accent-ink:#07201b; --accent-soft:#1c3b34;
+--good:#6cc58d; --good-soft:#1c3326; --warn:#e2a84c; --warn-soft:#34291a; --bad:#ec8277; --bad-soft:#3a2420;
+--shadow:none; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);font-size:16px;line-height:1.6;
+font-variant-numeric:tabular-nums;padding-bottom:calc(76px + env(safe-area-inset-bottom,0px));overflow-x:hidden}
+.page{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:18px}
+.inner{max-width:640px;margin-inline:auto}
+.num,input,td,th{font-variant-numeric:tabular-nums}
+h1{font-size:1.45rem;line-height:1.3;margin:0}
+h2{font-size:1.1rem;margin:26px 0 10px;line-height:1.4}
+h3{font-size:1rem;margin:0}
+p{margin:0 0 8px}
+.sub{color:var(--muted);font-size:.88rem;margin-top:2px}
+.top{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;margin-bottom:14px}
+.btn{font:inherit;font-weight:600;min-height:44px;padding:8px 16px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--text);cursor:pointer}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+.btn.armed{background:var(--bad);color:#fff;border-color:var(--bad)}
+.btn.small{min-height:44px;padding:6px 12px;font-size:.88rem}
+.btn.block{width:100%}
+.btn:disabled{opacity:.5}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.banner{background:var(--warn-soft);color:var(--warn);border:1px solid var(--warn);border-radius:10px;padding:8px 12px;margin-bottom:12px;font-size:.9rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;box-shadow:var(--shadow)}
+.muted{color:var(--muted)}
+.small{font-size:.85rem}
+.note{font-size:.85rem;color:var(--muted);margin:6px 0 12px}
+.warnbox,.warn{border-inline-start:4px solid var(--warn);background:var(--warn-soft);padding:8px 10px;border-radius:6px}
+.msg{font-size:.92rem;margin:8px 0;font-weight:600}
+.msg.ok{color:var(--good)}
+.msg.err{color:var(--bad)}
+label.fld{display:block;font-weight:600;font-size:.88rem;margin-bottom:4px}
+input[type=text],input[type=number],input[type=date],select,textarea{font:inherit;font-size:16px;width:100%;min-height:46px;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--text)}
+textarea{min-height:90px;resize:vertical}
+input.cell{text-align:center;padding-inline:4px}
+.hero{background:var(--accent-soft);border:1px solid var(--accent);border-radius:12px;padding:14px;margin-bottom:12px}
+.hero .k{font-size:.85rem;color:var(--muted)}
+.hero .v{font-size:1.3rem;font-weight:700;color:var(--accent)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ex{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}
+.ex-name{font-weight:700;font-size:1.02rem}
+.ex-target{color:var(--accent);font-weight:600;font-size:.92rem}
+.ex-last{color:var(--muted);font-size:.88rem;margin-top:2px}
+details.expl{margin:6px 0}
+details.expl>summary,details.day>summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:600;color:var(--accent);list-style:none}
+details.expl>summary::-webkit-details-marker,details.day>summary::-webkit-details-marker{display:none}
+details.expl>summary::before,details.day>summary::before{content:"+";display:inline-block;width:22px;font-weight:700}
+details[open].expl>summary::before,details[open].day>summary::before{content:"−"}
+details.day{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:0 12px;margin-bottom:10px}
+details.day[open]{padding-bottom:4px}
+.imgs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:6px 0}
+.imgs figure{margin:0;min-width:0}
+.imgs img{display:block;width:100%;max-width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px;background:var(--surface2)}
+.imgs figcaption{font-size:.78rem;color:var(--muted);margin-top:2px}
+.imgmiss{aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;text-align:center;font-size:.8rem;color:var(--muted);background:var(--surface2);border-radius:8px;padding:6px}
+.noimg{background:var(--surface2);border-radius:8px;padding:10px;color:var(--muted);font-size:.88rem;margin:6px 0}
+.cue{margin:6px 0}
+.cue.en,.ex-en{color:var(--muted,inherit);font-size:.86em;text-align:left;opacity:.85}
+.ex-en{margin-top:2px}
+a.vid{display:inline-flex;align-items:center;min-height:44px;color:var(--accent);font-weight:600}
+.sets{margin-top:6px}
+.srow{display:grid;grid-template-columns:5.2rem 1fr 1fr;gap:8px;align-items:center;margin-bottom:6px}
+.srow.hd{font-size:.8rem;color:var(--muted)}
+.srow.hd span:not(:first-child){text-align:center}
+.srow .sn{font-size:.9rem;color:var(--muted)}
+.setbtns{display:flex;gap:8px;margin-top:4px}
+.chk{display:flex;gap:12px;align-items:center;min-height:48px;cursor:pointer}
+.chk input{width:26px;height:26px;accent-color:var(--accent);flex:none;margin:0}
+.chk small{display:block;color:var(--muted)}
+.cor{border-bottom:1px solid var(--line);padding-bottom:2px;margin-bottom:4px}
+.cor:last-child{border-bottom:0}
+.week{display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:8px}
+.wd{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px;border-inline-start:4px solid var(--accent)}
+.wd.pull{border-inline-start-color:var(--good)}
+.wd.legs{border-inline-start-color:var(--warn)}
+.wd.rest{border-inline-start-color:var(--muted)}
+.wd b{display:block;font-size:1.2rem;color:var(--muted)}
+.wd span{font-weight:600;font-size:.9rem}
+.tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.88rem}
+th,td{padding:8px 10px;text-align:start;border-bottom:1px solid var(--line);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+th{background:var(--surface2);font-weight:600;color:var(--muted)}
+td.wrapc{white-space:normal;min-width:130px}
+tr.sub td{font-weight:700;background:var(--surface2)}
+.chip{display:inline-block;padding:2px 10px;border-radius:999px;font-weight:700;font-size:.85rem}
+.chip.early{background:var(--surface2);color:var(--muted)}
+.chip.now{background:var(--good-soft);color:var(--good)}
+.chip.late{background:var(--bad-soft);color:var(--bad)}
+.tag{display:inline-block;font-size:.72rem;background:var(--accent-soft);color:var(--accent);padding:1px 8px;border-radius:999px;margin-inline-start:6px}
+.up{color:var(--bad)} .down{color:var(--good)}
+.chart{width:100%;height:auto;display:block;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.chart text{fill:var(--muted);font-size:10px;font-family:var(--font)}
+.chart .grid{stroke:var(--line);stroke-width:1}
+.chart .ln{fill:none;stroke:var(--accent);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.chart .dot{fill:var(--surface);stroke:var(--accent);stroke-width:2}
+.chart .dot.last{fill:var(--accent)}
+.chart text.lv{fill:var(--text);font-weight:700;font-size:11px}
+.sess{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line)}
+.sess:last-child{border-bottom:0}
+.sess .t{min-width:0}
+.sum{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sum div{background:var(--surface2);border-radius:8px;padding:8px 10px}
+.sum b{display:block;font-size:1.25rem}
+.rev{border-bottom:1px solid var(--line);padding:8px 0}
+.rev:last-child{border-bottom:0}
+.rev .rv{font-weight:700;color:var(--accent)}
+.rev .rd{font-size:.88rem;color:var(--muted)}
+ul.plain{margin:0;padding:0;list-style:none}
+ul.plain li{padding:8px 10px;margin-bottom:6px;background:var(--surface);border:1px solid var(--line);border-radius:8px}
+ul.plain li.warn{background:var(--warn-soft)}
+.rev.warn{border-radius:6px;margin:4px 0}
+.tabbar{position:fixed;bottom:0;left:0;right:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);
+padding-bottom:env(safe-area-inset-bottom,0px);padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px))}
+.tabbar .in{max-width:640px;margin-inline:auto;display:grid;grid-template-columns:repeat(5,1fr)}
+.tab{font:inherit;font-size:.74rem;font-weight:600;min-height:56px;border:0;background:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;border-radius:10px}
+.tab svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tab[aria-selected="true"]{color:var(--accent)}
+.tab[aria-selected="true"] svg{stroke-width:2.4}
+#backupPanel{margin-bottom:14px}
+#backupPanel textarea{direction:ltr;text-align:left;font-size:13px}
+.hide{display:none!important}
+@media (prefers-reduced-motion: no-preference){ .tab{transition:color .15s} }
+@media (prefers-reduced-motion: reduce){ *{animation:none!important;transition:none!important;scroll-behavior:auto!important} }
+</style>
+<div class="page"><div class="inner">
+<div class="top">
+<div>
+<h1>ملف الجيم</h1>
+<div class="sub">دفع / سحب / رجل × 2 — إعادة تركيب الجسم وتصحيح الحوض</div>
+</div>
+<button class="btn small" id="backupBtn" type="button" aria-expanded="false" aria-controls="backupPanel">نسخة احتياطية</button>
+</div>
+<div id="banner"></div>
+<section id="backupPanel" class="card hide" aria-label="نسخة احتياطية"></section>
+<main id="view"></main>
+</div></div>
+<nav class="tabbar" id="tabbar" aria-label="التنقل"><div class="in" role="tablist"></div></nav>
+<script>
+// ===== GYM DATA (authored by Opus — do not change numbers or text) =====
+const IMG_REMOTE = "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/";
+const yt = q => "https://www.youtube.com/results?search_query=" + encodeURIComponent(q);
+// img: id in free-exercise-db (public domain, Unlicense). null = no verified image.
+const EX = {
+bench:      {ar:"بنش برس بار", img:"Barbell_Bench_Press_-_Medium_Grip", q:"barbell bench press proper form", cue:"لوحي الكتف لورا وتحت، الرجلين ثابتة على الأرض، البار ينزل لمنتصف الصدر."},
+incDb:      {ar:"بنش مائل دمبل", img:"Incline_Dumbbell_Press", q:"incline dumbbell press form", cue:"زاوية الكرسي 30 درجة تقريباً، انزل لحد ما تحس بتمدد في الصدر."},
+dbOhp:      {ar:"ضغط أكتاف دمبل", img:"Dumbbell_Shoulder_Press", q:"seated dumbbell shoulder press form", cue:"اقعد وضهرك ساند، شد البطن ومتقوسش أسفل الضهر."},
+latRaise:   {ar:"رفرفة جانبي", img:"Side_Lateral_Raise", q:"dumbbell lateral raise form", cue:"وزن خفيف، ارفع لحد مستوى الكتف بس، من غير مرجحة."},
+pushdown:   {ar:"ترايسبس حبل كيبل", img:"Triceps_Pushdown_-_Rope_Attachment", q:"rope triceps pushdown form", cue:"الكوع ثابت جنب الجسم، افتح الحبل تحت."},
+ohExt:      {ar:"ترايسبس فوق الراس كيبل", img:"Cable_Rope_Overhead_Triceps_Extension", q:"cable overhead triceps extension form", cue:"شد البطن والمقعدة عشان أسفل الضهر ميتقوسش."},
+pulldown:   {ar:"سحب أمامي واسع", img:"Wide-Grip_Lat_Pulldown", q:"lat pulldown proper form", cue:"اسحب البار لأعلى الصدر، الصدر لفوق، متميلش لورا كتير."},
+cableRow:   {ar:"سحب أرضي كيبل", img:"Seated_Cable_Rows", q:"seated cable row form", cue:"ضهرك مفرود، اسحب للبطن واضغط لوحي الكتف."},
+facePull:   {ar:"فيس بول", img:"Face_Pull", q:"face pull proper form", cue:"اسحب الحبل لمستوى الوش وافتح الإيدين للجنب. مهم لوضعية الكتف."},
+hammer:     {ar:"هامر كيرل", img:"Alternate_Hammer_Curl", q:"hammer curl form", cue:"الكف ناحية الجسم، الكوع ثابت."},
+bbCurl:     {ar:"باي بار", img:"Barbell_Curl", q:"barbell curl form", cue:"من غير مرجحة بالضهر، انزل للآخر بالتحكم."},
+squat:      {ar:"سكوات بار", img:"Barbell_Squat", q:"barbell back squat form for beginners", cue:"الصدر لفوق، الركبة في اتجاه صوابع الرجل. لو الحركة مش مظبوطة ابدأ بالليج برس لحد ما مدرب يراجع معاك."},
+rdl:        {ar:"رومانيان ديدلفت", img:"Romanian_Deadlift", q:"romanian deadlift proper form", cue:"ارجع بالحوض لورا والضهر مفرود، البار قريب من الرجل. أهم تمرين لخلف الفخذ والمقعدة."},
+lyingCurl:  {ar:"رجل خلفي نايم", img:"Lying_Leg_Curls", q:"lying leg curl form", cue:"الحوض لازق في المرتبة، متقوسش الضهر."},
+legExt:     {ar:"رجل أمامي", img:"Leg_Extensions", q:"leg extension machine form", cue:"اثبت فوق ثانية، انزل ببطء."},
+calfStand:  {ar:"سمانة واقف", img:"Standing_Calf_Raises", q:"standing calf raise machine form", cue:"مدى كامل: تحت للآخر وفوق للآخر."},
+hipThrust:  {ar:"هيب ثرست", img:"Barbell_Hip_Thrust", q:"barbell hip thrust form", cue:"الدقن لتحت شوية، اقفل بالمقعدة مش بأسفل الضهر. من أهم تمارين تصحيح الحوض."},
+machOhp:    {ar:"ضغط أكتاف جهاز", img:"Machine_Shoulder_Military_Press", q:"machine shoulder press form", cue:"ضهرك ساند على الكرسي، متقفلش الكوع فوق."},
+dbBench:    {ar:"بنش مستوي دمبل", img:"Dumbbell_Bench_Press", q:"dumbbell bench press form", cue:"انزل بتحكم لحد ما الدمبل يبقى جنب الصدر."},
+crossover:  {ar:"تجميع صدر كيبل", img:"Cable_Crossover", q:"cable crossover chest form", cue:"ميل بسيط لقدام، الإيدين تتقابل قدام الصدر."},
+dipMach:    {ar:"متوازي جهاز", img:"Dip_Machine", q:"dip machine triceps form", cue:"الكوع لورا قريب من الجسم."},
+skull:      {ar:"ترايسبس بار EZ نايم", img:"EZ-Bar_Skullcrusher", q:"ez bar skull crusher form", cue:"الكوع ثابت ومشاور للسقف، انزل ورا الراس شوية."},
+assistPull: {ar:"عقلة بمساعدة (أستك أو جهاز)", img:"Band_Assisted_Pull-Up", q:"assisted pull up form", cue:"لو مفيش أستك استخدم جهاز العقلة بالمساعدة أو السحب الأمامي."},
+dbRow:      {ar:"سحب دمبل بإيد واحدة", img:"One-Arm_Dumbbell_Row", q:"one arm dumbbell row form", cue:"اسحب الكوع ناحية الحوض، الضهر مفرود."},
+revFly:     {ar:"خلفي كتف جهاز", img:"Reverse_Machine_Flyes", q:"reverse pec deck rear delt form", cue:"وزن خفيف، افتح الإيدين للجنب واضغط ورا."},
+incCurl:    {ar:"باي دمبل على كرسي مائل", img:"Incline_Dumbbell_Curl", q:"incline dumbbell curl form", cue:"الإيد سايبة لتحت، اطلع من غير ما الكوع يتحرك لقدام."},
+legPress:   {ar:"ليج برس", img:"Leg_Press", q:"leg press proper form", cue:"أسفل الضهر لازق في الكرسي طول الحركة، متقفلش الركبة فوق."},
+splitSquat: {ar:"سبليت سكوات دمبل", img:"Split_Squat_with_Dumbbells", q:"dumbbell split squat form", cue:"شد مقعدة الرجل اللي ورا، ده بيمدد الفخذ الأمامي كمان."},
+seatedCurl: {ar:"رجل خلفي قاعد", img:"Seated_Leg_Curl", q:"seated leg curl form", cue:"اسحب لتحت بالكامل، ارجع ببطء."},
+calfSeat:   {ar:"سمانة قاعد", img:"Seated_Calf_Raise", q:"seated calf raise form", cue:"اثبت تحت ثانية وفوق ثانية."},
+// ---- correctives ----
+hipFlexStr: {ar:"تمدد عضلة الحوض الأمامية (على ركبة)", img:"Kneeling_Hip_Flexor", q:"kneeling hip flexor stretch posterior pelvic tilt", cue:"اشفط البطن واضغط مقعدة الرجل اللي على الأرض، وحرك الحوض لقدام شوية. لازم تحس بالشد قدام الفخذ."},
+quadStr:    {ar:"تمدد الفخذ الأمامي", img:"On_Your_Side_Quad_Stretch", q:"side lying quad stretch", cue:"نام على جنبك، امسك القدم اللي فوق وقرّب الكعب من المقعدة. الركبتين جنب بعض واضغط المقعدة."},
+pelvBridge: {ar:"إمالة الحوض لورا + جسر", img:"Pelvic_Tilt_Into_Bridge", q:"posterior pelvic tilt glute bridge", cue:"لزق أسفل الضهر في الأرض الأول، بعدين ارفع بالمقعدة فقرة فقرة."},
+slBridge:   {ar:"جسر المقعدة برجل واحدة", img:"Single_Leg_Glute_Bridge", q:"single leg glute bridge form", cue:"الحوض مستوي، الشغل كله من المقعدة."},
+deadBug:    {ar:"ديد بج", img:"Dead_Bug", q:"dead bug exercise form", cue:"أسفل الضهر لازق في الأرض طول الوقت. لو اتشال قلل المدى."},
+plank:      {ar:"بلانك بإمالة الحوض", img:"Plank", q:"plank posterior pelvic tilt RKC plank", cue:"اقلب الحوض لورا (كأنك بتدخل ديلك تحتك) واضغط المقعدة. بلانك قصير وصح أحسن من طويل وغلط."},
+// ---- desk ----
+glutSqz:    {ar:"ضغط المقعدة وانت قاعد", img:null, q:"seated glute squeeze desk exercise", cue:"اضغط المقعدة 5 ثواني وفك. مفيش صورة موثوقة لده، استخدم الفيديو."},
+pelvTilt:   {ar:"إمالة الحوض (قاعد أو واقف)", img:"Standing_Pelvic_Tilt", q:"seated pelvic tilt exercise", cue:"لف الحوض لورا ولقدام ببطء. الصورة وانت واقف، وتنفع قاعد على الكرسي."},
+hipFlexStand:{ar:"تمدد الحوض الأمامي واقف", img:"Standing_Hip_Flexors", q:"standing hip flexor stretch desk", cue:"قوم جنب المكتب، رجل لقدام وواحدة لورا، اضغط المقعدة."},
+neckStr:    {ar:"تمدد الرقبة", img:"Chin_To_Chest_Stretch", q:"chin tuck exercise desk posture", cue:"نزل الدقن للصدر براحة، وبعدها ارجع الراس لورا (دقن مزدوجة)."},
+chestOpen:  {ar:"فتح الصدر", img:"Dynamic_Chest_Stretch", q:"doorway chest stretch desk", cue:"افتح الإيدين لورا واضغط لوحي الكتف. بيعكس قعدة الكيبورد."},
+// ---- home ----
+pushups:    {ar:"ضغط", img:"Pushups", q:"push up proper form", cue:"الجسم خط واحد، الحوض متنزلش."},
+bwSquat:    {ar:"سكوات بوزن الجسم", img:"Bodyweight_Squat", q:"bodyweight squat form", cue:"انزل لحد ما الفخذ يبقى موازي للأرض أو أقل لو مريح."},
+revLunge:   {ar:"طعن لورا (من غير دمبل)", img:"Dumbbell_Rear_Lunge", q:"reverse lunge bodyweight form", cue:"الصورة بالدمبل، اعمله في البيت من غيره."},
+sidePlank:  {ar:"بلانك جانبي", img:"Side_Bridge", q:"side plank form", cue:"الجسم خط واحد، الحوض لفوق."},
+catCow:     {ar:"تمدد القطة", img:"Cat_Stretch", q:"cat cow stretch", cue:"حركة بطيئة مع النفس، لتليين الضهر."}
+};
+// sets, reps (range text), rest
+const PLAN = [
+{key:"pushA", name:"دفع أ — صدر", short:"دفع أ", type:"push", items:[
+["bench",3,"6-8","2-3 د"],["incDb",3,"8-12","2 د"],["dbOhp",3,"8-12","2 د"],
+["latRaise",3,"12-15","60-90 ث"],["pushdown",3,"10-15","60-90 ث"],["ohExt",2,"10-15","60-90 ث"]]},
+{key:"pullA", name:"سحب أ — ضهر عرض", short:"سحب أ", type:"pull", items:[
+["pulldown",3,"8-12","2 د"],["cableRow",3,"8-12","2 د"],["facePull",3,"12-15","60-90 ث"],
+["bbCurl",3,"8-12","60-90 ث"],["hammer",2,"10-12","60-90 ث"]]},
+{key:"legsA", name:"رجل أ — سكوات", short:"رجل أ", type:"legs", items:[
+["squat",3,"6-8","2-3 د"],["rdl",3,"8-10","2-3 د"],["hipThrust",3,"8-12","2 د"],
+["lyingCurl",3,"10-12","90 ث"],["legExt",2,"12-15","60-90 ث"],["calfStand",3,"10-15","60 ث"]]},
+{key:"pushB", name:"دفع ب — أكتاف", short:"دفع ب", type:"push", items:[
+["machOhp",3,"8-12","2 د"],["dbBench",3,"8-12","2 د"],["crossover",3,"12-15","60-90 ث"],
+["latRaise",3,"12-15","60-90 ث"],["dipMach",3,"8-12","90 ث"],["skull",2,"10-12","60-90 ث"]]},
+{key:"pullB", name:"سحب ب — ضهر سُمك", short:"سحب ب", type:"pull", items:[
+["assistPull",3,"6-10","2 د"],["dbRow",3,"8-12 لكل إيد","2 د"],["revFly",3,"12-15","60-90 ث"],
+["incCurl",3,"10-12","60-90 ث"],["facePull",2,"12-15","60 ث"]]},
+{key:"legsB", name:"رجل ب — مقعدة", short:"رجل ب", type:"legs", items:[
+["legPress",3,"10-12","2 د"],["splitSquat",3,"8-10 لكل رجل","2 د"],["hipThrust",3,"10-12","2 د"],
+["seatedCurl",3,"10-12","90 ث"],["calfSeat",3,"12-15","60 ث"]]}
+];
+// Done before every gym session (~10 min)
+const CORRECTIVE = [
+["hipFlexStr",2,"30 ث لكل جانب"],["quadStr",2,"30 ث لكل رجل"],["pelvBridge",2,"12"],
+["slBridge",2,"10 لكل رجل"],["deadBug",2,"8 لكل جانب"],["plank",3,"20-40 ث"]
+];
+const DESK = [
+["glutSqz",1,"10 مرات × 5 ث"],["pelvTilt",1,"10 مرات"],["hipFlexStand",1,"30 ث لكل جانب"],
+["neckStr",1,"5 مرات"],["chestOpen",1,"10 مرات"]
+];
+const HOME = [
+["pushups",3,"لحد ما يفضل 2 عدة"],["bwSquat",3,"15"],["revLunge",2,"10 لكل رجل"],
+["sidePlank",2,"20-30 ث لكل جانب"],["deadBug",2,"8 لكل جانب"],["catCow",1,"10 مرات"]
+];
+const REST_DAY = [
+"سباحة خفيفة 20-30 دقيقة بإيقاع مريح (مش تمرين قوي).",
+"جاكوزي سخن 10-15 دقيقة. ⚠️ افتراض، راجعه: مدة شائعة كحد آمن وليست من مصدر رسمي متحقق منه. اشرب مية قبل وبعد.",
+"مية باردة/غطس بارد 1-3 دقايق لو حابب. ⚠️ افتراض، راجعه.",
+"البارد يكون في يوم الراحة، مش بعد الحديد مباشرة: دراسة Roberts وزملاؤه 2015 (Journal of Physiology) لقت إن الغطس البارد بانتظام بعد تمرين المقاومة قلل مكاسب العضلات على المدى الطويل.",
+"لو عندك أي مشكلة ضغط أو قلب، اسأل دكتور قبل الجاكوزي السخن والبارد."
+];
+const ROTATION_NOTE = "الترتيب ثابت: دفع أ ← سحب أ ← رجل أ ← دفع ب ← سحب ب ← رجل ب ← راحة. لو اتمرنت 5 أيام بس في أسبوع، كمّل من آخر يوم وقفت عنده بدل ما تبدأ من الأول، كده الرجل عمرها ما هتتخطى.";
+const PROGRESSION = "طريقة الزيادة (Double progression): أول ما تكمل كل المجموعات عند أعلى رقم في المدى (مثلاً 3×12 في مدى 8-12)، زوّد الوزن خطوة صغيرة (حوالي 2.5 كجم للجزء العلوي، 5 كجم للرجل) وارجع لأقل رقم في المدى. وقف كل مجموعة وعندك تقريباً 1-3 عدات في الخزان.";
+// ===== NUTRITION =====
+// per 100 g: kcal, protein, carbs, fat. Source: USDA FoodData Central typical values, entered from memory.
+const FOODS = {
+dates:   {ar:"تمر", v:[282,2.5,75,0.4]},
+egg:     {ar:"بيض (البيضة حوالي 50 جم)", v:[143,12.6,0.7,9.5]},
+bread:   {ar:"خبز بر", v:[247,13,41,3.4]},
+veg:     {ar:"سلطة خضار (خيار، طماطم، خس)", v:[20,1,4,0.2]},
+rice:    {ar:"رز أبيض مطبوخ", v:[130,2.7,28,0.3]},
+chicken: {ar:"صدر فراخ مطبوخ", v:[165,31,0,3.6]},
+beef:    {ar:"لحم قليل الدهن مطبوخ", v:[217,26,0,11.7]},
+oil:     {ar:"زيت زيتون", v:[884,0,0,100]},
+banana:  {ar:"موز", v:[89,1.1,23,0.3]},
+tuna:    {ar:"تونة بالمية مصفاة", v:[116,25.5,0,0.8]},
+foul:    {ar:"فول مدمس", v:[110,7.6,19.6,0.4]},
+yogurt:  {ar:"زبادي قليل الدسم", v:[63,5.3,7,1.6]},
+lentils: {ar:"عدس مطبوخ", v:[116,9,20,0.4]}
+};
+const MEALS = [
+{name:"الفطار", time:"الصبح", items:[["dates",40],["egg",100],["bread",90],["veg",100]]},
+{name:"الغدا", time:"الظهر", items:[["rice",300],["chicken",140],["veg",150],["oil",20]], swap:"بدل الفراخ: 140 جم لحم قليل الدهن (بروتين أقل شوية ودهون أكتر)."},
+{name:"بعد الجيم", time:"بعد التمرين", items:[["banana",120]], extra:"+ عبوة لبن البروتين (30 جم بروتين). السعرات من ملصق العبوة.", swap:"في يوم التونة: علبة تونة 120 جم مصفاة بدل لبن البروتين."},
+{name:"العشا", time:"بالليل", items:[["foul",200],["bread",60],["yogurt",170]], swap:"بدل الفول: 200 جم عدس مطبوخ."}
+];
+const SHAKE = {protein:30, note:"لبن البروتين: 30 جم بروتين (من كلامك). السعرات غير معروفة، اقراها من الملصق وزودها على المجموع."};
+const NUTRITION_RULES = [
+"قلل البيتزا والهمبرجر لمرة في الأسبوع تقريباً، ولو أكلتها احسبها مكان وجبة الغدا مش زيادة عليه.",
+"الأكل كله حلال: اشتري اللحوم والفراخ من مصادر حلال معروفة، ولو منتج مستورد شوف علامة الحلال.",
+"وزن الأكل مطبوخ بميزان مطبخ أول أسبوعين، وبعدها هتعرف الكميات بالعين.",
+"القيم الغذائية في الجدول تقريبية من قاعدة USDA FoodData Central. ⚠️ افتراض، راجعه: اتكتبت من الذاكرة، والخبز والتمر بيختلفوا حسب النوع، فالأفضل ملصق المنتج."
+];
+// ===== REVIEW (Opus) =====
+const REVIEW = [
+{t:"الكتلة بدون دهون", v:"57.3 كجم", d:"79.3 − 22.0 كجم دهون (من الـInBody بتاعك). رقم محسوب، مش افتراض."},
+{t:"معدل الحرق وقت الراحة", v:"حوالي 1,600–1,730 سعرة", d:"Katch-McArdle (من الكتلة بدون دهون) = 1,608، وMifflin-St Jeor = 1,726. الاتنين معادلات تقديرية."},
+{t:"الحرق اليومي الكلي", v:"حوالي 2,490–2,680 سعرة", d:"⚠️ افتراض، راجعه: ضربت في معامل نشاط 1.55 (تمرين 5-6 أيام مع شغل مكتبي). المعامل ده تقدير، والرقم الحقيقي يبان من وزنك على 2-3 أسابيع."},
+{t:"هدف السعرات", v:"حوالي 2,050–2,100 سعرة", d:"الخطة = حوالي 1,910 سعرة + لبن البروتين. ده عجز تقريباً 400-600 سعرة من التقدير. ⚠️ افتراض، راجعه: لو وزنك نزل أكتر من 0.7 كجم في الأسبوع (متوسط أسبوعي) زوّد 150-200 سعرة رز أو خبز، ولو ثابت 3 أسابيع ودهونك مش بتقل، قلل 150."},
+{t:"البروتين", v:"130–140 جم = حوالي 1.7 جم لكل كجم", d:"رقمك سليم. داخل توصية ISSN (من 1.4 لـ 2.0 جم/كجم) وقريب من تحليل Morton وزملاؤه 2018 اللي لقى إن الفايدة بتثبت تقريباً عند 1.6 جم/كجم. الخطة بتوصل حوالي 142 جم مع اللبن."},
+{t:"الدهون الحشوية مستوى 9", v:"على حافة الطبيعي", d:"⚠️ افتراض، راجعه: على حد علمي تقرير InBody بيعتبر أقل من 10 طبيعي. خسارة الدهون العامة بتنزّلها."},
+{t:"دقة الـInBody", v:"اتابع الاتجاه مش الرقم", d:"أجهزة BIA بتتأثر بالمية والأكل. قيس نفس الوقت (الصبح، صايم، بعد الحمام) كل 3-4 أسابيع، وقارن الاتجاه."},
+{t:"ميل الحوض لقدام", v:"التمارين مفيدة، والدليل على تغيير الوضعية محدود", d:"تقوية المقعدة والبطن وتمدد الفخذ الأمامي آمنة ومفيدة للقوة والراحة، لكن الأبحاث مختلفة في قد إيه بتغيّر زاوية الحوض نفسها. لو في ألم أسفل الضهر بينزل للرجل أو تنميل، روح أخصائي علاج طبيعي."}
+];
+const FIRST_MEASURE = {date:"2026-10-21", weight:79.3, fatPct:27.7, fatKg:22.0, muscle:32.0, visceral:9};
+</script>
+<script>const EN = {
+bench:["Barbell Bench Press","Shoulder blades back and down, feet planted, bar to mid-chest."],
+incDb:["Incline Dumbbell Press","Bench at about 30°, lower until you feel a stretch in the chest."],
+dbOhp:["Seated Dumbbell Shoulder Press","Back supported, brace your abs, don't arch the lower back."],
+latRaise:["Dumbbell Lateral Raise","Light weight, raise to shoulder height only, no swinging."],
+pushdown:["Rope Triceps Pushdown","Elbows pinned to your sides, spread the rope at the bottom."],
+ohExt:["Cable Overhead Triceps Extension","Brace abs and glutes so the lower back doesn't arch."],
+pulldown:["Wide-Grip Lat Pulldown","Pull the bar to your upper chest, chest up, don't lean back much."],
+cableRow:["Seated Cable Row","Back straight, pull to your belly, squeeze the shoulder blades."],
+facePull:["Face Pull","Pull the rope to face level and spread the hands apart."],
+hammer:["Hammer Curl","Palms facing your body, elbows still."],
+bbCurl:["Barbell Curl","No swinging with the back, lower all the way under control."],
+squat:["Barbell Back Squat","Chest up, knees track over toes. Use the leg press until a coach checks your form."],
+rdl:["Romanian Deadlift","Push the hips back, back flat, bar close to the legs."],
+lyingCurl:["Lying Leg Curl","Keep the hips pressed into the pad, don't arch."],
+legExt:["Leg Extension","Pause one second at the top, lower slowly."],
+calfStand:["Standing Calf Raise","Full range: all the way down, all the way up."],
+hipThrust:["Barbell Hip Thrust","Chin slightly tucked, lock out with the glutes, not the lower back."],
+machOhp:["Machine Shoulder Press","Back against the pad, don't lock the elbows at the top."],
+dbBench:["Dumbbell Bench Press","Lower under control until the dumbbells are beside the chest."],
+crossover:["Cable Crossover","Slight forward lean, hands meet in front of the chest."],
+dipMach:["Dip Machine","Elbows back, close to the body."],
+skull:["EZ-Bar Skull Crusher","Elbows fixed and pointing up, lower slightly behind the head."],
+assistPull:["Assisted Pull-Up","Use a band or the assisted pull-up machine, or the lat pulldown."],
+dbRow:["One-Arm Dumbbell Row","Drive the elbow toward the hip, back flat."],
+revFly:["Reverse Machine Fly (Rear Delt)","Light weight, open the arms out and squeeze back."],
+incCurl:["Incline Dumbbell Curl","Arms hang straight down, curl without the elbow moving forward."],
+legPress:["Leg Press","Lower back stays on the seat, don't lock the knees at the top."],
+splitSquat:["Dumbbell Split Squat","Squeeze the glute of the back leg; it also stretches the front of the hip."],
+seatedCurl:["Seated Leg Curl","Pull all the way down, return slowly."],
+calfSeat:["Seated Calf Raise","Pause one second at the bottom and at the top."],
+hipFlexStr:["Kneeling Hip Flexor Stretch","Brace the abs, squeeze the glute of the down knee, shift the hips slightly forward."],
+quadStr:["Side-Lying Quad Stretch","Lie on your side, pull the top heel toward the glute. Knees together, squeeze the glute."],
+pelvBridge:["Posterior Pelvic Tilt into Glute Bridge","Flatten the lower back first, then lift with the glutes one vertebra at a time."],
+slBridge:["Single-Leg Glute Bridge","Keep the hips level, all the work from the glute."],
+deadBug:["Dead Bug","Lower back stays on the floor; shorten the range if it lifts."],
+plank:["Plank with Posterior Pelvic Tilt (RKC plank)","Tuck the pelvis under and squeeze the glutes. Short and correct beats long and sloppy."],
+glutSqz:["Seated Glute Squeeze","Squeeze for 5 seconds, release. No verified image; use the video."],
+pelvTilt:["Pelvic Tilt (seated or standing)","Slowly roll the pelvis back and forward. Works on a chair too."],
+hipFlexStand:["Standing Hip Flexor Stretch","Stand by the desk, one leg forward and one back, squeeze the glute."],
+neckStr:["Neck Stretch / Chin Tuck","Gently lower the chin to the chest, then pull the head back (double chin)."],
+chestOpen:["Chest Opener","Open the arms back and squeeze the shoulder blades."],
+pushups:["Push-Up","Body in one line, don't let the hips sag."],
+bwSquat:["Bodyweight Squat","Go down to thighs parallel, or lower if comfortable."],
+revLunge:["Reverse Lunge (bodyweight)","Image shows dumbbells; do it without them at home."],
+sidePlank:["Side Plank","Body in one line, hips up."],
+catCow:["Cat-Cow Stretch","Slow movement with the breath to loosen the back."]
+};
+const IMG_DATA={};
+</script>
+<script>
+(function(){
+"use strict";
+var KEY="gymFile_v1";
+var TABS=[
+{id:"today",label:"اليوم",icon:'<path d="M5 12l4 4 10-10"/><circle cx="12" cy="12" r="9.5"/>'},
+{id:"plan",label:"الخطة",icon:'<path d="M8 6h12M8 12h12M8 18h12"/><path d="M4 6h.01M4 12h.01M4 18h.01"/>'},
+{id:"progress",label:"التقدم",icon:'<path d="M3 20h18"/><path d="M5 15l5-5 4 3 6-7"/>'},
+{id:"body",label:"الجسم",icon:'<circle cx="12" cy="5" r="2.5"/><path d="M12 8v7M8 11h8M9 21l3-6 3 6"/>'},
+{id:"food",label:"الأكل",icon:'<path d="M6 3v8a2 2 0 002 2v8M10 3v8a2 2 0 01-2 2M17 3c-2 2-3 5-3 8h3v10"/>'}
+];
+var MONTHS=["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
+/* ---------- helpers ---------- */
+function h(tag,props){
+var e=document.createElement(tag),k,v,i;
+props=props||{};
+for(k in props){
+v=props[k];
+if(v==null||v===false) continue;
+if(k==="class") e.className=v;
+else if(k==="text") e.textContent=v;
+else if(k==="value"||k==="checked"||k==="disabled") e[k]=v;
+else if(k.slice(0,2)==="on") e.addEventListener(k.slice(2),v);
+else e.setAttribute(k,v===true?"":v);
+}
+for(i=2;i<arguments.length;i++) add(e,arguments[i]);
+return e;
+}
+function add(e,c){
+if(c==null||c===false) return;
+if(Array.isArray(c)){ c.forEach(function(x){add(e,x);}); return; }
+e.appendChild(typeof c==="string"||typeof c==="number"?document.createTextNode(String(c)):c);
+}
+function $(id){return document.getElementById(id);}
+function pad(n){return n<10?"0"+n:""+n;}
+function isoOf(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
+function today(){return isoOf(new Date());}
+function parseIso(s){var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s||"");return m?new Date(+m[1],+m[2]-1,+m[3]):null;}
+function addDays(s,n){var d=parseIso(s);if(!d) return today();d.setDate(d.getDate()+n);return isoOf(d);}
+function fmtDate(s){var d=parseIso(s);return d?d.getDate()+" "+MONTHS[d.getMonth()]+" "+d.getFullYear():String(s||"");}
+function shortDate(s){var d=parseIso(s);return d?pad(d.getDate())+"/"+pad(d.getMonth()+1):"";}
+function fmtNum(n){return String(Math.round(n*10)/10);}
+function num(v){
+if(v==null) return NaN;
+var s=String(v).replace(/[٠-٩]/g,function(c){return c.charCodeAt(0)-1632;}).replace("٫",".").replace(",",".").trim();
+if(s==="") return NaN;
+return parseFloat(s);
+}
+function uid(p){return p+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function hasWarn(t){return String(t).indexOf("⚠️")>=0;}
+function planByKey(k){for(var i=0;i<PLAN.length;i++) if(PLAN[i].key===k) return PLAN[i]; return null;}
+function planName(k){if(k==="rest") return "راحة";var p=planByKey(k);return p?p.name:k;}
+/* ---------- state / storage ---------- */
+var storageOk=true;
+var state=load();
+function defaultState(){
+var m=Object.assign({id:uid("m"),source:"inbody"},FIRST_MEASURE);
+return {version:1,sessions:[],measurements:[m],ui:{tab:"today"}};
+}
+function normalize(o){
+var s={version:1,sessions:[],measurements:[],ui:{tab:"today"}};
+(o.sessions||[]).forEach(function(x){ if(x&&typeof x==="object"&&typeof x.date==="string"){ if(!x.id) x.id=uid("s"); s.sessions.push(x);} });
+(o.measurements||[]).forEach(function(x){ if(x&&typeof x==="object"&&typeof x.date==="string"){ if(!x.id) x.id=uid("m"); s.measurements.push(x);} });
+if(o.ui&&typeof o.ui.tab==="string") s.ui.tab=o.ui.tab;
+sortAll(s);
+return s;
+}
+function sortAll(s){
+s.sessions.sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0;});
+s.measurements.sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0;});
+}
+function load(){
+var raw=null;
+try{ raw=localStorage.getItem(KEY); }catch(e){ storageOk=false; }
+if(raw){
+try{
+var o=JSON.parse(raw);
+if(o&&Array.isArray(o.sessions)&&Array.isArray(o.measurements)) return normalize(o);
+}catch(e2){}
+}
+return defaultState();
+}
+function persist(){
+try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){ storageOk=false; }
+renderBanner();
+}
+function renderBanner(){
+var b=$("banner"); b.textContent="";
+if(!storageOk) b.appendChild(h("div",{class:"banner",role:"status"},"التخزين مش شغال في المتصفح ده"));
+}
+/* ---------- domain ---------- */
+var draft=null;
+var tabSel={progressKey:null};
+var armed=null; /* id of item awaiting second tap */
+var armTimer=null;
+function arm(id){armed=id;clearTimeout(armTimer);armTimer=setTimeout(function(){armed=null;render();},4000);}
+function disarm(){armed=null;clearTimeout(armTimer);}
+function lastTrainingSession(){
+for(var i=state.sessions.length-1;i>=0;i--) if(state.sessions[i].planKey&&state.sessions[i].planKey!=="rest") return state.sessions[i];
+return null;
+}
+function nextPlanKey(){
+var l=lastTrainingSession();
+if(!l) return "pushA";
+for(var i=0;i<PLAN.length;i++) if(PLAN[i].key===l.planKey) return PLAN[(i+1)%PLAN.length].key;
+return "pushA";
+}
+function lastFor(key){
+for(var i=state.sessions.length-1;i>=0;i--){
+var s=state.sessions[i];
+if(s.sets&&s.sets[key]&&s.sets[key].length) return s.sets[key];
+}
+return null;
+}
+function fmtLast(arr){
+var same=arr.every(function(x){return x.kg===arr[0].kg;});
+if(same){
+var r=arr.map(function(x){return x.reps;}).join("، ");
+return arr[0].kg>0?fmtNum(arr[0].kg)+" كجم × "+r:"بوزن الجسم × "+r;
+}
+return arr.map(function(x){return fmtNum(x.kg)+"×"+x.reps;}).join("، ");
+}
+function newDraft(planKey){
+return {planKey:planKey,date:today(),n:{},sets:{},corr:{},notes:"",msg:null,msgKind:"ok"};
+}
+function ensureDraft(){ if(!draft) draft=newDraft(nextPlanKey()); }
+/* ---------- exercise components ---------- */
+function imgEl(id,idx,label){
+var im=document.createElement("img");
+im.alt=label+" — صورة التمرين";
+im.decoding="async";
+im.addEventListener("error",function(){
+if(!im.dataset.r){ im.dataset.r="1"; im.src=IMG_REMOTE+id+"/"+idx+".jpg"; }
+else { var box=h("div",{class:"imgmiss"},"الصورة مش متاحة دلوقتي"); if(im.parentNode) im.parentNode.replaceChild(box,im); }
+});
+im.src=IMG_DATA[id+"_"+idx]||(IMG_REMOTE+id+"/"+idx+".jpg"); im.dataset.r="1";
+return im;
+}
+function explainBody(key){
+var ex=EX[key];
+var wrap=h("div",{class:"explain"});
+if(ex.img){
+wrap.appendChild(h("div",{class:"imgs"},
+h("figure",null,imgEl(ex.img,0,ex.ar),h("figcaption",null,"البداية")),
+h("figure",null,imgEl(ex.img,1,ex.ar),h("figcaption",null,"النهاية"))));
+} else {
+wrap.appendChild(h("div",{class:"noimg"},"مفيش صورة موثوقة للتمرين ده — استخدم الفيديو"));
+}
+wrap.appendChild(h("p",{class:"cue"},ex.cue));
+if(EN[key]) wrap.appendChild(h("p",{class:"cue en",dir:"ltr",lang:"en"},EN[key][1]));
+wrap.appendChild(h("a",{class:"vid",href:yt(ex.q),target:"_blank",rel:"noopener"},"▶ فيديو شرح (بحث يوتيوب)"));
+return wrap;
+}
+function explainToggle(key){
+return h("details",{class:"expl"},h("summary",null,"شرح"),explainBody(key));
+}
+function targetText(sets,reps,rest){
+var t=sets===1?String(reps):sets+" × "+reps;
+return rest?t+" — راحة "+rest:t;
+}
+function exCard(key,target,opts){
+opts=opts||{};
+return h("div",{class:"ex"},
+h("div",{class:"ex-name"},EX[key].ar),
+EN[key]?h("div",{class:"ex-en",dir:"ltr",lang:"en"},EN[key][0]):null,
+target?h("div",{class:"ex-target num"},target):null,
+opts.last?h("div",{class:"ex-last num"},opts.last):null,
+explainToggle(key),
+opts.body||null);
+}
+function listCards(items,withRest){
+return items.map(function(it){return exCard(it[0],targetText(it[1],it[2],withRest?it[3]:null));});
+}
+/* ---------- tab: today ---------- */
+function renderToday(root){
+ensureDraft();
+var nk=nextPlanKey();
+root.appendChild(h("div",{class:"hero"},
+h("div",{class:"k"},"التمرين الجاي"),
+h("div",{class:"v"},planName(nk))));
+root.appendChild(h("p",{class:"note"},ROTATION_NOTE));
+var sel=h("select",{id:"daySel","aria-label":"اختار اليوم",onchange:function(e){
+draft=newDraft(e.target.value); render("daySel");
+}});
+PLAN.forEach(function(p){sel.appendChild(h("option",{value:p.key},p.name));});
+sel.appendChild(h("option",{value:"rest"},"راحة"));
+sel.value=draft.planKey;
+root.appendChild(h("label",{class:"fld","for":"daySel"},"اختار اليوم"));
+root.appendChild(sel);
+root.appendChild(h("label",{class:"fld","for":"sessDate",style:"margin-top:12px"},"تاريخ الجلسة"));
+root.appendChild(h("input",{type:"date",id:"sessDate",value:draft.date,oninput:function(e){draft.date=e.target.value;}}));
+if(draft.planKey==="rest") renderRestDay(root); else renderTrainDay(root);
+renderRecent(root);
+}
+function renderRestDay(root){
+root.appendChild(h("h2",null,"يوم الراحة"));
+root.appendChild(restList());
+root.appendChild(h("div",{style:"margin-top:12px"},
+h("button",{class:"btn primary block",id:"saveRest",type:"button",onclick:function(){
+var d=draft.date||today();
+state.sessions.push({id:uid("s"),date:d,planKey:"rest"});
+sortAll(state); persist();
+draft=newDraft(nextPlanKey()); draft.msg="اتحفظ ✓"; draft.msgKind="ok";
+render();
+}},"سجّل يوم راحة")));
+if(draft.msg) root.appendChild(h("div",{class:"msg "+draft.msgKind,role:"status"},draft.msg));
+}
+function restList(){
+var ul=h("ul",{class:"plain"});
+REST_DAY.forEach(function(t){ ul.appendChild(h("li",{class:hasWarn(t)?"warn":null},t)); });
+return ul;
+}
+function renderTrainDay(root){
+var plan=planByKey(draft.planKey);
+root.appendChild(h("h2",null,"روتين الحوض (قبل التمرين)"));
+CORRECTIVE.forEach(function(it){
+var k=it[0];
+root.appendChild(h("div",{class:"cor"},
+h("label",{class:"chk","for":"cor-"+k},
+h("input",{type:"checkbox",id:"cor-"+k,checked:!!draft.corr[k],onchange:function(e){draft.corr[k]=e.target.checked;}}),
+h("span",null,EX[k].ar,EN[k]?h("small",{class:"ex-en",dir:"ltr",lang:"en"},EN[k][0]):null,h("small",{class:"num"},targetText(it[1],it[2])))),
+explainToggle(k)));
+});
+root.appendChild(h("h2",null,plan.name));
+plan.items.forEach(function(it){
+var k=it[0], last=lastFor(k);
+var n=draft.n[k]!=null?draft.n[k]:it[1];
+var rows=draft.sets[k]=draft.sets[k]||[];
+var body=h("div",{class:"sets"},
+h("div",{class:"srow hd"},h("span",null,""),h("span",null,"كجم"),h("span",null,"عدات")));
+for(var i=0;i<n;i++){
+(function(i){
+var ph=last?last[Math.min(i,last.length-1)]:null;
+var cur=rows[i]||(rows[i]={kg:"",reps:""});
+body.appendChild(h("div",{class:"srow"},
+h("span",{class:"sn"},"مجموعة "+(i+1)),
+h("input",{type:"number",inputmode:"decimal",step:"any",class:"cell",id:"kg-"+k+"-"+i,"aria-label":EX[k].ar+" مجموعة "+(i+1)+" كجم",
+placeholder:ph?fmtNum(ph.kg):"",value:cur.kg,oninput:function(e){cur.kg=e.target.value;}}),
+h("input",{type:"number",inputmode:"numeric",step:"1",class:"cell",id:"reps-"+k+"-"+i,"aria-label":EX[k].ar+" مجموعة "+(i+1)+" عدات",
+placeholder:ph?String(ph.reps):"",value:cur.reps,oninput:function(e){cur.reps=e.target.value;}})));
+})(i);
+}
+body.appendChild(h("div",{class:"setbtns"},
+h("button",{class:"btn small",type:"button",id:"add-"+k,onclick:function(){draft.n[k]=n+1;render("add-"+k);}},"+ مجموعة"),
+h("button",{class:"btn small",type:"button",id:"rem-"+k,disabled:n<=1,onclick:function(){if(n>1){draft.n[k]=n-1;render("rem-"+k);}}},"− مجموعة")));
+root.appendChild(exCard(k,targetText(it[1],it[2],it[3]),{last:last?"آخر مرة: "+fmtLast(last):"أول مرة",body:body}));
+});
+root.appendChild(h("label",{class:"fld","for":"notes",style:"margin-top:12px"},"ملاحظات (اختياري)"));
+root.appendChild(h("textarea",{id:"notes",oninput:function(e){draft.notes=e.target.value;}},draft.notes||""));
+root.appendChild(h("p",{class:"note"},"الصف اللي من غير عدات بيتجاهل عند الحفظ."));
+root.appendChild(h("button",{class:"btn primary block",id:"saveSess",type:"button",onclick:saveSession},"حفظ التمرين"));
+if(draft.msg) root.appendChild(h("div",{class:"msg "+draft.msgKind,role:"status"},draft.msg));
+}
+function saveSession(){
+var plan=planByKey(draft.planKey), sets={}, any=false;
+plan.items.forEach(function(it){
+var k=it[0], out=[];
+(draft.sets[k]||[]).slice(0,draft.n[k]!=null?draft.n[k]:it[1]).forEach(function(r){
+var reps=num(r.reps), kg=num(r.kg);
+if(!(reps>0)) return;
+out.push({kg:isNaN(kg)?0:kg,reps:reps});
+});
+if(out.length){ sets[k]=out; any=true; }
+});
+if(!any){ draft.msg="اكتب عدات مجموعة واحدة على الأقل قبل الحفظ."; draft.msgKind="err"; render("saveSess"); return; }
+var corr=CORRECTIVE.map(function(c){return c[0];}).filter(function(k){return draft.corr[k];});
+state.sessions.push({id:uid("s"),date:draft.date||today(),planKey:draft.planKey,sets:sets,corrective:corr,notes:(draft.notes||"").trim()});
+sortAll(state); persist();
+draft=newDraft(nextPlanKey()); draft.msg="اتحفظ ✓"; draft.msgKind="ok";
+render();
+window.scrollTo(0,0);
+}
+function setCount(s){var c=0;if(s.sets)for(var k in s.sets)c+=s.sets[k].length;return c;}
+function renderRecent(root){
+root.appendChild(h("h2",null,"آخر 5 تمرينات"));
+var list=state.sessions.slice(-5).reverse();
+if(!list.length){ root.appendChild(h("p",{class:"muted"},"لسه مفيش تمرينات متسجلة.")); return; }
+var card=h("div",{class:"card"});
+list.forEach(function(s){
+var id="del-s-"+s.id, isArmed=armed===id;
+card.appendChild(h("div",{class:"sess"},
+h("div",{class:"t"},
+h("div",{style:"font-weight:600"},planName(s.planKey)),
+h("div",{class:"small muted num"},fmtDate(s.date)+(s.planKey==="rest"?"":" — "+setCount(s)+" مجموعة"))),
+h("button",{class:"btn small danger"+(isArmed?" armed":""),type:"button",id:id,onclick:function(){
+if(armed===id){ disarm(); state.sessions=state.sessions.filter(function(x){return x.id!==s.id;}); persist(); draft=null; render(); }
+else { arm(id); render(id); }
+}},isArmed?"متأكد؟ اضغط تاني":"حذف")));
+});
+root.appendChild(card);
+}
+/* ---------- tab: plan ---------- */
+function renderPlan(root){
+root.appendChild(h("h2",{style:"margin-top:0"},"الأسبوع"));
+var wk=h("div",{class:"week"});
+PLAN.forEach(function(p,i){ wk.appendChild(h("div",{class:"wd "+p.type},h("b",{class:"num"},i+1),h("span",null,p.short))); });
+wk.appendChild(h("div",{class:"wd rest"},h("b",{class:"num"},7),h("span",null,"راحة")));
+root.appendChild(wk);
+root.appendChild(h("p",{class:"note",style:"margin-top:10px"},ROTATION_NOTE));
+root.appendChild(h("div",{class:"card"},h("h3",null,"الزيادة"),h("p",{style:"margin-top:6px"},PROGRESSION)));
+root.appendChild(h("h2",null,"أيام التمرين"));
+PLAN.forEach(function(p){
+root.appendChild(h("details",{class:"day"},
+h("summary",null,p.name,h("span",{class:"tag num"},p.items.length+" تمارين")),
+listCards(p.items,true)));
+});
+root.appendChild(h("h2",null,"روتين الحوض (قبل كل تمرين)"));
+root.appendChild(h("details",{class:"day"},h("summary",null,"التمارين الستة"),listCards(CORRECTIVE,false)));
+root.appendChild(h("h2",null,"تمارين المكتب (كل ساعة تقريباً، 2-3 دقايق)"));
+root.appendChild(h("details",{class:"day"},h("summary",null,"التمارين الخمسة"),listCards(DESK,false)));
+root.appendChild(h("h2",null,"تمارين البيت (إضافة اختيارية، 2-3 مرات في الأسبوع، خفيفة)"));
+root.appendChild(h("details",{class:"day"},h("summary",null,"التمارين الستة"),listCards(HOME,false)));
+root.appendChild(h("h2",null,"يوم الراحة"));
+root.appendChild(restList());
+}
+/* ---------- charts ---------- */
+function lineChart(pts,unit,aria){
+var W=320,H=176,pl=40,pr=14,pt=18,pb=28;
+var vals=pts.map(function(p){return p.v;});
+var mn=Math.min.apply(null,vals), mx=Math.max.apply(null,vals);
+if(mn===mx){mn-=1;mx+=1;} else {var pad2=(mx-mn)*0.12;mn-=pad2;mx+=pad2;}
+function X(i){return pts.length===1?(pl+(W-pl-pr)/2):pl+(W-pl-pr)*i/(pts.length-1);}
+function Y(v){return pt+(H-pt-pb)*(1-(v-mn)/(mx-mn));}
+var s='<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+aria+'" direction="ltr" style="direction:ltr">';
+for(var g=0;g<3;g++){
+var gv=mn+(mx-mn)*g/2, gy=Y(gv);
+s+='<line class="grid" x1="'+pl+'" x2="'+(W-pr)+'" y1="'+gy+'" y2="'+gy+'"/>';
+s+='<text x="'+(pl-6)+'" y="'+(gy+3)+'" text-anchor="end">'+fmtNum(gv)+'</text>';
+}
+s+='<polyline class="ln" points="'+pts.map(function(p,i){return X(i).toFixed(1)+","+Y(p.v).toFixed(1);}).join(" ")+'"/>';
+pts.forEach(function(p,i){
+var last=i===pts.length-1;
+s+='<circle class="dot'+(last?" last":"")+'" cx="'+X(i).toFixed(1)+'" cy="'+Y(p.v).toFixed(1)+'" r="'+(last?5:3)+'"/>';
+});
+var lp=pts[pts.length-1];
+s+='<text class="lv" x="'+Math.min(W-pr,X(pts.length-1)).toFixed(1)+'" y="'+(Y(lp.v)-9).toFixed(1)+'" text-anchor="middle">'+fmtNum(lp.v)+' '+unit+'</text>';
+s+='<text x="'+pl+'" y="'+(H-8)+'" text-anchor="start">'+shortDate(pts[0].d)+'</text>';
+if(pts.length>1) s+='<text x="'+(W-pr)+'" y="'+(H-8)+'" text-anchor="end">'+shortDate(lp.d)+'</text>';
+s+='</svg>';
+var d=document.createElement("div"); d.innerHTML=s; return d.firstChild;
+}
+/* ---------- tab: progress ---------- */
+function e1rm(kg,reps){return Math.round(kg*(1+reps/30)*2)/2;}
+function loggedKeys(){
+var seen={}, out=[];
+state.sessions.forEach(function(s){ if(s.sets) for(var k in s.sets) if(s.sets[k].length&&EX[k]&&!seen[k]){seen[k]=1;out.push(k);} });
+return out;
+}
+function renderProgress(root){
+root.appendChild(h("h2",{style:"margin-top:0"},"التقدم"));
+var keys=loggedKeys();
+if(!keys.length){
+root.appendChild(h("div",{class:"card"},h("p",null,"لسه مفيش بيانات."),
+h("p",{class:"muted"},"ابدأ من تاب «اليوم»: اكتب الكيلوهات والعدات واضغط «حفظ التمرين». بعد أول تمرين هيظهر هنا كل تمرين سجلته ومنحنى تقدمه.")));
+return;
+}
+if(!tabSel.progressKey||keys.indexOf(tabSel.progressKey)<0) tabSel.progressKey=keys[0];
+var sel=h("select",{id:"progSel","aria-label":"اختار التمرين",onchange:function(e){tabSel.progressKey=e.target.value;render("progSel");}});
+keys.forEach(function(k){sel.appendChild(h("option",{value:k},EX[k].ar+(EN[k]?" — "+EN[k][0]:"")));});
+sel.value=tabSel.progressKey;
+root.appendChild(h("label",{class:"fld","for":"progSel"},"اختار التمرين"));
+root.appendChild(sel);
+var k=tabSel.progressKey, rows=[];
+state.sessions.forEach(function(s){
+var a=s.sets&&s.sets[k]; if(!a||!a.length) return;
+var best=0, top=0;
+a.forEach(function(x){ best=Math.max(best,e1rm(x.kg,x.reps)); top=Math.max(top,x.kg); });
+rows.push({d:s.date,top:top,sets:a.map(function(x){return fmtNum(x.kg)+"×"+x.reps;}).join("، "),e:best});
+});
+var wrap=h("div",{style:"margin-top:12px"});
+wrap.appendChild(lineChart(rows.map(function(r){return {d:r.d,v:r.e};}),"كجم","منحنى أفضل 1RM تقديري لتمرين "+EX[k].ar));
+root.appendChild(wrap);
+root.appendChild(h("p",{class:"note"},"الـ1RM هنا تقدير بمعادلة Epley، مش رقم حقيقي — استخدمه للمقارنة بس."));
+var tb=h("tbody");
+rows.slice().reverse().forEach(function(r){
+tb.appendChild(h("tr",null,h("td",{class:"num"},fmtDate(r.d)),h("td",{class:"num"},fmtNum(r.top)),h("td",{class:"num wrapc"},r.sets),h("td",{class:"num"},fmtNum(r.e))));
+});
+root.appendChild(h("div",{class:"tablewrap"},h("table",null,
+h("thead",null,h("tr",null,h("th",null,"التاريخ"),h("th",null,"أعلى وزن"),h("th",null,"المجموعات"),h("th",null,"1RM تقديري"))),tb)));
+}
+/* ---------- tab: body ---------- */
+var bodyMsg=null;
+function renderBody(root){
+root.appendChild(h("h2",{style:"margin-top:0"},"القياسات"));
+var ms=state.measurements;
+var last=ms.length?ms[ms.length-1]:null;
+if(last){
+var a=addDays(last.date,21), b=addDays(last.date,28), t=today(), st, cls;
+if(t<a){st="لسه بدري";cls="early";} else if(t<=b){st="وقته دلوقتي";cls="now";} else {st="متأخر";cls="late";}
+root.appendChild(h("div",{class:"card"},
+h("div",null,"القياس الجاي: بين ",h("b",{class:"num"},fmtDate(a))," و ",h("b",{class:"num"},fmtDate(b))),
+h("div",{style:"margin-top:6px"},h("span",{class:"chip "+cls},st))));
+}
+root.appendChild(h("p",{class:"note"},"قيس الصبح، صايم، بعد الحمام، بنفس الجهاز."));
+function fld(id,label,type,mode,val){
+return h("div",null,h("label",{class:"fld","for":id},label),
+h("input",{type:type,id:id,inputmode:mode,step:type==="number"?"any":null,value:val||""}));
+}
+var form=h("div",{class:"card"},
+h("h3",{style:"margin-bottom:8px"},"إضافة قياس"),
+fld("mDate","التاريخ","date",null,today()),
+h("div",{class:"row2",style:"margin-top:8px"},fld("mWeight","وزن (كجم)","number","decimal"),fld("mFat","دهون %","number","decimal")),
+h("div",{class:"row2",style:"margin-top:8px"},fld("mMuscle","عضلات هيكلية (كجم)","number","decimal"),fld("mVisc","دهون حشوية (مستوى)","number","decimal")),
+h("button",{class:"btn primary block",id:"mAdd",type:"button",style:"margin-top:12px",onclick:addMeasure},"إضافة القياس"),
+bodyMsg?h("div",{class:"msg "+bodyMsg.k,role:"status"},bodyMsg.t):null);
+root.appendChild(form);
+var wp=ms.filter(function(m){return !isNaN(num(m.weight));}).map(function(m){return {d:m.date,v:num(m.weight)};});
+var fp=ms.filter(function(m){return !isNaN(num(m.fatPct));}).map(function(m){return {d:m.date,v:num(m.fatPct)};});
+root.appendChild(h("h2",null,"الوزن"));
+root.appendChild(wp.length>=2?lineChart(wp,"كجم","منحنى الوزن"):h("p",{class:"muted"},"الرسم هيظهر بعد القياس التاني."));
+root.appendChild(h("h2",null,"نسبة الدهون"));
+root.appendChild(fp.length>=2?lineChart(fp,"%","منحنى نسبة الدهون"):h("p",{class:"muted"},"الرسم هيظهر بعد القياس التاني."));
+root.appendChild(h("h2",null,"كل القياسات"));
+function dv(cur,prev,unit){
+if(prev==null||isNaN(cur)||isNaN(prev)) return "—";
+var d=Math.round((cur-prev)*10)/10;
+if(d===0) return "0";
+return h("span",{class:"num "+(d>0?"up":"down"),dir:"ltr"},(d>0?"+":"")+d+unit);
+}
+var tb=h("tbody");
+for(var i=ms.length-1;i>=0;i--){
+(function(i){
+var m=ms[i], p=i>0?ms[i-1]:null, id="del-m-"+m.id, isArmed=armed===id;
+tb.appendChild(h("tr",null,
+h("td",{class:"num"},fmtDate(m.date),m.source==="inbody"?h("span",{class:"tag"},"من InBody"):null),
+h("td",{class:"num"},m.weight!=null?fmtNum(num(m.weight)):"—"),
+h("td",{class:"num"},m.fatPct!=null?fmtNum(num(m.fatPct)):"—"),
+h("td",{class:"num"},m.muscle!=null?fmtNum(num(m.muscle)):"—"),
+h("td",{class:"num"},m.visceral!=null?fmtNum(num(m.visceral)):"—"),
+h("td",null,dv(num(m.weight),p?num(p.weight):null," كجم")),
+h("td",null,dv(num(m.fatPct),p?num(p.fatPct):null,"%")),
+h("td",null,h("button",{class:"btn small danger"+(isArmed?" armed":""),type:"button",id:id,onclick:function(){
+if(armed===id){ disarm(); state.measurements=state.measurements.filter(function(x){return x.id!==m.id;}); persist(); render(); }
+else { arm(id); render(id); }
+}},isArmed?"متأكد؟ اضغط تاني":"حذف"))));
+})(i);
+}
+root.appendChild(h("div",{class:"tablewrap"},h("table",null,
+h("thead",null,h("tr",null,["التاريخ","وزن","دهون %","عضلات","حشوية","Δ وزن","Δ دهون",""].map(function(t){return h("th",null,t);}))),tb)));
+}
+function addMeasure(){
+var d=$("mDate").value, w=num($("mWeight").value), f=num($("mFat").value), mu=num($("mMuscle").value), v=num($("mVisc").value);
+if(!parseIso(d)){ bodyMsg={k:"err",t:"اختار تاريخ صحيح."}; render("mAdd"); return; }
+if(!(w>0)){ bodyMsg={k:"err",t:"اكتب الوزن بالكيلو."}; render("mAdd"); return; }
+var m={id:uid("m"),date:d,weight:w};
+if(!isNaN(f)) m.fatPct=f;
+if(!isNaN(mu)) m.muscle=mu;
+if(!isNaN(v)) m.visceral=v;
+state.measurements.push(m); sortAll(state); persist();
+bodyMsg={k:"ok",t:"اتحفظ ✓"}; render();
+}
+/* ---------- tab: food ---------- */
+function calcMeal(meal){
+var rows=[], kc=0, pr=0, ca=0, fa=0;
+meal.items.forEach(function(it){
+var f=FOODS[it[0]], g=it[1];
+var rk=Math.round(g*f.v[0]/100), rp=Math.round(g*f.v[1]/100);
+rows.push({name:f.ar,g:g,kcal:rk,prot:rp});
+kc+=rk; pr+=rp; ca+=g*f.v[2]/100; fa+=g*f.v[3]/100;
+});
+return {rows:rows,kcal:kc,prot:pr,carb:ca,fat:fa};
+}
+function renderFood(root){
+var calc=MEALS.map(calcMeal), T={kcal:0,prot:0,carb:0,fat:0};
+calc.forEach(function(c){T.kcal+=c.kcal;T.prot+=c.prot;T.carb+=c.carb;T.fat+=c.fat;});
+root.appendChild(h("h2",{style:"margin-top:0"},"ملخص الهدف اليومي"));
+root.appendChild(h("div",{class:"card"},
+h("div",{class:"sum"},
+h("div",null,"سعرات",h("b",{class:"num"},T.kcal)),
+h("div",null,"بروتين (جم)",h("b",{class:"num"},T.prot)),
+h("div",null,"كارب (جم)",h("b",{class:"num"},Math.round(T.carb))),
+h("div",null,"دهون (جم)",h("b",{class:"num"},Math.round(T.fat)))),
+h("p",{class:"small",style:"margin-top:10px"},"+ لبن البروتين: "+SHAKE.protein+" جم بروتين، والسعرات من الملصق"),
+h("p",{style:"font-weight:700;margin:0"},"إجمالي البروتين: ",h("span",{class:"num"},T.prot+SHAKE.protein)," جم"),
+h("p",{class:"note",style:"margin:6px 0 0"},SHAKE.note)));
+MEALS.forEach(function(m,i){
+var c=calc[i];
+root.appendChild(h("h2",null,m.name,h("span",{class:"tag"},m.time)));
+var tb=h("tbody");
+c.rows.forEach(function(r){ tb.appendChild(h("tr",null,h("td",{class:"wrapc"},r.name),h("td",{class:"num"},r.g),h("td",{class:"num"},r.kcal),h("td",{class:"num"},r.prot))); });
+tb.appendChild(h("tr",{class:"sub"},h("td",null,"المجموع"),h("td",null,""),h("td",{class:"num"},c.kcal),h("td",{class:"num"},c.prot)));
+root.appendChild(h("div",{class:"tablewrap"},h("table",null,
+h("thead",null,h("tr",null,h("th",null,"الصنف"),h("th",null,"جرام"),h("th",null,"سعرات"),h("th",null,"بروتين"))),tb)));
+if(m.extra) root.appendChild(h("p",{class:"small "+(hasWarn(m.extra)?"warn":""),style:"margin-top:8px"},m.extra));
+if(m.swap) root.appendChild(h("p",{class:"small muted "+(hasWarn(m.swap)?"warn":""),style:"margin-top:4px"},"↺ "+m.swap));
+});
+root.appendChild(h("h2",null,"قواعد الأكل"));
+var ul=h("ul",{class:"plain"});
+NUTRITION_RULES.forEach(function(t){ ul.appendChild(h("li",{class:hasWarn(t)?"warn":null},t)); });
+root.appendChild(ul);
+root.appendChild(h("h2",null,"مراجعة الأرقام"));
+var box=h("div",{class:"card"});
+REVIEW.forEach(function(r){
+box.appendChild(h("div",{class:"rev"+((hasWarn(r.t)||hasWarn(r.v)||hasWarn(r.d))?" warn":"")},
+h("div",{style:"font-weight:600"},r.t),h("div",{class:"rv num"},r.v),h("div",{class:"rd"},r.d)));
+});
+root.appendChild(box);
+}
+/* ---------- backup ---------- */
+var bk={open:false,msg:null,kind:"ok",pending:null,armed:false,impText:"",expText:""};
+function summarize(o){return {s:o.sessions.length,m:o.measurements.length};}
+function parseImport(text){
+var o;
+try{ o=JSON.parse(text); }catch(e){ return {err:"النص ده مش JSON سليم. تأكد إنك نسخت النسخة الاحتياطية كلها."}; }
+if(!o||typeof o!=="object"||Array.isArray(o)) return {err:"الملف ده مش نسخة احتياطية من التطبيق."};
+if(!Array.isArray(o.sessions)||!Array.isArray(o.measurements)) return {err:"الملف ناقصه قايمة التمرينات أو القياسات."};
+return {ok:normalize(o)};
+}
+function reviewImport(text){
+bk.impText=text; bk.armed=false;
+if(!text.trim()){ bk.pending=null; bk.msg="الصق النسخة الاحتياطية أو اختار ملف الأول."; bk.kind="err"; renderBackup("impReview"); return; }
+var r=parseImport(text);
+if(r.err){ bk.pending=null; bk.msg=r.err; bk.kind="err"; }
+else { bk.pending=r.ok; bk.msg=null; }
+renderBackup("impReview");
+}
+function renderBackup(focusId){
+var p=$("backupPanel");
+p.classList.toggle("hide",!bk.open);
+$("backupBtn").setAttribute("aria-expanded",bk.open?"true":"false");
+p.textContent="";
+if(!bk.open) return;
+var exp=h("textarea",{id:"expText",readonly:true,"aria-label":"نص النسخة الاحتياطية",rows:"4"},bk.expText);
+p.appendChild(h("h3",null,"نسخة احتياطية"));
+p.appendChild(h("p",{class:"note"},"بياناتك محفوظة في المتصفح ده بس. خد نسخة من وقت للتاني."));
+p.appendChild(exp);
+p.appendChild(h("div",{class:"row2",style:"margin-top:8px"},
+h("button",{class:"btn",id:"bkCopy",type:"button",onclick:function(){
+var text=JSON.stringify(state); bk.expText=text; exp.value=text;
+function fail(){ exp.focus(); try{exp.select();exp.setSelectionRange(0,text.length);}catch(e){} bk.msg="اضغط مطوّل وانسخ"; bk.kind="err"; showMsg(); }
+function okc(){ bk.msg="اتنسخت ✓"; bk.kind="ok"; showMsg(); }
+try{
+if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(okc,fail);
+else fail();
+}catch(e){ fail(); }
+}},"نسخ البيانات"),
+h("button",{class:"btn",id:"bkDl",type:"button",onclick:function(){
+var fname="gym-backup-"+today()+".json", data=JSON.stringify(state,null,1);
+var dlP=(window.claude&&window.claude.use)?window.claude.use("downloads"):Promise.resolve(null);
+dlP.then(function(dl){
+if(dl){ return dl.save({filename:fname,data:data}).then(function(){bk.msg="اتحفظ الملف.";bk.kind="ok";showMsg();},function(){bk.msg="الحفظ اتلغى. استخدم «نسخ البيانات».";bk.kind="err";showMsg();}); }
+legacyDl();
+},legacyDl);
+function legacyDl(){
+try{
+var blob=new Blob([JSON.stringify(state,null,1)],{type:"application/json"});
+var url=URL.createObjectURL(blob);
+var a=document.createElement("a"); a.href=url; a.download="gym-backup-"+today()+".json";
+document.body.appendChild(a); a.click(); a.remove();
+setTimeout(function(){URL.revokeObjectURL(url);},2000);
+bk.msg="اتبدأ التحميل."; bk.kind="ok";
+}catch(e){ bk.msg="التحميل مش شغال هنا. استخدم «نسخ البيانات»."; bk.kind="err"; }
+showMsg();
+}
+}},"تحميل ملف")));
+p.appendChild(h("p",{class:"note"},"التحميل بيشتغل لو فاتح الصفحة كملف أو من متصفح عادي"));
+p.appendChild(h("div",{id:"bkMsg",class:"msg "+(bk.kind||"ok"),role:"status"},bk.msg||""));
+p.appendChild(h("h3",{style:"margin-top:14px"},"استرجاع نسخة"));
+p.appendChild(h("label",{class:"fld","for":"impText",style:"margin-top:8px"},"الصق النسخة هنا"));
+p.appendChild(h("textarea",{id:"impText",dir:"ltr",oninput:function(e){bk.impText=e.target.value;bk.pending=null;bk.armed=false;}},bk.impText));
+p.appendChild(h("label",{class:"fld","for":"impFile",style:"margin-top:8px"},"أو اختار ملف (.json)"));
+p.appendChild(h("input",{type:"file",id:"impFile",accept:".json,application/json",onchange:function(e){
+var f=e.target.files&&e.target.files[0]; if(!f) return;
+var rd=new FileReader();
+rd.onload=function(){ reviewImport(String(rd.result||"")); };
+rd.onerror=function(){ bk.msg="معرفتش أقرأ الملف."; bk.kind="err"; renderBackup(); };
+rd.readAsText(f);
+}}));
+p.appendChild(h("button",{class:"btn block",id:"impReview",type:"button",style:"margin-top:10px",onclick:function(){reviewImport($("impText").value);}},"راجع البيانات"));
+if(bk.pending){
+var c=summarize(bk.pending);
+p.appendChild(h("div",{class:"warnbox",style:"margin-top:10px"},"هيستبدل: "+c.s+" تمرين و "+c.m+" قياس"));
+p.appendChild(h("button",{class:"btn block "+(bk.armed?"armed":"danger"),id:"impGo",type:"button",style:"margin-top:8px",onclick:function(){
+if(!bk.armed){ bk.armed=true; renderBackup("impGo"); return; }
+state=bk.pending; state.ui.tab=state.ui.tab||"today"; persist();
+bk.pending=null; bk.armed=false; bk.impText=""; bk.msg="اتبدلت البيانات ✓"; bk.kind="ok";
+draft=null; render(); renderBackup();
+}},bk.armed?"متأكد؟ اضغط تاني":"استبدل البيانات"));
+}
+p.appendChild(h("button",{class:"btn block",type:"button",style:"margin-top:12px",onclick:function(){bk.open=false;renderBackup();$("backupBtn").focus();}},"إغلاق"));
+if(focusId&&$(focusId)) $(focusId).focus();
+}
+function showMsg(){var m=$("bkMsg");if(m){m.textContent=bk.msg||"";m.className="msg "+(bk.kind||"ok");}}
+/* ---------- shell ---------- */
+function setTab(id){
+disarm(); state.ui.tab=id; persist(); render(); window.scrollTo(0,0);
+}
+function renderNav(){
+var nav=document.querySelector("#tabbar .in"); nav.textContent="";
+TABS.forEach(function(t){
+var b=h("button",{class:"tab",type:"button",role:"tab","aria-selected":state.ui.tab===t.id?"true":"false",id:"tab-"+t.id,onclick:function(){setTab(t.id);}});
+b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+t.icon+'</svg>';
+b.appendChild(h("span",null,t.label));
+nav.appendChild(b);
+});
+}
+function render(focusId){
+var view=$("view"); view.textContent="";
+var tab=state.ui.tab;
+if(tab==="plan") renderPlan(view);
+else if(tab==="progress") renderProgress(view);
+else if(tab==="body") renderBody(view);
+else if(tab==="food") renderFood(view);
+else renderToday(view);
+renderNav(); renderBanner();
+if(focusId&&$(focusId)) $(focusId).focus();
+}
+$("backupBtn").addEventListener("click",function(){
+bk.open=!bk.open;
+if(bk.open){ bk.expText=JSON.stringify(state); bk.msg=null; }
+renderBackup(bk.open?"bkCopy":null);
+});
+persist();
+render();
+})();
+</script>
+</body></html>
