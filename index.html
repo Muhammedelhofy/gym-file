@@ -213,7 +213,7 @@ const EX = {
   facePull:{name:"Face Pull",img:"Face_Pull",q:"face pull proper form",cue:"Pull the rope to face level and spread the hands apart. Good for shoulder posture."},
   hammer:{name:"Hammer Curl",img:"Alternate_Hammer_Curl",q:"hammer curl form",cue:"Palms facing your body, elbows still."},
   bbCurl:{name:"Barbell Curl",img:"Barbell_Curl",q:"barbell curl form",cue:"No swinging with the back, lower all the way under control."},
-  squat:{name:"Barbell Back Squat",img:"Barbell_Squat",q:"barbell back squat form for beginners",cue:"Chest up, knees track over toes. If the movement doesn't feel right, use the leg press until a coach checks your form."},
+  squat:{name:"Barbell Back Squat",img:"Barbell_Squat",q:"barbell back squat form for beginners",cue:"First 3-4 weeks: do the leg press or a goblet squat here instead, until a coach checks your squat. Then: chest up, knees track over toes, brace hard so the lower back doesn't arch."},
   rdl:{name:"Romanian Deadlift",img:"Romanian_Deadlift",q:"romanian deadlift proper form",cue:"Push the hips back, back flat, bar close to the legs. Key lift for hamstrings and glutes."},
   lyingCurl:{name:"Lying Leg Curl",img:"Lying_Leg_Curls",q:"lying leg curl form",cue:"Keep the hips pressed into the pad, don't arch."},
   legExt:{name:"Leg Extension",img:"Leg_Extensions",q:"leg extension machine form",cue:"Pause one second at the top, lower slowly."},
@@ -318,7 +318,7 @@ const FOODS = {
  lentils: {name:"Lentils, cooked", v:[116,9,20,0.4]}
 };
 const MEALS = [
- {name:"Breakfast", time:"Morning", items:[["dates",40],["egg",100],["bread",90],["veg",100]]},
+ {name:"Breakfast", time:"Morning", items:[["dates",40],["egg",150],["bread",90],["veg",100]]},
  {name:"Lunch", time:"Midday", items:[["rice",300],["chicken",140],["veg",150],["oil",20]], swap:"Swap the chicken for 140 g lean beef (a bit less protein, more fat)."},
  {name:"Post-workout", time:"After training", items:[["banana",120]], extra:"+ 1 protein milk (30 g protein). Take the calories from the label.", swap:"Tuna day: one 120 g drained can of tuna instead of the protein milk."},
  {name:"Dinner", time:"Evening", items:[["foul",200],["bread",60],["yogurt",170]], swap:"Swap the foul for 200 g cooked lentils."}
@@ -327,6 +327,8 @@ const SHAKE = {protein:30, note:"Protein milk: 30 g protein (your figure). Calor
 const NUTRITION_RULES = [
  "Cut pizza and burgers to about once a week, and when you have one, count it as your lunch, not on top of it.",
  "All food halal: buy meat and chicken from known halal sources, and check the halal mark on imported products.",
+ "Creatine monohydrate 3-5 g a day is one of the best-studied supplements for muscle (ISSN position stand, 2017). Use plain powder, not capsules, since capsule shells can be non-halal gelatin.",
+ "If you feel hungry, add a small handful of nuts (about 20-30 g). Sleep 7-9 hours; it matters more than any detail here.",
  "Weigh cooked food on a kitchen scale for the first two weeks; after that you'll know the portions by eye.",
  "Nutrition values are approximate, from USDA FoodData Central. ⚠️ Assumption, verify: entered from memory, and bread and dates vary by type, so the product label is better."
 ];
@@ -336,13 +338,21 @@ const REVIEW = [
  {t:"Lean body mass", v:"57.3 kg", d:"79.3 − 22.0 kg fat (from your InBody). Calculated, not assumed."},
  {t:"Resting burn (BMR)", v:"≈ 1,600–1,730 kcal", d:"Katch-McArdle (from lean mass) = 1,608; Mifflin-St Jeor = 1,726. Both are estimating equations."},
  {t:"Total daily burn", v:"≈ 2,490–2,680 kcal", d:"⚠️ Assumption, verify: multiplied by an activity factor of 1.55 (training 5-6 days with a desk job). The factor is an estimate; your real number shows in your weight over 2-3 weeks."},
- {t:"Calorie target", v:"≈ 2,050–2,100 kcal", d:"Plan ≈ 1,910 kcal + protein milk, a deficit of roughly 400-600 kcal from the estimate. ⚠️ Assumption, verify: if your weekly-average weight drops more than 0.7 kg a week, add 150-200 kcal of rice or bread; if it is flat for 3 weeks and body fat isn't dropping, cut 150."},
- {t:"Protein", v:"130–140 g ≈ 1.7 g per kg", d:"Your number is sound. Within the ISSN range (1.4–2.0 g/kg) and close to Morton et al. 2018, which found benefits level off around 1.6 g/kg. The plan reaches about 142 g with the protein milk."},
+ {t:"Calorie target", v:"≈ 2,100–2,150 kcal", d:"Plan ≈ 1,980 kcal + protein milk, a deficit of roughly 350-550 kcal from the estimate. ⚠️ Assumption, verify: if your weekly-average weight drops more than 0.7 kg a week, add 150-200 kcal of rice or bread; if it is flat for 3 weeks and body fat isn't dropping, cut 150."},
+ {t:"Protein", v:"130–140 g ≈ 1.7 g per kg", d:"Your number is sound. Within the ISSN range (1.4–2.0 g/kg) and close to Morton et al. 2018, which found benefits level off around 1.6 g/kg. The plan reaches about 148 g with the protein milk (breakfast now has 3 eggs)."},
  {t:"Visceral fat level 9", v:"Edge of normal", d:"⚠️ Assumption, verify: as far as I know, InBody reports treat below 10 as normal. Losing overall fat brings it down."},
  {t:"InBody accuracy", v:"Track the trend, not the number", d:"BIA devices are affected by water and food. Measure at the same time (morning, fasted, after the bathroom) every 3-4 weeks and compare the trend."},
  {t:"Anterior pelvic tilt", v:"Exercises help; evidence for posture change is limited", d:"Strengthening glutes and core and stretching the hip flexors is safe and good for strength and comfort, but research disagrees on how much it changes pelvic angle itself. If lower-back pain spreads down the leg or you get numbness, see a physiotherapist."}
 ];
 
+const COACH_NOTES = [
+ "Weeks 1-4: train 5 days a week, not 6. The rotation keeps the order, so legs never get skipped.",
+ "Warm up: before the first big lift of the day, do 1-2 light sets (about 50% then 75% of your working weight).",
+ "Sessions: about 60-75 minutes is enough (10 min pelvic routine + about 17 working sets). Longer doesn't add results.",
+ "Daily steps: walk more on non-gym hours. ⚠️ Assumption, verify: a common target is about 7,000-10,000 steps a day.",
+ "Deload: every 6-8 weeks, do one easy week with about half the sets. ⚠️ Assumption, verify: common coaching practice; evidence is moderate.",
+ "Frequency: each muscle twice a week. Schoenfeld et al. 2016 (meta-analysis) found twice a week beats once a week for muscle growth."
+];
 const FIRST_MEASURE = {date:"2026-10-21", weight:79.3, fatPct:27.7, fatKg:22.0, muscle:32.0, visceral:9};
 </script>
 <script>const IMG_DATA={};</script>
