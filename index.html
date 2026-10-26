@@ -383,6 +383,19 @@ body.hastimer{padding-bottom:calc(176px + env(safe-area-inset-bottom,0px))}
 @keyframes heroIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 }
 @media (prefers-reduced-motion: reduce){ *{animation:none!important;transition:none!important;scroll-behavior:auto!important} }
+/* machine / free choice */
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0 0}
+.segb{position:relative;min-height:64px;min-width:0;padding:8px 10px;text-align:left;font:inherit;color:var(--text);cursor:pointer;background:var(--field);border:1px solid var(--fline);border-radius:2px;display:flex;flex-direction:column;gap:2px}
+.segb[aria-pressed="true"]{border:2px solid var(--hud);background:rgba(var(--hud-rgb),.14);padding:7px 9px;box-shadow:0 0 12px rgba(var(--hud-rgb),.25)}
+.segb:focus-visible{outline:3px solid var(--hud-ink);outline-offset:2px}
+.segtop{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px}
+.seglbl{font-family:var(--display);font-weight:600;font-size:.92rem;letter-spacing:.08em;text-transform:uppercase}
+.segb[aria-pressed="true"] .seglbl::before{content:"\2713\00a0";color:var(--hud-ink)}
+.segname{font-size:.8rem;line-height:1.25;color:var(--muted);overflow-wrap:anywhere}
+.segrec{font-family:var(--display);font-weight:600;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--good);border:1px solid var(--good);background:var(--good-soft);padding:0 5px;line-height:1.5}
+.recwhy{margin:8px 0 4px;font-size:.88rem;color:var(--muted)}
+.ktag{display:inline-block;vertical-align:middle;margin-left:8px;font-family:var(--display);font-weight:600;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--hud-ink);border:1px solid rgba(var(--hud-rgb),.5);padding:0 6px;line-height:1.5}
+.altline{margin-top:6px;font-size:.82rem;color:var(--muted);overflow-wrap:anywhere}
 </style>
 </head><body>
 <header class="hdr"><div class="in">
@@ -566,6 +579,48 @@ const RECOVERY_MUSCLES=["Chest","Shoulders","Rear delts","Triceps","Lats","Mid b
 const RECOVERY_NOTE="Simple rule of thumb from the days since you last trained each muscle: under 24 h ≈ 30%, 24-48 h ≈ 60%, 48-72 h ≈ 85%, 72 h+ = ready. ⚠️ Assumption, verify: a rough guide, not a measurement. Soreness and sleep matter too.";
 </script>
 <script>
+// ===== MACHINE / FREE-WEIGHT ALTERNATIVES (authored by Opus — keep text and numbers) =====
+Object.assign(EX, {
+  chestPressMach:{name:"Machine Chest Press",img:"Machine_Bench_Press",q:"machine chest press proper form",cue:"Handles at mid-chest height, shoulder blades back, press without locking the elbows."},
+  incPressMach:{name:"Incline Chest Press Machine",img:"Leverage_Incline_Chest_Press",q:"incline chest press machine form",cue:"Seat so the handles start at upper-chest level, press up and slightly together."},
+  cableLatRaise:{name:"Cable Lateral Raise",img:"Cable_Seated_Lateral_Raise",q:"cable lateral raise form",cue:"Constant tension; raise to shoulder height, lower slowly."},
+  machCurl:{name:"Machine Biceps Curl",img:"Machine_Bicep_Curl",q:"machine bicep curl form",cue:"Elbows on the pad, full range, slow on the way down."},
+  cableHammer:{name:"Cable Rope Hammer Curl",img:"Cable_Hammer_Curls_-_Rope_Attachment",q:"cable rope hammer curl form",cue:"Palms facing each other, elbows pinned to your sides."},
+  hackSquat:{name:"Hack Squat Machine",img:"Hack_Squat",q:"hack squat machine form",cue:"Back flat on the pad, go only as deep as the lower back stays on the pad."},
+  pullThrough:{name:"Cable Pull-Through",img:"Pull_Through",q:"cable pull through glutes form",cue:"Hinge back like an RDL, then drive the hips forward and squeeze the glutes. Easy on the lower back."},
+  cableTriExt:{name:"Kneeling Cable Triceps Extension",img:"Kneeling_Cable_Triceps_Extension",q:"kneeling cable overhead triceps extension",cue:"Elbows fixed by your head, extend fully, ribs down."},
+  isoRow:{name:"Machine Row (chest-supported)",img:"Leverage_Iso_Row",q:"chest supported machine row form",cue:"Chest on the pad, pull elbows back, squeeze the shoulder blades."},
+  preacherMach:{name:"Machine Preacher Curl",img:"Machine_Preacher_Curls",q:"machine preacher curl form",cue:"Armpits snug on the pad, full stretch at the bottom."},
+  smithSplit:{name:"Smith Machine Split Squat",img:"Smith_Single-Leg_Split_Squat",q:"smith machine split squat form",cue:"Same as the split squat, but the bar guides balance. Squeeze the back-leg glute."}
+});
+Object.assign(MUSCLES, {
+  chestPressMach:["Chest"], incPressMach:["Chest"], cableLatRaise:["Shoulders"], machCurl:["Biceps"],
+  cableHammer:["Biceps"], hackSquat:["Quads"], pullThrough:["Glutes","Hamstrings"], cableTriExt:["Triceps"],
+  isoRow:["Mid back","Lats"], preacherMach:["Biceps"], smithSplit:["Quads","Glutes"]
+});
+// slot (plan exercise key) -> alternative key. "learn": machine recommended while learning (first weeks).
+// "kind": what the ORIGINAL slot exercise is ("free" or "machine").
+const ALTS = {
+  bench:{alt:"chestPressMach", kind:"free", learn:true},
+  incDb:{alt:"incPressMach", kind:"free"},
+  dbOhp:{alt:"machOhp", kind:"free"},
+  latRaise:{alt:"cableLatRaise", kind:"free"},
+  bbCurl:{alt:"machCurl", kind:"free"},
+  hammer:{alt:"cableHammer", kind:"free"},
+  squat:{alt:"hackSquat", kind:"free", learn:true},
+  rdl:{alt:"pullThrough", kind:"free", learn:true},
+  dbBench:{alt:"chestPressMach", kind:"free"},
+  skull:{alt:"cableTriExt", kind:"free"},
+  assistPull:{alt:"pulldown", kind:"free"},
+  dbRow:{alt:"isoRow", kind:"free"},
+  incCurl:{alt:"preacherMach", kind:"free"},
+  splitSquat:{alt:"smithSplit", kind:"free", learn:true},
+  machOhp:{alt:"dbOhp", kind:"machine"}
+};
+const LEARN_SESSIONS = 16; // ≈ first 3-4 weeks at 4-5 sessions/week
+const ALT_NOTE = "Recommendation rule: first 16 training sessions (about 3-4 weeks) → machine for squat, bench, RDL and split squat while you learn the movement. After that → free weight. If the free-weight version stalls (no gain in estimated 1RM for 3 sessions in a row) → machine for the next 3 sessions, then back. ⚠️ Assumption, verify: a coach's rule of thumb, not a study-based formula.";
+</script>
+<script>
 (function(){
 "use strict";
 var KEY="gymFile_v1";
@@ -692,15 +747,59 @@ return arr[0].kg>0?fmtNum(arr[0].kg)+" kg × "+r:"Bodyweight × "+r;
 }
 return arr.map(function(x){return fmtNum(x.kg)+"×"+x.reps;}).join(", ");
 }
+function trainingCount(){
+var c=0; state.sessions.forEach(function(s){ if(s.planKey!=="rest") c++; });
+return c;
+}
+function recommendFor(k){
+var a=ALTS[k]; if(!a) return {opt:"orig",reason:""};
+var isFree=a.kind==="free", freeKey=isFree?k:a.alt, machKey=isFree?a.alt:k, want, reason;
+var tc=trainingCount();
+function toOpt(w){ return (w==="machine")===isFree?"alt":"orig"; }
+if(a.learn&&tc<LEARN_SESSIONS){
+return {opt:toOpt("machine"),reason:"Learning phase: session "+(tc+1)+" of "+LEARN_SESSIONS+" \u2014 machine while you learn the movement"};
+}
+var best=[], lastDate="";
+state.sessions.forEach(function(s){
+var arr=s.sets&&s.sets[freeKey]; if(!arr||!arr.length) return;
+var m=0; arr.forEach(function(x){ if(x.reps>0){ var v=e1rm(+x.kg||0,+x.reps); if(v>m) m=v; } });
+best.push(m); lastDate=s.date;
+});
+var stalled=false;
+if(best.length>=4){
+var tail=Math.max.apply(null,best.slice(-3)), before=Math.max.apply(null,best.slice(0,-3));
+stalled=tail<=before;
+}
+if(stalled){
+var cnt=0;
+state.sessions.forEach(function(s){ if(s.date>lastDate&&s.sets&&s.sets[machKey]&&s.sets[machKey].length) cnt++; });
+if(cnt<3) return {opt:toOpt("machine"),reason:"Free weight stalled 3 sessions \u2014 machine for "+(3-cnt)+" more session(s)"};
+return {opt:toOpt("free"),reason:"Back to free weight after a machine block"};
+}
+return {opt:toOpt("free"),reason:"Progressing on free weight \u2014 keep it"};
+}
 function newDraft(planKey){
-return {planKey:planKey,date:today(),n:{},sets:{},corr:{},notes:"",cur:0,msg:null,msgKind:"ok",dirty:false,resumed:false};
+var d={planKey:planKey,date:today(),n:{},sets:{},choice:{},corr:{},notes:"",cur:0,msg:null,msgKind:"ok",dirty:false,resumed:false};
+var p=planKey==="rest"?null:planByKey(planKey);
+if(p) p.items.forEach(function(it){ if(ALTS[it[0]]) d.choice[it[0]]=recommendFor(it[0]).opt; });
+return d;
+}
+function activeKey(k){
+var a=ALTS[k]; if(!a) return k;
+var c=draft&&draft.choice?draft.choice[k]:null;
+if(c!=="orig"&&c!=="alt") c=recommendFor(k).opt;
+return c==="alt"?a.alt:k;
+}
+function isMachineNow(k){
+var a=ALTS[k], alt=activeKey(k)!==k;
+return a.kind==="free"?alt:!alt;
 }
 function ensureDraft(){ if(!draft) draft=newDraft(nextPlanKey()); }
 /* ---------- persistent draft (gymDraft_v1) ---------- */
 function saveDraft(){
 if(!draft||!draft.dirty) return;
 try{
-localStorage.setItem(DKEY,JSON.stringify({planKey:draft.planKey,date:draft.date,n:draft.n,sets:draft.sets,corr:draft.corr,notes:draft.notes,cur:draft.cur||0}));
+localStorage.setItem(DKEY,JSON.stringify({planKey:draft.planKey,date:draft.date,n:draft.n,sets:draft.sets,choice:draft.choice,corr:draft.corr,notes:draft.notes,cur:draft.cur||0}));
 }catch(e){}
 }
 function clearDraftStore(){ try{ localStorage.removeItem(DKEY); }catch(e){} }
@@ -723,6 +822,7 @@ r=r&&typeof r==="object"?r:{};
 return {kg:r.kg==null?"":String(r.kg),reps:r.reps==null?"":String(r.reps),done:!!r.done};
 });
 }
+if(o.choice&&typeof o.choice==="object") for(var k4 in o.choice){ if(ALTS[k4]&&(o.choice[k4]==="orig"||o.choice[k4]==="alt")) d.choice[k4]=o.choice[k4]; }
 if(o.corr&&typeof o.corr==="object") for(var k3 in o.corr) d.corr[k3]=!!o.corr[k3];
 var p=planByKey(o.planKey);
 d.cur=Math.max(0,Math.min(p?p.items.length-1:0,Math.floor(+o.cur)||0));
@@ -871,7 +971,14 @@ explainToggle(key),
 opts.body||null);
 }
 function listCards(items,withRest){
-return items.map(function(it){return exCard(it[0],targetText(it[1],it[2],withRest?it[3]:null));});
+return items.map(function(it){
+var a=ALTS[it[0]], card=exCard(it[0],targetText(it[1],it[2],withRest?it[3]:null));
+if(a&&withRest){
+card.setAttribute("data-q",(card.getAttribute("data-q")+" "+EX[a.alt].name).toLowerCase());
+card.querySelector(".exmain").appendChild(h("div",{class:"altline"},"or: "+EX[a.alt].name+" ("+(a.kind==="free"?"machine":"free")+")"));
+}
+return card;
+});
 }
 function reduced(){try{return window.matchMedia("(prefers-reduced-motion: reduce)").matches;}catch(e){return false;}}
 function scrollToEl(el){ if(el&&el.scrollIntoView) el.scrollIntoView({behavior:reduced()?"auto":"smooth",block:"start"}); }
@@ -1058,13 +1165,13 @@ root.appendChild(det);
 root.appendChild(h("h2",null,"Exercises"));
 var xl=h("div",{class:"xlist t-"+plan.type});
 plan.items.forEach(function(it,idx){
-var k=it[0], n=nFor(it), dc=doneCount(it), complete=dc>=n;
+var k=it[0], ak=activeKey(k), n=nFor(it), dc=doneCount(it), complete=dc>=n;
 xl.appendChild(h("button",{class:"xrow",type:"button",id:"xr-"+k,onclick:function(){openEx(idx);}},
-thumbEl(k,false,true),
+thumbEl(ak,false,true),
 h("span",{class:"xmain"},
-h("span",{class:"xname"},EX[k].name),
+h("span",{class:"xname"},EX[ak].name,ALTS[k]?h("span",{class:"ktag"},isMachineNow(k)?"Machine":"Free"):null),
 h("span",{class:"xtarget num"},n+" × "+it[2]),
-chipsEl(muscles(k),"span")),
+chipsEl(muscles(ak),"span")),
 h("span",{class:"pill"+(complete?" done":"")},complete?n+"/"+n+" ✓":dc+"/"+n+" sets")));
 });
 root.appendChild(xl);
@@ -1086,16 +1193,34 @@ root.appendChild(fin);
 function backBtn(){
 return h("button",{class:"xback",type:"button",id:"xBack",onclick:function(){openList();}},h("span",{"aria-hidden":"true"},"‹ "),"All exercises");
 }
+function choiceBar(k){
+var a=ALTS[k], rec=recommendFor(k), cur=activeKey(k)===k?"orig":"alt", wrap=h("div",null);
+var free=a.kind==="free";
+var grp=h("div",{class:"seg",role:"group","aria-label":"Free weight or machine"});
+[["orig",k],["alt",a.alt]].forEach(function(o){
+var isMach=(o[0]==="orig")!==free;
+grp.appendChild(h("button",{class:"segb",type:"button",id:"seg-"+o[0],"aria-pressed":cur===o[0]?"true":"false",onclick:function(){
+if(draft.choice[k]===o[0]) return;
+draft.choice[k]=o[0]; touch(); render("seg-"+o[0]);
+}},
+h("span",{class:"segtop"},h("span",{class:"seglbl"},isMach?"Machine":"Free weight"),rec.opt===o[0]?h("span",{class:"segrec"},"Recommended"):null),
+h("span",{class:"segname"},EX[o[1]].name)));
+});
+wrap.appendChild(grp);
+wrap.appendChild(h("p",{class:"recwhy",id:"recWhy"},rec.reason));
+return wrap;
+}
 function renderExScreen(root,plan){
-var it=plan.items[exIdx], k=it[0], ex=EX[k], n=nFor(it), rows=rowsFor(k,n), last=lastFor(k), total=plan.items.length;
+var it=plan.items[exIdx], k=it[0], ak=activeKey(k), ex=EX[ak], n=nFor(it), rows=rowsFor(k,n), last=lastFor(ak), total=plan.items.length;
 var sc=h("section",{class:"xscreen t-"+plan.type,"aria-label":"Exercise"});
 sc.appendChild(backBtn());
 sc.appendChild(h("div",{class:"kicker"},"Exercise "+(exIdx+1)+" of "+total));
 sc.appendChild(h("h2",{class:"xtitle",id:"exTitle",tabindex:"-1"},ex.name));
-sc.appendChild(chipsEl(muscles(k)));
+if(ALTS[k]) sc.appendChild(choiceBar(k));
+sc.appendChild(chipsEl(muscles(ak)));
 sc.appendChild(h("div",{class:"xtarget2 num"},n+" × "+it[2]+(it[3]?" · rest "+it[3]:"")));
 sc.appendChild(h("div",{class:"ex-last num"},last?"Last time: "+fmtLast(last):"First time"));
-sc.appendChild(explainBody(k));
+sc.appendChild(explainBody(ak));
 var body=h("div",{class:"sets"},
 h("div",{class:"srow x hd"},h("span",null,"Set"),h("span",null,"kg"),h("span",null,"reps"),h("span",{"aria-hidden":"true"},"✓")));
 for(var i=0;i<n;i++){
@@ -1146,13 +1271,13 @@ root.appendChild(sc);
 function saveSession(){
 var plan=planByKey(draft.planKey), sets={}, any=false;
 plan.items.forEach(function(it){
-var k=it[0], out=[];
+var k=it[0], ak=activeKey(k), out=[];
 (draft.sets[k]||[]).slice(0,draft.n[k]!=null?draft.n[k]:it[1]).forEach(function(r){
 var reps=num(r.reps), kg=num(r.kg);
 if(!(reps>0)) return;
 out.push({kg:isNaN(kg)?0:kg,reps:reps});
 });
-if(out.length){ sets[k]=out; any=true; }
+if(out.length){ sets[ak]=(sets[ak]||[]).concat(out); any=true; }
 });
 if(!any){ draft.msg="Enter reps for at least one set before finishing."; draft.msgKind="err"; render("saveSess"); return; }
 var corr=CORRECTIVE.map(function(c){return c[0];}).filter(function(k){return draft.corr[k];});
@@ -1226,6 +1351,7 @@ nx.appendChild(wk);
 nx.appendChild(h("p",{class:"note",style:"margin-top:12px"},ROTATION_NOTE));
 var cl=h("ul",null);
 COACH_NOTES.forEach(function(t){ cl.appendChild(h("li",{class:hasWarn(t)?"warn":null},t)); });
+cl.appendChild(h("li",{class:hasWarn(ALT_NOTE)?"warn":null},ALT_NOTE));
 nx.appendChild(h("div",{class:"panel"},h("h3",null,"Coach notes"),cl));
 nx.appendChild(h("div",{class:"panel"},h("h3",null,"Progression"),h("p",{style:"margin-top:6px"},PROGRESSION)));
 root.appendChild(nx);
