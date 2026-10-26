@@ -931,13 +931,13 @@ if(live&&live.textContent) live.textContent="";
 function openDay(key){
 if(!draft||draft.planKey!==key){ draft=newDraft(key); clearDraftStore(); }
 todayView="list"; chgOpen=false;
-state.ui.tab="today"; persist(); render(); window.scrollTo(0,0);
+state.ui.tab="today"; persist(); render(); window.scrollTo(0,0); navPush();
 }
 function openEx(i){
-todayView="ex"; exIdx=i; draft.cur=i; saveDraft(); render("exTitle"); window.scrollTo(0,0);
+var same=(todayView==="ex"); todayView="ex"; exIdx=i; draft.cur=i; saveDraft(); render("exTitle"); window.scrollTo(0,0); if(same) navReplace(); else navPush();
 }
-function openCor(){ todayView="cor"; render("exTitle"); window.scrollTo(0,0); }
-function openList(focusId){ todayView="list"; render(focusId); window.scrollTo(0,0); }
+function openCor(){ todayView="cor"; render("exTitle"); window.scrollTo(0,0); navPush(); }
+function openList(focusId){ todayView="list"; render(focusId); window.scrollTo(0,0); navPush(); }
 function startWorkout(){
 var plan=planByKey(draft.planKey), any=corDone()>0, idx=-1, i;
 for(i=0;i<plan.items.length;i++){
@@ -1597,7 +1597,7 @@ bk.pending=null; bk.armed=false; bk.impText=""; bk.msg="Data replaced ✓"; bk.k
 draft=null; clearDraftStore(); stopRest(); todayView="list"; render(); renderBackup();
 }},bk.armed?"Tap again to confirm":"Replace data"));
 }
-p.appendChild(h("button",{class:"btn block",type:"button",style:"margin-top:14px",onclick:function(){bk.open=false;renderBackup();$("backupBtn").focus();}},"Close"));
+p.appendChild(h("button",{class:"btn block",type:"button",style:"margin-top:14px",onclick:function(){bk.open=false;renderBackup();$("backupBtn").focus();navPush();}},"Close"));
 if(focusId&&$(focusId)) $(focusId).focus();
 }
 function showMsg(){var m=$("bkMsg");if(m){m.textContent=bk.msg||"";m.className="msg "+(bk.kind||"ok");}}
@@ -1605,7 +1605,7 @@ function showMsg(){var m=$("bkMsg");if(m){m.textContent=bk.msg||"";m.className="
 function setTab(id){
 disarm();
 if(id==="today"&&state.ui.tab==="today") todayView="list";
-state.ui.tab=id; persist(); render(); window.scrollTo(0,0);
+state.ui.tab=id; persist(); render(); window.scrollTo(0,0); navPush();
 }
 function renderNav(){
 var nav=document.querySelector("#tabbar .in"); nav.textContent="";
@@ -1638,10 +1638,41 @@ $("backupBtn").addEventListener("click",function(){
 bk.open=!bk.open;
 if(bk.open){ bk.expText=JSON.stringify(state); bk.msg=null; }
 renderBackup(bk.open?"bkCopy":null);
+navPush();
+});
+/* ---------- back gesture / history ---------- */
+var navRestoring=false, lastRootBack=0;
+function navState(){return {g:1,t:state.ui.tab,v:todayView,x:exIdx,b:!!bk.open};}
+function navSame(a,b){return a&&b&&a.t===b.t&&a.v===b.v&&a.x===b.x&&a.b===b.b;}
+function navPush(){ if(navRestoring) return; try{ var cur=history.state; var n=navState(); if(navSame(cur,n)) return; history.pushState(n,""); }catch(e){} }
+function navReplace(){ if(navRestoring) return; try{ history.replaceState(navState(),""); }catch(e){} }
+function navToast(t){
+var el=document.getElementById("navToast");
+if(!el){ el=document.createElement("div"); el.id="navToast"; el.setAttribute("role","status");
+el.style.cssText="position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + env(safe-area-inset-bottom,0px));z-index:60;background:var(--surface2);color:var(--text);border:1px solid var(--hud);padding:10px 16px;border-radius:10px;font-size:.95rem;max-width:90vw;text-align:center";
+document.body.appendChild(el); }
+el.textContent=t; el.hidden=false; clearTimeout(el._t); el._t=setTimeout(function(){el.hidden=true;},2000);
+}
+window.addEventListener("popstate",function(e){
+var s=e.state;
+if(!s||!s.g){
+if(Date.now()-lastRootBack<2000){ try{history.back();}catch(err){} return; }
+lastRootBack=Date.now(); navToast("Swipe back again to exit");
+try{ history.pushState(navState(),""); }catch(err){} return;
+}
+navRestoring=true;
+try{
+if(bk.open&&!s.b){ bk.open=false; renderBackup(); }
+else if(!bk.open&&s.b){ bk.open=true; bk.expText=JSON.stringify(state); bk.msg=null; renderBackup(); }
+state.ui.tab=s.t; todayView=s.v||"list"; exIdx=s.x||0;
+if(todayView==="ex"&&!draft) todayView="list";
+persist(); render(); window.scrollTo(0,0);
+} finally { navRestoring=false; }
 });
 draft=loadDraft();
 buildRestBar();
 persist();
 render();
+try{ history.replaceState({root:1},""); history.pushState(navState(),""); }catch(e){}
 })();
 </script>
