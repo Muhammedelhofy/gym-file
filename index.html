@@ -396,6 +396,28 @@ body.hastimer{padding-bottom:calc(176px + env(safe-area-inset-bottom,0px))}
 .recwhy{margin:8px 0 4px;font-size:.88rem;color:var(--muted)}
 .ktag{display:inline-block;vertical-align:middle;margin-left:8px;font-family:var(--display);font-weight:600;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--hud-ink);border:1px solid rgba(var(--hud-rgb),.5);padding:0 6px;line-height:1.5}
 .altline{margin-top:6px;font-size:.82rem;color:var(--muted);overflow-wrap:anywhere}
+
+.optpanel{margin:12px 0 0}
+.optcur{display:flex;gap:12px;align-items:center;padding:10px;background:rgba(var(--hud-rgb),.1);border:1px solid rgba(var(--hud-rgb),.45);border-radius:2px}
+.optcur .thumb{flex:none}
+.optmain{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:4px}
+.optname{font-family:var(--display);font-weight:600;font-size:1rem;line-height:1.25;letter-spacing:.02em;overflow-wrap:anywhere}
+.eqtag{display:inline-flex;align-items:center;gap:5px;max-width:100%;font-size:.78rem;line-height:1.35;color:var(--hud-ink);border:1px solid rgba(var(--hud-rgb),.5);padding:1px 7px 1px 5px}
+.eqtag svg{flex:none;width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.eqtag span{min-width:0;overflow-wrap:anywhere}
+.optbtn{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:48px;margin-top:8px;padding:8px 12px;font:inherit;font-family:var(--display);font-weight:600;font-size:.9rem;letter-spacing:.06em;text-transform:uppercase;color:var(--text);cursor:pointer;background:var(--field);border:1px solid var(--fline);border-radius:2px;text-align:left}
+.optbtn:focus-visible,.optrow:focus-visible{outline:3px solid var(--hud-ink);outline-offset:2px}
+.optbtn .chev{flex:none;transition:transform .15s}
+.optbtn[aria-expanded="true"] .chev{transform:rotate(180deg)}
+.optlist{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.optrow{display:flex;gap:12px;align-items:center;width:100%;min-height:68px;padding:6px 10px;font:inherit;color:var(--text);text-align:left;cursor:pointer;background:var(--field);border:1px solid var(--fline);border-radius:2px}
+.optrow[aria-pressed="true"]{border:2px solid var(--hud);padding:5px 9px;background:rgba(var(--hud-rgb),.14);box-shadow:0 0 12px rgba(var(--hud-rgb),.25)}
+.optrow .thumb{flex:none}
+.optbadges{display:flex;flex-wrap:wrap;gap:4px 6px}
+.optcur-mark{font-family:var(--display);font-weight:600;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--hud-ink);border:1px solid var(--hud-ink);padding:0 5px;line-height:1.5}
+.xrow .ktag{max-width:11em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.optsline{margin-top:6px;font-size:.8rem;line-height:1.35;color:var(--muted);overflow-wrap:anywhere}
+@media (prefers-reduced-motion: reduce){ .optbtn .chev{transition:none} }
 .formchk{display:grid;gap:8px;margin:10px 0 6px}.formchk .fc{display:grid;grid-template-columns:4.6rem 1fr;gap:10px;align-items:start;background:var(--surface2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;line-height:1.45}.formchk .fl{font-family:var(--display);font-weight:600;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--hud-ink);padding-top:2px}
 </style>
 </head><body>
@@ -682,6 +704,127 @@ const FORM = {
  smithSplit:["Knees","Front knee over the foot.","Upright torso, back-leg glute squeezed."]
 };
 </script>
+<script>// ===== BACKUP OPTIONS — "equipment busy?" (authored by Opus — keep text and numbers) =====
+Object.assign(EX, {
+  smithBench:{name:"Smith Machine Bench Press",img:"Smith_Machine_Bench_Press",q:"",cue:"Bar to mid-chest, shoulder blades pinched, controlled down."},
+  smithIncline:{name:"Smith Machine Incline Press",img:"Smith_Machine_Incline_Bench_Press",q:"",cue:"Bench at about 30°, bar to upper chest."},
+  incBarbell:{name:"Incline Barbell Bench Press",img:"Barbell_Incline_Bench_Press_-_Medium_Grip",q:"",cue:"Bench at about 30°, bar to upper chest, feet planted."},
+  smithOhp:{name:"Smith Machine Shoulder Press",img:"Smith_Machine_Overhead_Shoulder_Press",q:"",cue:"Seated, bar from chin level up, don't arch."},
+  cableShPress:{name:"Cable Shoulder Press",img:"Cable_Shoulder_Press",q:"",cue:"Handles at shoulder height, press up and slightly in."},
+  vbarPush:{name:"V-Bar Triceps Pushdown",img:"Triceps_Pushdown_-_V-Bar_Attachment",q:"",cue:"Same as the rope pushdown, with the V-bar handle."},
+  benchDips:{name:"Bench Dips",img:"Bench_Dips",q:"",cue:"Hands on a bench behind you, lower until elbows reach about 90°. Keep the shoulders down."},
+  dbTriExt:{name:"Dumbbell Overhead Triceps Extension",img:"Standing_Dumbbell_Triceps_Extension",q:"",cue:"One dumbbell held with both hands behind the head, extend up."},
+  vbarPulldown:{name:"Close-Grip (V-Bar) Pulldown",img:"V-Bar_Pulldown",q:"",cue:"Pull the V-handle to the upper chest, elbows down."},
+  straightArm:{name:"Straight-Arm Cable Pulldown",img:"Straight-Arm_Pulldown",q:"",cue:"Arms nearly straight, sweep the bar down to the thighs using the lats."},
+  dbRow2:{name:"Bent-Over Two-Dumbbell Row",img:"Bent_Over_Two-Dumbbell_Row",q:"",cue:"Hinge to about 45°, flat back, row both dumbbells to the hips."},
+  dbRearDelt:{name:"Dumbbell Rear Delt Raise (head on bench)",img:"Bent_Over_Dumbbell_Rear_Delt_Raise_With_Head_On_Bench",q:"",cue:"Forehead on an incline bench, raise light dumbbells out to the sides."},
+  cableRearFly:{name:"Cable Rear Delt Fly",img:"Cable_Rear_Delt_Fly",q:"",cue:"Cross the cables, pull out and back at shoulder height."},
+  dbCurl:{name:"Dumbbell Biceps Curl",img:"Dumbbell_Bicep_Curl",q:"",cue:"Palms forward, elbows still."},
+  cableCurl:{name:"Cable Biceps Curl",img:"Standing_Biceps_Cable_Curl",q:"",cue:"Straight bar on the low pulley, elbows pinned."},
+  crossHammer:{name:"Cross-Body Hammer Curl",img:"Cross_Body_Hammer_Curl",q:"",cue:"Curl the dumbbell across the body toward the opposite shoulder."},
+  smithSquat:{name:"Smith Machine Squat",img:"Smith_Machine_Squat",q:"",cue:"Feet slightly in front of the bar, squat down with a neutral spine."},
+  gobletSquat:{name:"Goblet Squat",img:"Goblet_Squat",q:"",cue:"Hold one dumbbell or kettlebell at the chest, squat between the knees."},
+  dbRdl:{name:"Dumbbell Romanian Deadlift",img:"Stiff-Legged_Dumbbell_Deadlift",q:"",cue:"Same hinge as the RDL with dumbbells; soft knees, flat back."},
+  gluteBridgeBB:{name:"Barbell Glute Bridge (floor)",img:"Barbell_Glute_Bridge",q:"",cue:"Back on the floor instead of a bench; drive the hips up with the glutes."},
+  standLegCurl:{name:"Standing Leg Curl",img:"Standing_Leg_Curl",q:"",cue:"One leg at a time, hips still."},
+  ballLegCurl:{name:"Stability Ball Leg Curl",img:"Ball_Leg_Curl",q:"",cue:"Heels on a ball, hips up, roll the ball in."},
+  slLegExt:{name:"Single-Leg Extension",img:"Single-Leg_Leg_Extension",q:"",cue:"Leg extension machine, one leg at a time."},
+  smithCalf:{name:"Smith Machine Calf Raise",img:"Smith_Machine_Calf_Raise",q:"",cue:"Balls of the feet on a plate, full range."},
+  legPressCalf:{name:"Calf Press on Leg Press",img:"Calf_Press_On_The_Leg_Press_Machine",q:"",cue:"Balls of the feet on the platform edge, push with the ankles only."},
+  dbCalf:{name:"Dumbbell Calf Raise",img:"Standing_Dumbbell_Calf_Raise",q:"",cue:"Dumbbells in hand, rise onto the toes, slow down."},
+  pecDeck:{name:"Pec Deck (Butterfly) Machine",img:"Butterfly",q:"",cue:"Elbows slightly bent, bring the pads together in front of the chest."},
+  dbFly:{name:"Dumbbell Fly",img:"Dumbbell_Flyes",q:"",cue:"Flat bench, wide arc with a slight elbow bend, stop at chest level."},
+  lowCable:{name:"Low-to-High Cable Fly",img:"Low_Cable_Crossover",q:"",cue:"Low pulleys, sweep the hands up and together."},
+  parDips:{name:"Parallel Bar Dips (triceps)",img:"Dips_-_Triceps_Version",q:"",cue:"Body upright, lower to about 90° at the elbows. Use the assisted machine if needed."},
+  cgBench:{name:"Close-Grip Bench Press",img:"Close-Grip_Barbell_Bench_Press",q:"",cue:"Hands shoulder-width, elbows tucked, bar to lower chest."},
+  oneArmCableRow:{name:"One-Arm Seated Cable Row",img:"Seated_One-arm_Cable_Pulley_Rows",q:"",cue:"One handle, row to the hip, no twisting."},
+  cablePreacher:{name:"Cable Preacher Curl",img:"Cable_Preacher_Curl",q:"",cue:"Preacher bench in front of a low pulley, full stretch at the bottom."},
+  bbSeatCalf:{name:"Seated Calf Raise (barbell on knees)",img:"Barbell_Seated_Calf_Raise",q:"",cue:"Padded bar on the knees, balls of the feet on a plate."},
+  dbSeatCalf:{name:"Seated One-Leg Dumbbell Calf Raise",img:"Dumbbell_Seated_One-Leg_Calf_Raise",q:"",cue:"Dumbbell on the knee, one leg at a time."},
+  dbLunge:{name:"Dumbbell Lunge",img:"Dumbbell_Lunges",q:"",cue:"Step forward, back knee toward the floor, upright torso."}
+});
+Object.assign(MUSCLES, {
+  smithBench:["Chest"], smithIncline:["Chest"], incBarbell:["Chest"], smithOhp:["Shoulders"], cableShPress:["Shoulders"],
+  vbarPush:["Triceps"], benchDips:["Triceps"], dbTriExt:["Triceps"], vbarPulldown:["Lats"], straightArm:["Lats"],
+  dbRow2:["Mid back","Lats"], dbRearDelt:["Rear delts"], cableRearFly:["Rear delts"], dbCurl:["Biceps"], cableCurl:["Biceps"],
+  crossHammer:["Biceps"], smithSquat:["Quads"], gobletSquat:["Quads"], dbRdl:["Hamstrings","Glutes"], gluteBridgeBB:["Glutes"],
+  standLegCurl:["Hamstrings"], ballLegCurl:["Hamstrings"], slLegExt:["Quads"], smithCalf:["Calves"], legPressCalf:["Calves"],
+  dbCalf:["Calves"], pecDeck:["Chest"], dbFly:["Chest"], lowCable:["Chest"], parDips:["Triceps"], cgBench:["Triceps","Chest"],
+  oneArmCableRow:["Mid back"], cablePreacher:["Biceps"], bbSeatCalf:["Calves"], dbSeatCalf:["Calves"], dbLunge:["Quads","Glutes"]
+});
+Object.assign(FORM, {
+  smithBench:["Elbows","About 45° from the body.","Shoulder blades pinched, butt on the bench."],
+  smithIncline:["Elbows","About 45° from the body.","Upper back on the pad, no big arch."],
+  incBarbell:["Elbows","About 45° from the body.","Upper back on the pad, feet planted."],
+  smithOhp:["Elbows","Slightly in front of the bar path.","Back on the pad, glutes tight."],
+  cableShPress:["Elbows","Start just below shoulder height.","Tall, ribs down."],
+  vbarPush:["Elbows","Pinned to your sides.","Slight forward lean, ribs down."],
+  benchDips:["Elbows","Point straight back, stop at about 90°.","Back close to the bench, shoulders down."],
+  dbTriExt:["Elbows","Point forward, close to the head.","Ribs down, glutes tight, no arch."],
+  vbarPulldown:["Elbows","Drive down toward the ribs.","Chest up, small lean back."],
+  straightArm:["Elbows","Slight fixed bend.","Hinge slightly forward, neutral spine."],
+  dbRow2:["Elbows","Close to the body, toward the hips.","Flat back at about 45°, neck neutral."],
+  dbRearDelt:["Elbows","Slight bend, at shoulder height.","Chest on the bench, neutral neck."],
+  cableRearFly:["Elbows","Slight bend, at shoulder height.","Stand tall, no lean back."],
+  dbCurl:["Elbows","Fixed at your sides.","Stand tall, no swinging."],
+  cableCurl:["Elbows","Fixed at your sides.","Stand tall, no leaning back."],
+  crossHammer:["Elbows","Fixed at your sides.","Stand tall, no twisting."],
+  smithSquat:["Knees","Track over the toes.","Neutral spine, stop before the lower back rounds."],
+  gobletSquat:["Knees","Push out over the toes.","Chest up, weight held close."],
+  dbRdl:["Knees","Soft bend, fixed.","Flat back, dumbbells close to the legs."],
+  gluteBridgeBB:["Knees","About 90° at the top.","Ribs down at the top, no lower-back arch."],
+  standLegCurl:["Knees","Aligned with the machine pivot.","Hips against the pad, no arching."],
+  ballLegCurl:["Knees","Pull the heels toward the glutes.","Hips stay up, ribs down."],
+  slLegExt:["Knees","Aligned with the machine pivot.","Back on the pad, hips down."],
+  smithCalf:["Knees","Straight, not locked.","Tall and neutral."],
+  legPressCalf:["Knees","Straight, not locked.","Back on the seat."],
+  dbCalf:["Knees","Straight, not locked.","Tall, use a wall for balance if needed."],
+  pecDeck:["Elbows","Slight bend, at chest height.","Back on the pad, shoulders down."],
+  dbFly:["Elbows","Slight fixed bend.","Shoulder blades pinched, feet planted."],
+  lowCable:["Elbows","Slight fixed bend.","Slight forward lean, neutral spine."],
+  parDips:["Elbows","Point back, close to the body.","Upright torso, shoulders down."],
+  cgBench:["Elbows","Tucked close to the body.","Shoulder blades pinched, butt on the bench."],
+  oneArmCableRow:["Elbows","Close to the body, toward the hip.","Tall spine, no twisting."],
+  cablePreacher:["Elbows","On the pad.","Armpits snug on the pad."],
+  bbSeatCalf:["Knees","Bent at 90° under the bar pad.","Sit tall."],
+  dbSeatCalf:["Knees","Bent at 90°.","Sit tall."],
+  dbLunge:["Knees","Front knee over the foot.","Upright torso, ribs down."]
+});
+// For each plan slot: every option the user can switch to, with the equipment to look for.
+// The slot's own exercise and its ALTS partner are listed first.
+const OPTIONS = {
+  bench:[["bench","Barbell + flat bench"],["chestPressMach","Chest press machine"],["smithBench","Smith machine + flat bench"],["dbBench","Dumbbells + flat bench"],["pushups","Bodyweight (floor)"]],
+  incDb:[["incDb","Dumbbells + incline bench"],["incPressMach","Incline chest press machine"],["smithIncline","Smith machine + incline bench"],["incBarbell","Barbell + incline bench"]],
+  dbOhp:[["dbOhp","Dumbbells + upright bench"],["machOhp","Shoulder press machine"],["smithOhp","Smith machine + upright bench"],["cableShPress","Cable station (two low pulleys)"]],
+  latRaise:[["latRaise","Dumbbells"],["cableLatRaise","Cable station (low pulley)"]],
+  pushdown:[["pushdown","Cable station + rope"],["vbarPush","Cable station + V-bar"],["dipMach","Dip machine"],["benchDips","Bench (bodyweight)"]],
+  ohExt:[["ohExt","Cable station + rope"],["cableTriExt","Cable station + rope (kneeling)"],["dbTriExt","One dumbbell"],["skull","EZ bar + flat bench"]],
+  pulldown:[["pulldown","Lat pulldown machine (wide bar)"],["vbarPulldown","Lat pulldown machine + V-bar"],["assistPull","Assisted pull-up machine or band"],["straightArm","Cable station (high pulley)"]],
+  cableRow:[["cableRow","Seated cable row station"],["isoRow","Chest-supported row machine"],["oneArmCableRow","Seated cable row (single handle)"],["dbRow2","Dumbbells (bent over)"]],
+  facePull:[["facePull","Cable station + rope (high)"],["cableRearFly","Cable station (crossover)"],["revFly","Reverse pec deck machine"],["dbRearDelt","Dumbbells + incline bench"]],
+  bbCurl:[["bbCurl","Barbell or EZ bar"],["machCurl","Biceps curl machine"],["cableCurl","Cable station (low pulley)"],["dbCurl","Dumbbells"]],
+  hammer:[["hammer","Dumbbells"],["cableHammer","Cable station + rope (low)"],["crossHammer","Dumbbells (cross-body)"]],
+  squat:[["squat","Squat rack + barbell"],["hackSquat","Hack squat machine"],["legPress","Leg press machine"],["smithSquat","Smith machine"],["gobletSquat","One dumbbell or kettlebell"]],
+  rdl:[["rdl","Barbell"],["pullThrough","Cable station + rope (low)"],["dbRdl","Dumbbells"]],
+  hipThrust:[["hipThrust","Barbell + bench (or hip thrust machine)"],["gluteBridgeBB","Barbell (floor)"],["pullThrough","Cable station + rope (low)"],["slBridge","Bodyweight (floor)"]],
+  lyingCurl:[["lyingCurl","Lying leg curl machine"],["seatedCurl","Seated leg curl machine"],["standLegCurl","Standing leg curl machine"],["ballLegCurl","Stability ball"]],
+  legExt:[["legExt","Leg extension machine"],["slLegExt","Leg extension machine (one leg)"],["gobletSquat","One dumbbell or kettlebell"]],
+  calfStand:[["calfStand","Standing calf raise machine"],["smithCalf","Smith machine + plate"],["legPressCalf","Leg press machine"],["dbCalf","Dumbbells"]],
+  machOhp:[["machOhp","Shoulder press machine"],["dbOhp","Dumbbells + upright bench"],["smithOhp","Smith machine + upright bench"],["cableShPress","Cable station (two low pulleys)"]],
+  dbBench:[["dbBench","Dumbbells + flat bench"],["chestPressMach","Chest press machine"],["bench","Barbell + flat bench"],["smithBench","Smith machine + flat bench"]],
+  crossover:[["crossover","Cable crossover station"],["pecDeck","Pec deck (butterfly) machine"],["lowCable","Cable crossover (low pulleys)"],["dbFly","Dumbbells + flat bench"]],
+  dipMach:[["dipMach","Dip machine"],["parDips","Parallel bars / assisted dip machine"],["pushdown","Cable station + rope"],["benchDips","Bench (bodyweight)"]],
+  skull:[["skull","EZ bar + flat bench"],["cableTriExt","Cable station + rope (kneeling)"],["dbTriExt","One dumbbell"],["cgBench","Barbell + flat bench (close grip)"]],
+  assistPull:[["assistPull","Assisted pull-up machine or band"],["pulldown","Lat pulldown machine (wide bar)"],["vbarPulldown","Lat pulldown machine + V-bar"]],
+  dbRow:[["dbRow","One dumbbell + flat bench"],["isoRow","Chest-supported row machine"],["oneArmCableRow","Seated cable row (single handle)"],["cableRow","Seated cable row station"]],
+  revFly:[["revFly","Reverse pec deck machine"],["cableRearFly","Cable station (crossover)"],["dbRearDelt","Dumbbells + incline bench"],["facePull","Cable station + rope (high)"]],
+  incCurl:[["incCurl","Dumbbells + incline bench"],["preacherMach","Preacher curl machine"],["cablePreacher","Preacher bench + low pulley"],["dbCurl","Dumbbells"]],
+  legPress:[["legPress","Leg press machine"],["hackSquat","Hack squat machine"],["smithSquat","Smith machine"],["gobletSquat","One dumbbell or kettlebell"]],
+  splitSquat:[["splitSquat","Dumbbells"],["smithSplit","Smith machine"],["dbLunge","Dumbbells (walking or in place)"],["legPress","Leg press machine"]],
+  seatedCurl:[["seatedCurl","Seated leg curl machine"],["lyingCurl","Lying leg curl machine"],["standLegCurl","Standing leg curl machine"],["ballLegCurl","Stability ball"]],
+  calfSeat:[["calfSeat","Seated calf raise machine"],["bbSeatCalf","Barbell + bench (bar on knees)"],["dbSeatCalf","One dumbbell + bench"],["legPressCalf","Leg press machine"]]
+};
+</script>
 <script>
 (function(){
 "use strict";
@@ -843,17 +986,26 @@ return {opt:toOpt("free"),reason:"Progressing on free weight \u2014 keep it"};
 function newDraft(planKey){
 var d={planKey:planKey,date:today(),n:{},sets:{},choice:{},corr:{},notes:"",cur:0,msg:null,msgKind:"ok",dirty:false,resumed:false};
 var p=planKey==="rest"?null:planByKey(planKey);
-if(p) p.items.forEach(function(it){ if(ALTS[it[0]]) d.choice[it[0]]=recommendFor(it[0]).opt; });
+if(p) p.items.forEach(function(it){ if(ALTS[it[0]]) d.choice[it[0]]=recKey(it[0]); });
 return d;
 }
+function optKeys(k){ var o=OPTIONS[k]; return o?o.map(function(x){return x[0];}):[]; }
+function optLabel(k,key){ var o=OPTIONS[k]||[]; for(var i=0;i<o.length;i++) if(o[i][0]===key) return o[i][1]; return ""; }
+function recKey(k){ var a=ALTS[k]; return (a&&recommendFor(k).opt==="alt")?a.alt:k; }
+function normChoice(k,c){
+if(c==="orig") return k;
+if(c==="alt") return ALTS[k]?ALTS[k].alt:null;
+if(typeof c==="string"&&(c===k||optKeys(k).indexOf(c)>=0)&&EX[c]) return c;
+return null;
+}
 function activeKey(k){
-var a=ALTS[k]; if(!a) return k;
-var c=draft&&draft.choice?draft.choice[k]:null;
-if(c!=="orig"&&c!=="alt") c=recommendFor(k).opt;
-return c==="alt"?a.alt:k;
+var c=normChoice(k,draft&&draft.choice?draft.choice[k]:null);
+if(c) return c;
+return recKey(k)||k;
 }
 function isMachineNow(k){
-var a=ALTS[k], alt=activeKey(k)!==k;
+var a=ALTS[k]; if(!a) return false;
+var alt=activeKey(k)!==k;
 return a.kind==="free"?alt:!alt;
 }
 function ensureDraft(){ if(!draft) draft=newDraft(nextPlanKey()); }
@@ -884,7 +1036,7 @@ r=r&&typeof r==="object"?r:{};
 return {kg:r.kg==null?"":String(r.kg),reps:r.reps==null?"":String(r.reps),done:!!r.done};
 });
 }
-if(o.choice&&typeof o.choice==="object") for(var k4 in o.choice){ if(ALTS[k4]&&(o.choice[k4]==="orig"||o.choice[k4]==="alt")) d.choice[k4]=o.choice[k4]; }
+if(o.choice&&typeof o.choice==="object") for(var k4 in o.choice){ var nc=normChoice(k4,o.choice[k4]); if(nc&&(ALTS[k4]||OPTIONS[k4])) d.choice[k4]=nc; }
 if(o.corr&&typeof o.corr==="object") for(var k3 in o.corr) d.corr[k3]=!!o.corr[k3];
 var p=planByKey(o.planKey);
 d.cur=Math.max(0,Math.min(p?p.items.length-1:0,Math.floor(+o.cur)||0));
@@ -1035,7 +1187,14 @@ opts.body||null);
 function listCards(items,withRest){
 return items.map(function(it){
 var a=ALTS[it[0]], card=exCard(it[0],targetText(it[1],it[2],withRest?it[3]:null));
-if(a&&withRest){
+var ol=OPTIONS[it[0]];
+if(ol){
+card.setAttribute("data-q",(card.getAttribute("data-q")+" "+ol.map(function(o){return (EX[o[0]]?EX[o[0]].name:"")+" "+o[1];}).join(" ")).toLowerCase());
+if(withRest){
+var others=ol.filter(function(o){return o[0]!==it[0];}).map(function(o){return o[1];});
+card.querySelector(".exmain").appendChild(h("div",{class:"optsline"},"Options: "+ol.length+" \u2014 "+others.join(", ")));
+}
+} else if(a&&withRest){
 card.setAttribute("data-q",(card.getAttribute("data-q")+" "+EX[a.alt].name).toLowerCase());
 card.querySelector(".exmain").appendChild(h("div",{class:"altline"},"or: "+EX[a.alt].name+" ("+(a.kind==="free"?"machine":"free")+")"));
 }
@@ -1103,6 +1262,7 @@ todayView="list"; chgOpen=false;
 state.ui.tab="today"; persist(); render(); window.scrollTo(0,0); navPush();
 }
 function openEx(i){
+optOpenKey=null;
 var same=(todayView==="ex"); todayView="ex"; exIdx=i; draft.cur=i; saveDraft(); render("exTitle"); window.scrollTo(0,0); if(same) navReplace(); else navPush();
 }
 function openCor(){ todayView="cor"; render("exTitle"); window.scrollTo(0,0); navPush(); }
@@ -1231,7 +1391,7 @@ var k=it[0], ak=activeKey(k), n=nFor(it), dc=doneCount(it), complete=dc>=n;
 xl.appendChild(h("button",{class:"xrow",type:"button",id:"xr-"+k,onclick:function(){openEx(idx);}},
 thumbEl(ak,false,true),
 h("span",{class:"xmain"},
-h("span",{class:"xname"},EX[ak].name,ALTS[k]?h("span",{class:"ktag"},isMachineNow(k)?"Machine":"Free"):null),
+h("span",{class:"xname"},EX[ak].name,(OPTIONS[k]&&optLabel(k,ak))?h("span",{class:"ktag",title:optLabel(k,ak)},optLabel(k,ak)):(ALTS[k]?h("span",{class:"ktag"},isMachineNow(k)?"Machine":"Free"):null)),
 h("span",{class:"xtarget num"},n+" × "+it[2]),
 chipsEl(muscles(ak),"span")),
 h("span",{class:"pill"+(complete?" done":"")},complete?n+"/"+n+" ✓":dc+"/"+n+" sets")));
@@ -1255,21 +1415,49 @@ root.appendChild(fin);
 function backBtn(){
 return h("button",{class:"xback",type:"button",id:"xBack",onclick:function(){openList();}},h("span",{"aria-hidden":"true"},"‹ "),"All exercises");
 }
+var optOpenKey=null;
+function eqIcon(){
+var ns="http://www.w3.org/2000/svg", sv=document.createElementNS(ns,"svg");
+sv.setAttribute("viewBox","0 0 24 24"); sv.setAttribute("aria-hidden","true");
+var pth=document.createElementNS(ns,"path"); pth.setAttribute("d","M3 9v6M6 6v12M18 6v12M21 9v6M6 12h12");
+sv.appendChild(pth); return sv;
+}
+function eqTag(label){ return h("span",{class:"eqtag"},eqIcon(),h("span",null,label)); }
+function chevIcon(){
+var ns="http://www.w3.org/2000/svg", sv=document.createElementNS(ns,"svg");
+sv.setAttribute("viewBox","0 0 24 24"); sv.setAttribute("aria-hidden","true"); sv.setAttribute("class","chev");
+sv.setAttribute("width","16"); sv.setAttribute("height","16");
+var pth=document.createElementNS(ns,"path"); pth.setAttribute("d","M6 9l6 6 6-6");
+pth.setAttribute("fill","none"); pth.setAttribute("stroke","currentColor"); pth.setAttribute("stroke-width","2.4"); pth.setAttribute("stroke-linecap","round"); pth.setAttribute("stroke-linejoin","round");
+sv.appendChild(pth); return sv;
+}
 function choiceBar(k){
-var a=ALTS[k], rec=recommendFor(k), cur=activeKey(k)===k?"orig":"alt", wrap=h("div",null);
-var free=a.kind==="free";
-var grp=h("div",{class:"seg",role:"group","aria-label":"Free weight or machine"});
-[["orig",k],["alt",a.alt]].forEach(function(o){
-var isMach=(o[0]==="orig")!==free;
-grp.appendChild(h("button",{class:"segb",type:"button",id:"seg-"+o[0],"aria-pressed":cur===o[0]?"true":"false",onclick:function(){
-if(draft.choice[k]===o[0]) return;
-draft.choice[k]=o[0]; touch(); render("seg-"+o[0]);
-}},
-h("span",{class:"segtop"},h("span",{class:"seglbl"},isMach?"Machine":"Free weight"),rec.opt===o[0]?h("span",{class:"segrec"},"Recommended"):null),
-h("span",{class:"segname"},EX[o[1]].name)));
+var list=OPTIONS[k]; if(!list||!list.length) return null;
+var ak=activeKey(k), rk=recKey(k), rec=recommendFor(k), open=optOpenKey===k, wrap=h("div",{class:"optpanel",id:"optPanel"});
+wrap.appendChild(h("div",{class:"kicker",style:"margin-bottom:6px"},"Exercise option"));
+wrap.appendChild(h("div",{class:"optcur",id:"optCur"},thumbEl(ak,true,true),
+h("div",{class:"optmain"},
+h("div",{class:"optname"},EX[ak].name),
+h("div",{class:"optbadges"},optLabel(k,ak)?eqTag(optLabel(k,ak)):null,ak===rk&&ALTS[k]?h("span",{class:"segrec"},"Recommended"):null))));
+if(rec.reason) wrap.appendChild(h("p",{class:"recwhy",id:"recWhy"},rec.reason));
+wrap.appendChild(h("button",{class:"optbtn",type:"button",id:"optToggle","aria-expanded":open?"true":"false","aria-controls":"optList",onclick:function(){
+optOpenKey=open?null:k; render("optToggle");
+}},h("span",null,"Equipment busy? Switch exercise"),chevIcon()));
+if(open){
+var ul=h("div",{class:"optlist",id:"optList",role:"group","aria-label":"Exercise options"});
+list.forEach(function(o){
+var key=o[0], isCur=key===ak;
+ul.appendChild(h("button",{class:"optrow",type:"button","data-key":key,"aria-pressed":isCur?"true":"false",onclick:function(){
+optOpenKey=null;
+if(!isCur){ draft.choice[k]=key; touch(); }
+render("optToggle");
+}},thumbEl(key,true,true),
+h("span",{class:"optmain"},
+h("span",{class:"optname"},EX[key].name),
+h("span",{class:"optbadges"},eqTag(o[1]),key===rk&&ALTS[k]?h("span",{class:"segrec"},"Recommended"):null,isCur?h("span",{class:"optcur-mark"},"Current"):null))));
 });
-wrap.appendChild(grp);
-wrap.appendChild(h("p",{class:"recwhy",id:"recWhy"},rec.reason));
+wrap.appendChild(ul);
+}
 return wrap;
 }
 function renderExScreen(root,plan){
@@ -1278,7 +1466,7 @@ var sc=h("section",{class:"xscreen t-"+plan.type,"aria-label":"Exercise"});
 sc.appendChild(backBtn());
 sc.appendChild(h("div",{class:"kicker"},"Exercise "+(exIdx+1)+" of "+total));
 sc.appendChild(h("h2",{class:"xtitle",id:"exTitle",tabindex:"-1"},ex.name));
-if(ALTS[k]) sc.appendChild(choiceBar(k));
+var cb=choiceBar(k); if(cb) sc.appendChild(cb);
 sc.appendChild(chipsEl(muscles(ak)));
 sc.appendChild(h("div",{class:"xtarget2 num"},n+" × "+it[2]+(it[3]?" · rest "+it[3]:"")));
 sc.appendChild(h("div",{class:"ex-last num"},last?"Last time: "+fmtLast(last):"First time"));
