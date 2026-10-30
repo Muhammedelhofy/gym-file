@@ -467,6 +467,17 @@ body.hastimer{padding-bottom:calc(176px + env(safe-area-inset-bottom,0px))}
 .stbtn{flex:1;min-width:0;min-height:44px;padding:0;font-family:var(--display);font-weight:600;font-size:.9rem;border:1px solid var(--fline);background:var(--field);color:var(--text);cursor:pointer;border-radius:2px}
 .stbtn:active{background:rgba(var(--hud-rgb),.2)}
 .stbtn:focus-visible{outline:3px solid var(--hud-ink);outline-offset:-3px}
+.modesw{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 14px}
+.modeb{min-height:48px;min-width:0;padding:6px 8px;font-family:var(--display);font-weight:600;font-size:.95rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);background:var(--field);border:1px solid var(--fline);border-radius:2px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;line-height:1.15}
+.modeb small{font-size:.66rem;letter-spacing:.06em;color:var(--warn)}
+.modeb.on{color:var(--text);border:2px solid var(--hud);background:rgba(var(--hud-rgb),.14);box-shadow:0 0 12px rgba(var(--hud-rgb),.25);padding:5px 7px}
+.modeb:focus-visible{outline:3px solid var(--hud-ink);outline-offset:2px}
+.hero.hv .v{font-size:2rem;letter-spacing:.02em;overflow-wrap:anywhere}
+.hero.hv .s{margin-top:2px}
+.srow.x.h{grid-template-columns:2.2rem minmax(0,1fr) 52px}
+.hgrp{margin:6px 0 -4px}
+.hgrp2{font-family:var(--display);font-weight:600;font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:12px 0 6px}
+.ptag.htag{color:var(--good);border-color:var(--good);background:var(--good-soft)}
 </style>
 </head><body>
 <header class="hdr"><div class="in">
@@ -879,6 +890,7 @@ const OPTIONS = {
 var KEY="gymFile_v1";
 var DKEY="gymDraft_v1";
 var SKEY="gymLastSaved_v1";
+var HKEY="gymHomeDraft_v1";
 var lastSaved=null, pendingSwitch=null, staleBanner=false;
 try{ var _ls=JSON.parse(localStorage.getItem(SKEY)||"null"); if(_ls&&typeof _ls==="object"&&typeof _ls.date==="string") lastSaved=_ls; }catch(e){}
 var TABS=[
@@ -929,20 +941,21 @@ return parseFloat(s);
 function uid(p){return p+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 function hasWarn(t){return String(t).indexOf("⚠️")>=0;}
 function planByKey(k){for(var i=0;i<PLAN.length;i++) if(PLAN[i].key===k) return PLAN[i]; return null;}
-function planName(k){if(k==="rest") return "Rest day";var p=planByKey(k);return p?p.name:k;}
-function planType(k){if(k==="rest") return "rest";var p=planByKey(k);return p?p.type:"rest";}
+function planName(k){if(k==="rest") return "Rest day";if(k==="home") return "Home + Pelvic";var p=planByKey(k);return p?p.name:k;}
+function planType(k){if(k==="rest"||k==="home") return "rest";var p=planByKey(k);return p?p.type:"rest";}
 /* ---------- state / storage ---------- */
 var storageOk=true;
 var state=load();
 function defaultState(){
 var m=Object.assign({id:uid("m"),source:"inbody"},FIRST_MEASURE);
-return {version:1,sessions:[],measurements:[m],ui:{tab:"today"}};
+return {version:1,sessions:[],measurements:[m],ui:{tab:"today",mode:"lift"}};
 }
 function normalize(o){
-var s={version:1,sessions:[],measurements:[],ui:{tab:"today"}};
+var s={version:1,sessions:[],measurements:[],ui:{tab:"today",mode:"lift"}};
 (o.sessions||[]).forEach(function(x){ if(x&&typeof x==="object"&&typeof x.date==="string"){ if(!x.id) x.id=uid("s"); s.sessions.push(x);} });
 (o.measurements||[]).forEach(function(x){ if(x&&typeof x==="object"&&typeof x.date==="string"){ if(!x.id) x.id=uid("m"); s.measurements.push(x);} });
 if(o.ui&&typeof o.ui.tab==="string") s.ui.tab=o.ui.tab;
+if(o.ui&&(o.ui.mode==="home"||o.ui.mode==="lift")) s.ui.mode=o.ui.mode;
 sortAll(s);
 return s;
 }
@@ -972,14 +985,14 @@ if(!storageOk) b.appendChild(h("div",{class:"banner",role:"status"},"Storage isn
 /* ---------- domain ---------- */
 var draft=null;
 var todayView="list"; /* list | ex | cor */
-var exIdx=0, chgOpen=false, corOpen=false, finOpen=false;
+var exIdx=0, chgOpen=false, finOpen=false;
 var tabSel={progressKey:null};
 var armed=null; /* id of item awaiting second tap */
 var armTimer=null;
 function arm(id){armed=id;clearTimeout(armTimer);armTimer=setTimeout(function(){armed=null;render();},4000);}
 function disarm(){armed=null;clearTimeout(armTimer);}
 function lastTrainingSession(){
-for(var i=state.sessions.length-1;i>=0;i--) if(state.sessions[i].planKey&&state.sessions[i].planKey!=="rest") return state.sessions[i];
+for(var i=state.sessions.length-1;i>=0;i--) if(state.sessions[i].planKey&&state.sessions[i].planKey!=="rest"&&state.sessions[i].planKey!=="home") return state.sessions[i];
 return null;
 }
 function nextPlanKey(){
@@ -995,16 +1008,17 @@ if(s.sets&&s.sets[key]&&s.sets[key].length) return s.sets[key];
 }
 return null;
 }
+function setStr(x){ return x.kg>0?fmtNum(x.kg)+"×"+x.reps:x.reps+(x.unit==="s"?" s":" reps"); }
 function fmtLast(arr){
 var same=arr.every(function(x){return x.kg===arr[0].kg;});
 if(same){
 var r=arr.map(function(x){return x.reps;}).join(", ");
-return arr[0].kg>0?fmtNum(arr[0].kg)+" kg × "+r:"Bodyweight × "+r;
+return arr[0].kg>0?fmtNum(arr[0].kg)+" kg × "+r:"Bodyweight × "+r+(arr[0].unit==="s"?" s":"");
 }
-return arr.map(function(x){return fmtNum(x.kg)+"×"+x.reps;}).join(", ");
+return arr.map(function(x){return setStr(x);}).join(", ");
 }
 function trainingCount(){
-var c=0; state.sessions.forEach(function(s){ if(s.planKey!=="rest") c++; });
+var c=0; state.sessions.forEach(function(s){ if(s.planKey!=="rest"&&s.planKey!=="home") c++; });
 return c;
 }
 function recommendFor(k){
@@ -1356,7 +1370,7 @@ if(live&&live.textContent) live.textContent="";
 function guardSwitch(key){
 if(draft&&draft.planKey!==key&&draftHasWork(draft)){
 pendingSwitch={key:key}; disarm(); finOpen=false; todayView="list"; chgOpen=false;
-state.ui.tab="today"; persist(); render(); window.scrollTo(0,0); navPush();
+state.ui.tab="today"; state.ui.mode="lift"; persist(); render(); window.scrollTo(0,0); navPush();
 return true;
 }
 return false;
@@ -1369,13 +1383,12 @@ function doOpenDay(key){
 finOpen=false; pendingSwitch=null;
 if(!draft||draft.planKey!==key){ draft=newDraft(key); clearDraftStore(); staleBanner=false; }
 todayView="list"; chgOpen=false;
-state.ui.tab="today"; persist(); render(); window.scrollTo(0,0); navPush();
+state.ui.tab="today"; state.ui.mode="lift"; persist(); render(); window.scrollTo(0,0); navPush();
 }
 function openEx(i){
 optOpenKey=null; finOpen=false;
 var same=(todayView==="ex"); todayView="ex"; exIdx=i; draft.cur=i; saveDraft(); render("exTitle"); window.scrollTo(0,0); if(same) navReplace(); else navPush();
 }
-function openCor(){ finOpen=false; todayView="cor"; render("exTitle"); window.scrollTo(0,0); navPush(); }
 function openList(focusId){ finOpen=false; todayView="list"; render(focusId); window.scrollTo(0,0); navPush(); }
 function resumeInfo(){
 var plan=planByKey(draft.planKey), any=corDone()>0||loggedSets()>0, idx=-1, i;
@@ -1387,7 +1400,6 @@ return {any:any,idx:idx};
 }
 function startWorkout(){
 var ri=resumeInfo();
-if(!ri.any){ openCor(); return; }
 if(ri.idx<0){ openList(); openFinish(); return; }
 openEx(ri.idx);
 }
@@ -1395,15 +1407,15 @@ function openFinish(){
 finOpen=true; render(loggedSets()>0?"finSave":"finKeep"); scrollToEl($("finPanel"));
 }
 function finPanel(){
-var base=countSets(draft,false), pfn=pfSets(), lg=base+(draft.countPf?pfn:0), pl=plannedSets(), cd=corDone(), ok=lg>0, partial=lg<pl||cd<CORRECTIVE.length;
+var base=countSets(draft,false), pfn=pfSets(), lg=base+(draft.countPf?pfn:0), pl=plannedSets(), ok=lg>0, partial=lg<pl;
 var box=h("div",{class:"finpanel",id:"finPanel",role:"group","aria-label":"Finish workout"},
 h("div",{class:"kicker"},"Finish workout"),
-ok?h("p",{class:"fp-sum num",id:"finSum"},"Logged: "+lg+" of "+pl+" sets \u00b7 Pelvic routine: "+cd+"/"+CORRECTIVE.length)
+ok?h("p",{class:"fp-sum num",id:"finSum"},"Logged: "+lg+" of "+pl+" sets")
 :h("p",{class:"fp-sum",id:"finSum"},"Log at least one set first."),
 pfn>0?h("div",{class:"pfwarn",id:"pfWarn"},
 h("p",{class:"fp-pf"},pfn+(pfn===1?" set still shows":" sets still show")+" last time's numbers but "+(pfn===1?"wasn't":"weren't")+" ticked"),
 h("label",{class:"pfchk","for":"pfCount"},h("input",{type:"checkbox",id:"pfCount",checked:!!draft.countPf,onchange:function(e){draft.countPf=e.target.checked;render("pfCount");}}),h("span",null,"Count them as done"))):null,
-ok&&partial?h("p",{class:"note fp-note"},"Saved as a partial workout. That's fine \u2014 the pelvic routine is optional."):null,
+ok&&partial?h("p",{class:"note fp-note"},"Saved as a partial workout. That's fine."):null,
 h("div",{class:"fp-btns"},
 ok?h("button",{class:"btn primary",type:"button",id:"finSave",onclick:saveSession},"Save workout"):null,
 h("button",{class:"btn",type:"button",id:"finKeep",onclick:function(){finOpen=false;render("finOpenBtn");}},"Keep training")));
@@ -1436,17 +1448,18 @@ h("div",{class:"v"},plan.short.toUpperCase()),
 h("div",{class:"s"},parts[1]||"")),
 h("div",{class:"hmap"},bodyMap(list,{color:DAYCOL[type],label:"Muscles worked today: "+list.join(", ")}))),
 chipsEl(list),
-h("div",{class:"stats"},stat("Exercises",plan.items.length),stat("Sets",totalSets),stat("Time","≈ "+(totalSets*3+10)+" min")));
+h("div",{class:"stats"},stat("Exercises",plan.items.length),stat("Sets",totalSets),stat("Time","≈ "+(totalSets*3)+" min")));
 }
 function renderToday(root){
-ensureDraft();
+ensureDraft(); ensureHDraft();
+if(state.ui.mode==="home"){ renderHomeToday(root); return; }
 if(draft.planKey==="rest") todayView="list";
 if(todayView==="ex"){
 var pl=planByKey(draft.planKey);
 if(pl&&exIdx>=0&&exIdx<pl.items.length){ renderExScreen(root,pl); return; }
 todayView="list";
 }
-if(todayView==="cor"){ renderCorScreen(root); return; }
+root.appendChild(modeSwitch());
 if(pendingSwitch&&(!draft||pendingSwitch.key===draft.planKey||!draftHasWork(draft))) pendingSwitch=null;
 if(pendingSwitch) root.appendChild(switchPanel());
 if(staleBanner&&!(draft&&countSets(draft,false)>0&&draft.date<today())) staleBanner=false;
@@ -1486,7 +1499,7 @@ function switchPanel(){
 var n=countSets(draft,false), nm=dayShort(draft.planKey), target=dayShort(pendingSwitch.key), isArmed=armed==="swdiscard";
 return h("div",{class:"alertpanel",id:"switchPanel",role:"alertdialog","aria-label":"Unsaved workout"},
 h("div",{class:"kicker"},"Unsaved workout"),
-h("p",{class:"ap-t"},n>0?"You have "+n+(n===1?" set":" sets")+" logged on "+nm+" that aren't saved yet.":"You have pelvic routine ticks on "+nm+" that aren't saved yet."),
+h("p",{class:"ap-t"},n>0?"You have "+n+(n===1?" set":" sets")+" logged on "+nm+" that aren't saved yet.":"You have ticks on "+nm+" that aren't saved yet."),
 h("p",{class:"note ap-n"},"Switching to "+target+" would replace them."),
 h("div",{class:"fp-btns"},
 n>0?h("button",{class:"btn primary",type:"button",id:"swSave",onclick:function(){
@@ -1543,39 +1556,8 @@ var ul=h("ul",{class:"plain"});
 REST_DAY.forEach(function(t){ ul.appendChild(h("li",{class:hasWarn(t)?"warn":null},t)); });
 return ul;
 }
-function updateCorCounts(){
-var t=corDone()+"/"+CORRECTIVE.length;
-document.querySelectorAll(".corcount").forEach(function(e){e.textContent=t+" done";e.classList.toggle("done",corDone()===CORRECTIVE.length);});
-}
-function corList(){
-var wrap=h("div",{class:"corlist"});
-CORRECTIVE.forEach(function(it){
-var k=it[0];
-wrap.appendChild(h("div",{class:"cor exc","data-q":searchKey(k)},
-h("div",{class:"exrow"},thumbEl(k,true,true),
-h("div",{class:"exmain"},
-h("label",{class:"chk","for":"cor-"+k},
-h("input",{type:"checkbox",id:"cor-"+k,checked:!!draft.corr[k],onchange:function(e){draft.corr[k]=e.target.checked;touch();updateCorCounts();}}),
-h("span",null,h("span",{class:"nm"},EX[k].name),h("small",{class:"num"},targetText(it[1],it[2])))),
-chipsEl(muscles(k)))),
-explainToggle(k)));
-});
-return wrap;
-}
-function corPill(){
-return h("span",{class:"pill corcount"+(corDone()===CORRECTIVE.length?" done":"")},corDone()+"/"+CORRECTIVE.length+" done");
-}
 function renderTrainDay(root){
 var plan=planByKey(draft.planKey);
-/* pelvic routine: one collapsible row */
-var det=h("details",{class:"corrow",id:"corRow"},
-h("summary",null,h("span",{class:"sp"},"Pelvic routine"),corPill()),
-h("div",{class:"cwrap"},
-h("button",{class:"btn small ghost",type:"button",onclick:openCor},"Open guided routine ›"),
-corList()));
-if(corOpen) det.open=true;
-det.addEventListener("toggle",function(){corOpen=det.open;});
-root.appendChild(det);
 /* exercise list */
 root.appendChild(h("h2",null,"Exercises"));
 var xl=h("div",{class:"xlist t-"+plan.type});
@@ -1732,16 +1714,6 @@ if(finOpen) sc.appendChild(finPanel());
 else sc.appendChild(h("button",{class:"linkbtn",type:"button",id:"finOpenBtn",onclick:openFinish},"Finish now"));
 root.appendChild(sc);
 }
-function renderCorScreen(root){
-var sc=h("section",{class:"xscreen t-"+planType(draft.planKey),"aria-label":"Pelvic routine"});
-sc.appendChild(backBtn());
-sc.appendChild(h("div",{class:"kicker"},"Before lifting"));
-sc.appendChild(h("h2",{class:"xtitle",id:"exTitle",tabindex:"-1"},"Pelvic routine"));
-sc.appendChild(h("div",{style:"margin:8px 0 16px"},corPill()));
-sc.appendChild(corList());
-sc.appendChild(h("div",{class:"xnav one"},h("button",{class:"btn primary",type:"button",id:"startLift",onclick:function(){openEx(0);}},"Start lifting ›")));
-root.appendChild(sc);
-}
 /* saves the current draft under its own date; returns the session or null when no set qualifies */
 function commitDraft(){
 var plan=planByKey(draft.planKey), sets={}, any=false, cnt=0, planned=0, incPf=!!draft.countPf;
@@ -1760,7 +1732,7 @@ if(out.length){ sets[ak]=(sets[ak]||[]).concat(out); any=true; }
 if(!any) return null;
 var corr=CORRECTIVE.map(function(c){return c[0];}).filter(function(k){return draft.corr[k];});
 var sess={id:uid("s"),date:draft.date||today(),planKey:draft.planKey,sets:sets,corrective:corr,notes:(draft.notes||"").trim()};
-if(cnt<planned||corr.length<CORRECTIVE.length) sess.partial=true;
+if(cnt<planned) sess.partial=true;
 state.sessions.push(sess);
 sortAll(state); persist();
 clearDraftStore(); stopRest(); staleBanner=false;
@@ -1787,7 +1759,7 @@ list.forEach(function(s){
 var id="del-s-"+s.id, isArmed=armed===id;
 card.appendChild(h("div",{class:"sess"},
 h("div",{class:"t"},
-h("div",{class:"nm"},planName(s.planKey),s.partial?h("span",{class:"ptag"},"Partial"):null),
+h("div",{class:"nm"},planName(s.planKey),s.planKey==="home"?h("span",{class:"ptag htag"},"Bodyweight"):null,s.partial?h("span",{class:"ptag"},"Partial"):null),
 h("div",{class:"small muted num"},fmtDate(s.date)+(s.planKey==="rest"?"":" — "+setCount(s)+" sets"))),
 h("button",{class:"btn small danger"+(isArmed?" armed":""),type:"button",id:id,onclick:function(){
 if(armed===id){ disarm(); state.sessions=state.sessions.filter(function(x){return x.id!==s.id;}); persist(); render(); }
@@ -1795,6 +1767,312 @@ else { arm(id); render(id); }
 }},isArmed?"Tap again to confirm":"Delete")));
 });
 root.appendChild(card);
+}
+/* ---------- Home + Pelvic session (separate draft: gymHomeDraft_v1, planKey "home") ---------- */
+var HSLOTS=(function(){
+var out=[], seen={};
+function mk(it,grp){
+var k=it[0], dup=!!seen[k]; seen[k]=1;
+var t=String(it[2]), m=/^\s*(\d+)/.exec(t);
+out.push({id:dup?k+"_h":k,key:k,n:it[1],target:t,sec:/\d\s*s\b/.test(t),low:m?+m[1]:0,grp:grp,dup:dup,off:dup?2:0});
+}
+CORRECTIVE.forEach(function(it){mk(it,"pel");});
+HOME.forEach(function(it){mk(it,"home");});
+return out;
+})();
+var hdraft=null, hView="list", hIdx=0, hFinOpen=false, hStale=false;
+function hNew(){ return {date:today(),dateSet:false,countPf:false,prevN:0,n:{},sets:{},notes:"",cur:0,msg:null,msgKind:"ok",dirty:false,resumed:false}; }
+function hN(sl,d){ d=d||hdraft; return d.n[sl.id]!=null?d.n[sl.id]:sl.n; }
+function hRows(sl,n){
+var rows=hdraft.sets[sl.id]=hdraft.sets[sl.id]||[];
+for(var i=0;i<n;i++) if(!rows[i]) rows[i]={reps:"",done:false};
+return rows;
+}
+function hDoneCount(sl){
+var rows=hdraft.sets[sl.id]||[], n=hN(sl), c=0;
+for(var i=0;i<n;i++) if(rows[i]&&rows[i].done) c++;
+return c;
+}
+function hCount(d,incPf){
+var c=0; if(!d) return 0;
+HSLOTS.forEach(function(sl){
+var rows=d.sets[sl.id]||[], n=hN(sl,d);
+for(var i=0;i<n;i++){ var r=rows[i]; if(r&&(incPf||!(r.pf&&!r.done))&&num(r.reps)>0) c++; }
+});
+return c;
+}
+function hLogged(){ return hCount(hdraft,false); }
+function hPfSets(){ return hCount(hdraft,true)-hCount(hdraft,false); }
+function hPlanned(){ var c=0; HSLOTS.forEach(function(sl){ c+=hN(sl); }); return c; }
+function hLast(sl){
+var arr=lastFor(sl.key); if(!arr) return null;
+if(sl.off&&arr.length>sl.off) arr=arr.slice(sl.off);
+return arr;
+}
+function ensureHDraft(){
+if(!hdraft) hdraft=hNew();
+else if(!hdraft.dateSet&&hCount(hdraft,false)===0&&hdraft.date!==today()) hdraft.date=today();
+}
+function hSaveDraft(){
+if(!hdraft||!hdraft.dirty) return;
+try{ localStorage.setItem(HKEY,JSON.stringify({planKey:"home",date:hdraft.date,dateSet:!!hdraft.dateSet,n:hdraft.n,sets:hdraft.sets,notes:hdraft.notes,cur:hdraft.cur||0})); }catch(e){}
+}
+function hClearStore(){ try{ localStorage.removeItem(HKEY); }catch(e){} }
+function hTouch(){
+if(!hdraft) return;
+var nowN=hCount(hdraft,false);
+if(!hdraft.dateSet&&hdraft.prevN===0&&nowN>0) hdraft.date=today();
+hdraft.prevN=nowN;
+if(nowN>0&&lastSaved) clearLastSaved();
+hdraft.dirty=true; hdraft.resumed=false; hSaveDraft();
+}
+function hLoadDraft(){
+var raw=null, o;
+try{ raw=localStorage.getItem(HKEY); }catch(e){ return null; }
+if(!raw) return null;
+try{ o=JSON.parse(raw); }catch(e2){ return null; }
+if(!o||typeof o!=="object") return null;
+var d=hNew();
+if(typeof o.date==="string"&&parseIso(o.date)) d.date=o.date;
+d.dateSet=!!o.dateSet;
+if(typeof o.notes==="string") d.notes=o.notes;
+if(o.n&&typeof o.n==="object") for(var k in o.n){ var nn=+o.n[k]; if(nn>=1&&nn<=20) d.n[k]=Math.floor(nn); }
+if(o.sets&&typeof o.sets==="object") for(var k2 in o.sets){
+if(!Array.isArray(o.sets[k2])) continue;
+d.sets[k2]=o.sets[k2].slice(0,20).map(function(r){
+r=r&&typeof r==="object"?r:{};
+return {reps:r.reps==null?"":String(r.reps),done:!!r.done,pf:!!r.pf&&!r.done};
+});
+}
+d.cur=Math.max(0,Math.min(HSLOTS.length-1,Math.floor(+o.cur)||0));
+d.dirty=true; d.resumed=true;
+d.prevN=hCount(d,false);
+if(!d.dateSet&&d.prevN===0) d.date=today();
+return d;
+}
+function hTargetText(sl,n){ return n+" × "+sl.target; }
+function hStartInfo(){
+var any=false, idx=-1;
+HSLOTS.forEach(function(sl,i){
+if(hDoneCount(sl)>0) any=true;
+if(idx<0&&hDoneCount(sl)<hN(sl)) idx=i;
+});
+return {any:any||hLogged()>0,idx:idx};
+}
+function openHome(){
+state.ui.mode="home"; state.ui.tab="today"; hView="list"; hFinOpen=false; finOpen=false;
+persist(); render(); window.scrollTo(0,0); navPush();
+}
+function setMode(m){
+if(state.ui.mode===m&&state.ui.tab==="today"&&todayView==="list"&&hView==="list") return;
+state.ui.mode=m; finOpen=false; hFinOpen=false; todayView="list"; hView="list"; disarm();
+persist(); render(); window.scrollTo(0,0); navPush();
+}
+function modeSwitch(){
+var home=state.ui.mode==="home", ln=draft?countSets(draft,false):0, hn=hCount(hdraft,false);
+function opt(id,label,on,cnt,m){
+return h("button",{class:"modeb"+(on?" on":""),type:"button",id:id,"aria-pressed":on?"true":"false",onclick:function(){setMode(m);}},
+h("span",null,label),(!on&&cnt>0)?h("small",{class:"num"},cnt+(cnt===1?" set":" sets")):null);
+}
+return h("div",{class:"modesw",role:"group","aria-label":"Session type"},
+opt("modeLift","Lifting",!home,ln,"lift"),opt("modeHome","Home + Pelvic",home,hn,"home"));
+}
+function hHero(){
+function br(c){return h("span",{class:"br "+c,"aria-hidden":"true"});}
+var total=0, ms=[]; HSLOTS.forEach(function(sl){ total+=sl.n; ms=ms.concat(muscles(sl.key)); });
+var list=[]; ms.forEach(function(m){ if(list.indexOf(m)<0) list.push(m); });
+return h("section",{class:"hero hv t-rest","aria-label":"Home and pelvic session"},br("tl"),br("tr"),br("bl"),br("brr"),
+h("div",{class:"k"},"Bodyweight session"),
+h("div",{class:"v"},"HOME + PELVIC"),
+h("div",{class:"s"},"Pelvic routine first, then home exercises"),
+chipsEl(list),
+h("div",{class:"stats"},stat("Exercises",HSLOTS.length),stat("Sets",total),stat("Time","≈ "+total+" min")));
+}
+function hFinPanel(){
+var base=hCount(hdraft,false), pfn=hPfSets(), lg=base+(hdraft.countPf?pfn:0), pl=hPlanned(), ok=lg>0, partial=lg<pl;
+return h("div",{class:"finpanel",id:"finPanel",role:"group","aria-label":"Finish home session"},
+h("div",{class:"kicker"},"Finish session"),
+ok?h("p",{class:"fp-sum num",id:"finSum"},"Logged: "+lg+" of "+pl+" sets"):h("p",{class:"fp-sum",id:"finSum"},"Log at least one set first."),
+pfn>0?h("div",{class:"pfwarn",id:"pfWarn"},
+h("p",{class:"fp-pf"},pfn+(pfn===1?" set still shows":" sets still show")+" last time's numbers but "+(pfn===1?"wasn't":"weren't")+" ticked"),
+h("label",{class:"pfchk","for":"pfCount"},h("input",{type:"checkbox",id:"pfCount",checked:!!hdraft.countPf,onchange:function(e){hdraft.countPf=e.target.checked;render("pfCount");}}),h("span",null,"Count them as done"))):null,
+ok&&partial?h("p",{class:"note fp-note"},"Saved as a partial session. That's fine."):null,
+h("div",{class:"fp-btns"},
+ok?h("button",{class:"btn primary",type:"button",id:"finSave",onclick:hSaveSession},"Save session"):null,
+h("button",{class:"btn",type:"button",id:"finKeep",onclick:function(){hFinOpen=false;render("finOpenBtn");}},"Keep going")));
+}
+function hFinBar(){
+if(hFinOpen) return hFinPanel();
+var lg=hLogged(); if(lg<1) return null;
+return h("div",{class:"finbar"},
+h("span",{class:"num"},lg+(lg===1?" set":" sets")+" logged"),
+h("button",{class:"btn small primary",type:"button",id:"finOpenBtn",onclick:openHFinish},"Finish"));
+}
+function openHFinish(){ hFinOpen=true; render(hLogged()>0?"finSave":"finKeep"); scrollToEl($("finPanel")); }
+function gotoHFinish(){ disarm(); state.ui.tab="today"; state.ui.mode="home"; hView="list"; persist(); openHFinish(); window.scrollTo(0,0); navPush(); }
+function hStalePanel(){
+var n=hCount(hdraft,false), isArmed=armed==="hstalediscard";
+return h("div",{class:"alertpanel",id:"stalePanel",role:"group","aria-label":"Unfinished home session"},
+h("div",{class:"kicker"},"Forgotten session?"),
+h("p",{class:"ap-t"},"Unfinished Home + Pelvic from "+fmtLong(hdraft.date)+" — "+n+(n===1?" set":" sets")),
+h("div",{class:"fp-btns"},
+h("button",{class:"btn primary",type:"button",id:"staleSave",onclick:function(){
+if(!hCommit()) return;
+hFinOpen=false; hdraft=hNew(); hView="list"; render(); window.scrollTo(0,0);
+}},"Save it"),
+h("button",{class:"btn danger"+(isArmed?" armed":""),type:"button",id:"staleDiscard",onclick:function(){
+if(armed==="hstalediscard"){ disarm(); hClearStore(); hStale=false; hdraft=hNew(); hFinOpen=false; hView="list"; render(); window.scrollTo(0,0); }
+else { arm("hstalediscard"); render("staleDiscard"); }
+}},isArmed?"Tap again to discard":"Discard")));
+}
+function hCommit(){
+var sets={}, cnt=0, planned=0, incPf=!!hdraft.countPf, corr=[];
+HSLOTS.forEach(function(sl){
+var n=hN(sl), out=[], all=true, rows=hdraft.sets[sl.id]||[];
+planned+=n;
+for(var i=0;i<n;i++){
+var r=rows[i]; if(!r||!r.done) all=false; if(!r) continue;
+var reps=num(r.reps);
+if(!(reps>0)||(r.pf&&!r.done&&!incPf)) continue;
+cnt++;
+var o={kg:0,reps:reps}; if(sl.sec) o.unit="s";
+out.push(o);
+}
+if(out.length) sets[sl.key]=(sets[sl.key]||[]).concat(out);
+if(sl.grp==="pel"&&all&&out.length&&corr.indexOf(sl.key)<0) corr.push(sl.key);
+});
+if(!cnt) return null;
+var sess={id:uid("s"),date:hdraft.date||today(),planKey:"home",sets:sets,corrective:corr,notes:(hdraft.notes||"").trim(),kind:"home"};
+if(cnt<planned) sess.partial=true;
+state.sessions.push(sess);
+sortAll(state); persist();
+hClearStore(); hStale=false;
+lastSaved={id:sess.id,planKey:"home",name:"Home + Pelvic",date:sess.date,sets:cnt,first:Object.keys(sets)[0]||null};
+try{ localStorage.setItem(SKEY,JSON.stringify(lastSaved)); }catch(e){}
+return sess;
+}
+function hSaveSession(){
+var sess=hCommit();
+if(!sess){ hFinOpen=true; render("finKeep"); return; }
+hFinOpen=false; hdraft=hNew(); hView="list";
+render(); window.scrollTo(0,0);
+}
+function hOpenEx(i){
+hFinOpen=false;
+var same=(hView==="ex"); hView="ex"; hIdx=i; hdraft.cur=i; hSaveDraft(); render("exTitle"); window.scrollTo(0,0);
+if(same) navReplace(); else navPush();
+}
+function hOpenList(){ hFinOpen=false; hView="list"; render(); window.scrollTo(0,0); navPush(); }
+function hStart(){
+var si=hStartInfo();
+if(si.idx<0){ hOpenList(); openHFinish(); return; }
+hOpenEx(si.idx);
+}
+function renderHomeToday(root){
+ensureHDraft();
+if(hView==="ex"&&hIdx>=0&&hIdx<HSLOTS.length){ renderHEx(root); return; }
+hView="list";
+root.appendChild(modeSwitch());
+if(hStale&&!(hCount(hdraft,false)>0&&hdraft.date<today())) hStale=false;
+if(hStale) root.appendChild(hStalePanel());
+if(lastSaved) root.appendChild(savedCard());
+root.appendChild(hHero());
+var si=hStartInfo();
+var lbl=!si.any?"START":(si.idx>=0?"Continue: "+EX[HSLOTS[si.idx].key].name:"Review & finish");
+root.appendChild(h("div",{class:"startwrap"},h("button",{class:"btn primary block startbtn t-rest",id:"startHome",type:"button",onclick:hStart},lbl)));
+var fb=hFinBar(); if(fb) root.appendChild(fb);
+if(hdraft.msg&&hdraft.msgKind==="ok"){ root.appendChild(h("div",{class:"msg ok",role:"status"},hdraft.msg)); hdraft.msg=null; }
+if(hdraft.resumed) root.appendChild(h("div",{class:"subrow"},h("span",{class:"pill resumed",role:"status"},"Session in progress — resumed")));
+var xl=h("div",{class:"xlist t-rest"}), grp=null;
+HSLOTS.forEach(function(sl,idx){
+if(sl.grp!==grp){ grp=sl.grp; xl.appendChild(h("h2",{class:"hgrp"},grp==="pel"?"Pelvic routine":"Home exercises")); }
+var n=hN(sl), dc=hDoneCount(sl), complete=dc>=n;
+xl.appendChild(h("button",{class:"xrow",type:"button",id:"xr-"+sl.id,onclick:function(){hOpenEx(idx);}},
+thumbEl(sl.key,false,true),
+h("span",{class:"xmain"},
+h("span",{class:"xname"},EX[sl.key].name),
+h("span",{class:"xtarget num"},hTargetText(sl,n)),
+chipsEl(muscles(sl.key),"span")),
+h("span",{class:"pill"+(complete?" done":"")},complete?n+"/"+n+" ✓":dc+"/"+n+" sets")));
+});
+root.appendChild(xl);
+root.appendChild(h("label",{class:"fld","for":"sessDate",style:"margin-top:24px"},"Session date"));
+root.appendChild(h("input",{type:"date",id:"sessDate",value:hdraft.date,oninput:function(e){if(parseIso(e.target.value)){hdraft.date=e.target.value;hdraft.dateSet=true;}hTouch();}}));
+root.appendChild(h("label",{class:"fld","for":"notes",style:"margin-top:14px"},"Notes (optional)"));
+root.appendChild(h("textarea",{id:"notes",oninput:function(e){hdraft.notes=e.target.value;hTouch();}},hdraft.notes||""));
+var fin=h("div",{class:"finish",id:"finishSec"},
+h("button",{class:"btn primary block",id:"saveSess",type:"button",onclick:openHFinish},"FINISH SESSION"));
+var isArmed=armed==="hdiscard";
+fin.appendChild(h("button",{class:"linkbtn"+(isArmed?" armed":""),id:"discardBtn",type:"button",onclick:function(){
+if(armed==="hdiscard"){ disarm(); hClearStore(); hStale=false; hdraft=hNew(); hFinOpen=false; hView="list"; render(); window.scrollTo(0,0); }
+else { arm("hdiscard"); render("discardBtn"); }
+}},isArmed?"Tap again to discard this session":"Discard"));
+root.appendChild(fin);
+renderRecent(root);
+}
+function renderHEx(root){
+var sl=HSLOTS[hIdx], k=sl.key, ex=EX[k], n=hN(sl), rows=hRows(sl,n), last=hLast(sl), total=HSLOTS.length;
+var unit=sl.sec?"seconds":"reps", step=sl.sec?5:1;
+var sc=h("section",{class:"xscreen t-rest","aria-label":"Exercise"});
+sc.appendChild(h("button",{class:"xback",type:"button",id:"xBack",onclick:hOpenList},h("span",{"aria-hidden":"true"},"‹ "),"All exercises"));
+sc.appendChild(h("div",{class:"kicker"},(sl.grp==="pel"?"Pelvic routine":"Home exercise")+" · "+(hIdx+1)+" of "+total));
+sc.appendChild(h("h2",{class:"xtitle",id:"exTitle",tabindex:"-1"},ex.name));
+sc.appendChild(chipsEl(muscles(k)));
+sc.appendChild(h("div",{class:"xtarget2 num"},hTargetText(sl,n)));
+sc.appendChild(h("div",{class:"ex-last num"},last?"Last time: "+fmtLast(last):"First time"));
+sc.appendChild(explainBody(k));
+var body=h("div",{class:"sets"});
+if(last) body.appendChild(h("button",{class:"btn small samebtn",type:"button",id:"sameLast",onclick:function(){
+for(var q=0;q<n;q++){ var lr=last[Math.min(q,last.length-1)], rr=rows[q]; rr.reps=String(lr.reps); rr.pf=!rr.done; }
+hTouch(); render("sameLast");
+}},"Same as last time"));
+body.appendChild(h("div",{class:"srow x h hd"},h("span",null,"Set"),h("span",null,unit),h("span",{"aria-hidden":"true"},"✓")));
+for(var i=0;i<n;i++){
+(function(i){
+var r=rows[i], ph=last?last[Math.min(i,last.length-1)]:null, rowEl, capEl;
+if(!r.done&&r.reps===""&&ph){ r.reps=String(ph.reps); r.pf=true; }
+function clearPf(){ r.pf=false; if(rowEl) rowEl.classList.remove("pf"); if(capEl) capEl.hidden=true; }
+var isPf=!!(r.pf&&!r.done);
+var repsIn=h("input",{type:"number",inputmode:"numeric",step:"1",class:"cell",id:"reps-"+sl.id+"-"+i,"aria-label":ex.name+" set "+(i+1)+" "+unit,
+placeholder:ph?String(ph.reps):"",value:r.reps,oninput:function(e){r.reps=e.target.value;clearPf();hTouch();}});
+function bump(d){
+var cur=num(r.reps); if(isNaN(cur)) cur=0;
+r.reps=String(Math.max(0,Math.round(cur+d)));
+repsIn.value=r.reps; clearPf(); hTouch();
+}
+function sb(txt,lab,d,id){ return h("button",{class:"stbtn",type:"button",id:id,"aria-label":lab+" set "+(i+1),onclick:function(){bump(d);}},txt); }
+rowEl=h("div",{class:"srow x h"+(r.done?" isdone":"")+(isPf?" pf":"")},
+h("span",{class:"sn num"},i+1),repsIn,
+h("button",{class:"dbtn",type:"button",id:"done-"+sl.id+"-"+i,"aria-pressed":r.done?"true":"false","aria-label":"Mark set "+(i+1)+" done",onclick:function(){
+if(r.done){ r.done=false; hTouch(); render("done-"+sl.id+"-"+i); return; }
+if(!(num(r.reps)>0)) r.reps=String(ph?ph.reps:(sl.low>0?sl.low:1));
+r.done=true; r.pf=false;
+var nx=rows[i+1];
+if(i+1<n&&nx&&!nx.done&&(nx.pf||nx.reps==="")){ nx.reps=r.reps; nx.pf=true; }
+hTouch();
+render("done-"+sl.id+"-"+i);
+}},"✓"));
+body.appendChild(rowEl);
+capEl=h("div",{class:"pfcap"},"Last time — tap ✓ when done");
+if(!isPf) capEl.hidden=true;
+body.appendChild(capEl);
+body.appendChild(h("div",{class:"srow x h stp"+(r.done?" isdone":"")},
+h("span",null),
+h("div",{class:"stg"},sb("−"+step,unit+" minus "+step+" for",-step,"rpm-"+sl.id+"-"+i),sb("+"+step,unit+" plus "+step+" for",step,"rpp-"+sl.id+"-"+i)),
+h("span",null)));
+})(i);
+}
+body.appendChild(h("div",{class:"setbtns"},
+h("button",{class:"btn small",type:"button",id:"add-"+sl.id,onclick:function(){hdraft.n[sl.id]=n+1;hTouch();render("add-"+sl.id);}},"+ Set"),
+h("button",{class:"btn small",type:"button",id:"rem-"+sl.id,disabled:n<=1,onclick:function(){if(n>1){hdraft.n[sl.id]=n-1;if(hdraft.sets[sl.id]) hdraft.sets[sl.id].length=Math.min(hdraft.sets[sl.id].length,n-1);hTouch();render("rem-"+sl.id);}}},"− Set")));
+sc.appendChild(body);
+var isLast=hIdx>=total-1;
+sc.appendChild(h("div",{class:"xnav"},
+h("button",{class:"btn",type:"button",id:"xPrev",disabled:hIdx<=0,onclick:function(){hOpenEx(hIdx-1);}},"‹ Prev"),
+h("button",{class:"btn primary",type:"button",id:"xNext",onclick:function(){ if(isLast) openHFinish(); else hOpenEx(hIdx+1); }},isLast?"Finish session":"Next exercise ›")));
+if(hFinOpen) sc.appendChild(hFinPanel());
+else sc.appendChild(h("button",{class:"linkbtn",type:"button",id:"finOpenBtn",onclick:openHFinish},"Finish now"));
+root.appendChild(sc);
 }
 /* ---------- tab: plan ---------- */
 var planQ="", planSaved=null;
@@ -1823,6 +2101,21 @@ if(!q) planSaved=null;
 document.querySelectorAll("#view .nx").forEach(function(n){n.classList.toggle("hide",!!q);});
 var none=$("planNone"); if(none) none.classList.toggle("hide",!(q&&!any));
 }
+function homeCard(){
+var total=0; HSLOTS.forEach(function(sl){ total+=sl.n; });
+var strip=h("div",{class:"strip",role:"region","aria-label":"Home + Pelvic exercises",tabindex:"0"},
+HSLOTS.map(function(sl){var t=thumbEl(sl.key,true);t.setAttribute("title",EX[sl.key].name);return t;}));
+return h("section",{class:"daycard t-rest","data-sec":"1",id:"homeCard"},
+h("h3",{class:"dch3"},h("span",{class:"dchead"},h("span",{class:"dctxt"},
+h("span",{class:"dcname"},"Home + Pelvic session"),
+h("span",{class:"tag num"},HSLOTS.length+" exercises · ≈ "+total+" min")))),
+h("p",{class:"note",style:"margin:4px 0 0"},"Bodyweight, logged separately from lifting: the pelvic routine first, then the home exercises."),
+strip,
+h("button",{class:"btn primary block startbtn",type:"button",id:"homeStart",onclick:openHome},"START"),
+h("details",{class:"dfull"},h("summary",null,"Full exercise list"),
+h("h4",{class:"hgrp2"},"Pelvic routine"),listCards(CORRECTIVE,false),
+h("h4",{class:"hgrp2"},"Home exercises"),listCards(HOME,false)));
+}
 function renderPlan(root){
 planSaved=null;
 var sw=h("div",{class:"searchwrap"},
@@ -1837,6 +2130,7 @@ PLAN.forEach(function(p,i){ wk.appendChild(h("button",{class:"wd t-"+p.type,type
 wk.appendChild(h("button",{class:"wd t-rest",type:"button","data-day":"rest",onclick:function(){openDay("rest");}},h("b",{class:"num"},7),h("span",null,"Rest")));
 nx.appendChild(wk);
 nx.appendChild(h("p",{class:"note",style:"margin-top:12px"},ROTATION_NOTE));
+nx.appendChild(h("p",{class:"note",id:"homeWeekNote"},"Home + Pelvic: on rest days or any evening, 2-3× a week"));
 var cl=h("ul",null);
 COACH_NOTES.forEach(function(t){ cl.appendChild(h("li",{class:hasWarn(t)?"warn":null},t)); });
 cl.appendChild(h("li",{class:hasWarn(ALT_NOTE)?"warn":null},ALT_NOTE));
@@ -1859,9 +2153,8 @@ strip,
 h("button",{class:"btn primary block startbtn",type:"button",onclick:function(){openDay(p.key);}},"START"),
 h("details",{class:"dfull"},h("summary",null,"Full exercise list"),listCards(p.items,true))));
 });
-root.appendChild(secBlock("Pelvic routine (before every workout)","The six exercises",CORRECTIVE,false));
+root.appendChild(homeCard());
 root.appendChild(secBlock("Desk exercises (about every hour, 2-3 minutes)","The five exercises",DESK,false));
-root.appendChild(secBlock("Home extras (optional, 2-3×/week, light)","The six exercises",HOME,false));
 var rd=h("div",{class:"nx"});
 rd.appendChild(h("h2",null,"Rest day"));
 rd.appendChild(restList());
@@ -1915,14 +2208,32 @@ keys.forEach(function(k){sel.appendChild(h("option",{value:k},EX[k].name));});
 sel.value=tabSel.progressKey;
 root.appendChild(h("label",{class:"fld","for":"progSel"},"Choose exercise"));
 root.appendChild(sel);
-var k=tabSel.progressKey, rows=[];
+var k=tabSel.progressKey, rows=[], bw=true, secs=false;
 state.sessions.forEach(function(s){
 var a=s.sets&&s.sets[k]; if(!a||!a.length) return;
-var best=0, top=0;
-a.forEach(function(x){ best=Math.max(best,e1rm(x.kg,x.reps)); top=Math.max(top,x.kg); });
-rows.push({d:s.date,top:top,sets:a.map(function(x){return fmtNum(x.kg)+"×"+x.reps;}).join(", "),e:best});
+a.forEach(function(x){ if(x.kg>0) bw=false; if(x.unit==="s") secs=true; });
+});
+state.sessions.forEach(function(s){
+var a=s.sets&&s.sets[k]; if(!a||!a.length) return;
+var best=0, top=0, tot=0;
+a.forEach(function(x){ best=Math.max(best,e1rm(x.kg,x.reps)); top=Math.max(top,x.kg); tot+=(+x.reps||0); });
+var brep=0; a.forEach(function(x){ brep=Math.max(brep,+x.reps||0); });
+rows.push({d:s.date,top:top,sets:a.map(setStr).join(", "),e:best,b:brep,t:tot});
 });
 var wrap=h("div",{style:"margin-top:16px"});
+var bu=secs?"s":"reps";
+if(bw){
+wrap.appendChild(lineChart(rows.map(function(r){return {d:r.d,v:r.b};}),bu,"Best "+(secs?"seconds":"reps")+" curve for "+EX[k].name));
+root.appendChild(wrap);
+root.appendChild(h("p",{class:"note",id:"bwNote"},"Bodyweight exercise: the chart shows your best "+(secs?"seconds":"reps")+" in a single set."));
+var tb2=h("tbody");
+rows.slice().reverse().forEach(function(r){
+tb2.appendChild(h("tr",null,h("td",{class:"num"},fmtDate(r.d)),h("td",{class:"num"},r.b+(secs?" s":"")),h("td",{class:"num wrapc"},r.sets),h("td",{class:"num"},r.t+(secs?" s":""))));
+});
+root.appendChild(h("div",{class:"tablewrap"},h("table",null,
+h("thead",null,h("tr",null,h("th",null,"Date"),h("th",null,secs?"Best seconds":"Best reps"),h("th",null,"Sets"),h("th",null,"Total"))),tb2)));
+return;
+}
 wrap.appendChild(lineChart(rows.map(function(r){return {d:r.d,v:r.e};}),"kg","Best estimated 1RM curve for "+EX[k].name));
 root.appendChild(wrap);
 root.appendChild(h("p",{class:"note"},"1RM here is an Epley estimate, not a real max — use it for comparison only."));
@@ -1942,15 +2253,22 @@ for(var k in s.sets){ if(s.sets[k]&&s.sets[k].length&&EX[k]&&muscles(k).indexOf(
 return out;
 }
 function recoveryFor(m){
+var lift=null, home=null;
 for(var i=state.sessions.length-1;i>=0;i--){
 var s=state.sessions[i];
 if(!s.planKey||s.planKey==="rest") continue;
+var isH=s.planKey==="home";
+if(isH?home:lift) continue;
 if(!trainedKeys(s,m).length) continue;
 var d=sessAt18(s); if(!d) continue;
-var hrs=(Date.now()-d.getTime())/3600000;
-return {never:false,date:s.date,pct:hrs<24?30:hrs<48?60:hrs<72?85:100};
+var hrs=(Date.now()-d.getTime())/3600000, pct=hrs<24?30:hrs<48?60:hrs<72?85:100;
+if(isH) pct=Math.max(pct,85); /* bodyweight: effect capped at 85% */
+var rec={never:false,date:s.date,pct:pct};
+if(isH) home=rec; else lift=rec;
+if(lift&&home) break;
 }
-return {never:true,pct:100};
+if(lift&&home) return home.pct<lift.pct?home:lift;
+return lift||home||{never:true,pct:100};
 }
 function daysAgoText(iso){
 var a=parseIso(iso), b=parseIso(today());
@@ -1964,7 +2282,7 @@ for(var i=state.sessions.length-1;i>=0&&out.length<5;i--){
 var s=state.sessions[i];
 if(!s.planKey||s.planKey==="rest"||!s.sets) continue;
 trainedKeys(s,m).forEach(function(k){
-if(out.length<5) out.push({date:s.date,name:EX[k].name,sets:s.sets[k].map(function(x){return fmtNum(x.kg)+"×"+x.reps;}).join(", ")});
+if(out.length<5) out.push({date:s.date,name:EX[k].name,sets:s.sets[k].map(setStr).join(", ")});
 });
 }
 return out;
@@ -2217,11 +2535,11 @@ if(focusId&&$(focusId)) $(focusId).focus();
 function showMsg(){var m=$("bkMsg");if(m){m.textContent=bk.msg||"";m.className="msg "+(bk.kind||"ok");}}
 /* ---------- shell ---------- */
 function gotoFinish(){
-disarm(); state.ui.tab="today"; todayView="list"; persist(); openFinish(); window.scrollTo(0,0); navPush();
+disarm(); state.ui.tab="today"; state.ui.mode="lift"; todayView="list"; persist(); openFinish(); window.scrollTo(0,0); navPush();
 }
 function setTab(id){
 disarm();
-if(id==="today"&&state.ui.tab==="today") todayView="list";
+if(id==="today"&&state.ui.tab==="today"){ todayView="list"; hView="list"; }
 state.ui.tab=id; persist(); render(); window.scrollTo(0,0); navPush();
 }
 function renderNav(){
@@ -2235,7 +2553,7 @@ nav.appendChild(b);
 }
 function setPlate(){
 var tab=state.ui.tab, pt;
-if(tab==="today"||(tab!=="plan"&&tab!=="progress"&&tab!=="body"&&tab!=="food")){ ensureDraft(); pt=planType(draft.planKey); }
+if(tab==="today"||(tab!=="plan"&&tab!=="progress"&&tab!=="body"&&tab!=="food")){ ensureDraft(); pt=state.ui.mode==="home"?"rest":planType(draft.planKey); }
 else pt=planType(nextPlanKey());
 document.documentElement.setAttribute("data-plate",pt);
 }
@@ -2249,6 +2567,12 @@ else if(tab==="body") renderBody(view);
 else if(tab==="food") renderFood(view);
 else renderToday(view);
 if(tab==="plan"||tab==="progress"||tab==="body"||tab==="food"){
+var hwn=hdraft?hCount(hdraft,false):0;
+if(hwn>0){
+view.insertBefore(h("div",{class:"wipstrip",id:"wipStripHome",role:"status"},
+h("span",{class:"num"},"Home + Pelvic in progress: "+hwn+(hwn===1?" set":" sets")+" not saved"),
+h("button",{class:"btn small primary",type:"button",id:"wipFinishHome",onclick:gotoHFinish},"Finish")),view.firstChild);
+}
 var wn=draft?countSets(draft,false):0;
 if(wn>0){
 view.insertBefore(h("div",{class:"wipstrip",id:"wipStrip",role:"status"},
@@ -2311,8 +2635,8 @@ lbOpen(ex.img,n,ex.name);
 });
 /* ---------- back gesture / history ---------- */
 var navRestoring=false, lastRootBack=0;
-function navState(){return {g:1,t:state.ui.tab,v:todayView,x:exIdx,b:!!bk.open};}
-function navSame(a,b){return a&&b&&a.t===b.t&&a.v===b.v&&a.x===b.x&&a.b===b.b;}
+function navState(){return {g:1,t:state.ui.tab,v:todayView,x:exIdx,b:!!bk.open,m:state.ui.mode,hv:hView,hx:hIdx};}
+function navSame(a,b){return a&&b&&a.t===b.t&&a.v===b.v&&a.x===b.x&&a.b===b.b&&a.m===b.m&&a.hv===b.hv&&a.hx===b.hx;}
 function navPush(){ if(navRestoring) return; try{ var cur=history.state; var n=navState(); if(navSame(cur,n)) return; history.pushState(n,""); }catch(e){} }
 function navReplace(){ if(navRestoring) return; try{ history.replaceState(navState(),""); }catch(e){} }
 function navToast(t){
@@ -2334,13 +2658,18 @@ navRestoring=true;
 try{
 if(bk.open&&!s.b){ bk.open=false; renderBackup(); }
 else if(!bk.open&&s.b){ bk.open=true; bk.expText=JSON.stringify(state); bk.msg=null; renderBackup(); }
-finOpen=false; state.ui.tab=s.t; todayView=s.v||"list"; exIdx=s.x||0;
+finOpen=false; hFinOpen=false; state.ui.tab=s.t; todayView=s.v||"list"; exIdx=s.x||0;
+if(s.m==="home"||s.m==="lift") state.ui.mode=s.m;
+hView=s.hv||"list"; hIdx=s.hx||0;
 if(todayView==="ex"&&!draft) todayView="list";
+if(hView==="ex"&&!hdraft) hView="list";
 persist(); render(); window.scrollTo(0,0);
 } finally { navRestoring=false; }
 });
 draft=loadDraft();
 staleBanner=!!(draft&&countSets(draft,false)>0&&draft.date<today());
+hdraft=hLoadDraft();
+hStale=!!(hdraft&&hCount(hdraft,false)>0&&hdraft.date<today());
 buildRestBar();
 persist();
 render();
