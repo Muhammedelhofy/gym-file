@@ -428,6 +428,24 @@ body.hastimer{padding-bottom:calc(176px + env(safe-area-inset-bottom,0px))}
 .lb .lbx{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));right:max(12px,env(safe-area-inset-right,0px))}
 .imgs img{cursor:zoom-in}
 
+/* v6: data-loss guards */
+.alertpanel{margin:0 0 14px;padding:14px;border:1px solid var(--warn);background:var(--warn-soft)}
+.alertpanel .ap-t{margin:6px 0 4px;font-family:var(--display);font-weight:600;font-size:1.05rem;color:#ffe2a6;overflow-wrap:anywhere}
+.alertpanel .ap-n{margin:2px 0 0}
+.alertpanel .fp-btns .btn{flex:1 1 100%}
+.savedcard{margin:0 0 14px;padding:12px 14px;border:1px solid var(--good);background:var(--good-soft)}
+.savedcard .sc-t{font-family:var(--display);font-weight:600;font-size:1.05rem;color:var(--good);overflow-wrap:anywhere}
+.savedcard .sc-b{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+.savedcard .sc-b .btn{min-height:44px;flex:1 1 130px}
+.wipstrip{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 12px;padding:2px 2px 2px 12px;border:1px solid var(--warn);background:var(--warn-soft);color:#ffe2a6;font-size:.9rem}
+.wipstrip .btn{min-height:44px;flex:none}
+.pfwarn{margin:8px 0 4px;padding:10px 12px;border-left:4px solid var(--warn);background:var(--warn-soft)}
+.pfwarn .fp-pf{margin:0 0 4px;color:#ffe2a6;font-weight:600}
+.pfchk{display:flex;align-items:center;gap:12px;min-height:44px;cursor:pointer}
+.pfchk input{width:24px;height:24px;flex:none}
+.srow.x.pf input.cell{opacity:.55;border-style:dashed}
+.pfcap{margin:-2px 0 6px 2.2rem;font-size:.78rem;color:var(--muted);font-style:italic}
+.pfcap[hidden]{display:none}
 /* v5: finish anywhere, steppers, last-choice */
 .finbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 12px;padding:6px 6px 6px 12px;border:1px solid rgba(var(--hud-rgb),.5);background:rgba(var(--hud-rgb),.09)}
 .finbar .btn{min-height:44px;flex:none}
@@ -860,6 +878,9 @@ const OPTIONS = {
 "use strict";
 var KEY="gymFile_v1";
 var DKEY="gymDraft_v1";
+var SKEY="gymLastSaved_v1";
+var lastSaved=null, pendingSwitch=null, staleBanner=false;
+try{ var _ls=JSON.parse(localStorage.getItem(SKEY)||"null"); if(_ls&&typeof _ls==="object"&&typeof _ls.date==="string") lastSaved=_ls; }catch(e){}
 var TABS=[
 {id:"today",label:"Today",icon:'<path d="M5 12l4 4 10-10"/><circle cx="12" cy="12" r="9.5"/>'},
 {id:"plan",label:"Plan",icon:'<path d="M8 6h12M8 12h12M8 18h12"/><path d="M4 6h.01M4 12h.01M4 18h.01"/>'},
@@ -1014,7 +1035,7 @@ return {opt:toOpt("free"),reason:"Back to free weight after a machine block"};
 return {opt:toOpt("free"),reason:"Progressing on free weight \u2014 keep it"};
 }
 function newDraft(planKey){
-var d={planKey:planKey,date:today(),n:{},sets:{},choice:{},corr:{},notes:"",cur:0,msg:null,msgKind:"ok",dirty:false,resumed:false};
+var d={planKey:planKey,date:today(),dateSet:false,countPf:false,prevN:0,n:{},sets:{},choice:{},corr:{},notes:"",cur:0,msg:null,msgKind:"ok",dirty:false,resumed:false};
 var p=planKey==="rest"?null:planByKey(planKey);
 if(p) p.items.forEach(function(it){
 var k=it[0], lc=OPTIONS[k]?lastChoiceFor(planKey,k):null;
@@ -1051,16 +1072,23 @@ var a=ALTS[k]; if(!a) return false;
 var alt=activeKey(k)!==k;
 return a.kind==="free"?alt:!alt;
 }
-function ensureDraft(){ if(!draft) draft=newDraft(nextPlanKey()); }
+function ensureDraft(){ if(!draft) draft=newDraft(nextPlanKey()); else if(!draft.dateSet&&countSets(draft,false)===0&&draft.date!==today()) draft.date=today(); }
 /* ---------- persistent draft (gymDraft_v1) ---------- */
 function saveDraft(){
 if(!draft||!draft.dirty) return;
 try{
-localStorage.setItem(DKEY,JSON.stringify({planKey:draft.planKey,date:draft.date,n:draft.n,sets:draft.sets,choice:draft.choice,corr:draft.corr,notes:draft.notes,cur:draft.cur||0}));
+localStorage.setItem(DKEY,JSON.stringify({planKey:draft.planKey,date:draft.date,dateSet:!!draft.dateSet,n:draft.n,sets:draft.sets,choice:draft.choice,corr:draft.corr,notes:draft.notes,cur:draft.cur||0}));
 }catch(e){}
 }
 function clearDraftStore(){ try{ localStorage.removeItem(DKEY); }catch(e){} }
-function touch(){ if(!draft) return; draft.dirty=true; draft.resumed=false; saveDraft(); }
+function touch(){
+if(!draft) return;
+var nowN=countSets(draft,false);
+if(!draft.dateSet&&draft.prevN===0&&nowN>0) draft.date=today();
+draft.prevN=nowN;
+if(nowN>0&&lastSaved) clearLastSaved();
+draft.dirty=true; draft.resumed=false; saveDraft();
+}
 function loadDraft(){
 var raw=null, o;
 try{ raw=localStorage.getItem(DKEY); }catch(e){ return null; }
@@ -1070,6 +1098,7 @@ if(!o||typeof o!=="object") return null;
 if(o.planKey!=="rest"&&!planByKey(o.planKey)) return null;
 var d=newDraft(o.planKey);
 if(typeof o.date==="string"&&parseIso(o.date)) d.date=o.date;
+d.dateSet=!!o.dateSet;
 if(typeof o.notes==="string") d.notes=o.notes;
 if(o.n&&typeof o.n==="object") for(var k in o.n){ var nn=+o.n[k]; if(nn>=1&&nn<=20) d.n[k]=Math.floor(nn); }
 if(o.sets&&typeof o.sets==="object") for(var k2 in o.sets){
@@ -1084,9 +1113,11 @@ if(o.corr&&typeof o.corr==="object") for(var k3 in o.corr) d.corr[k3]=!!o.corr[k
 var p=planByKey(o.planKey);
 d.cur=Math.max(0,Math.min(p?p.items.length-1:0,Math.floor(+o.cur)||0));
 d.dirty=true; d.resumed=true;
+d.prevN=countSets(d,false);
+if(!d.dateSet&&d.prevN===0) d.date=today();
 return d;
 }
-function nFor(it){ return draft.n[it[0]]!=null?draft.n[it[0]]:it[1]; }
+function nFor(it,d){ d=d||draft; return d.n[it[0]]!=null?d.n[it[0]]:it[1]; }
 function rowsFor(k,n){
 var rows=draft.sets[k]=draft.sets[k]||[];
 for(var i=0;i<n;i++) if(!rows[i]) rows[i]={kg:"",reps:"",done:false};
@@ -1097,14 +1128,23 @@ var rows=draft.sets[it[0]]||[], n=nFor(it), c=0;
 for(var i=0;i<n;i++) if(rows[i]&&rows[i].done) c++;
 return c;
 }
-function loggedSets(){
-var plan=planByKey(draft.planKey), c=0; if(!plan) return 0;
+/* sets with reps>0 in draft d; rows still showing untouched last-time numbers (pf) count only when incPf */
+function countSets(d,incPf){
+var plan=d&&planByKey(d.planKey), c=0; if(!plan) return 0;
 plan.items.forEach(function(it){
-var rows=draft.sets[it[0]]||[], n=nFor(it);
-for(var i=0;i<n;i++){ var r=rows[i]; if(r&&!r.pf&&num(r.reps)>0) c++; }
+var rows=d.sets[it[0]]||[], n=nFor(it,d);
+for(var i=0;i<n;i++){ var r=rows[i]; if(r&&(incPf||!(r.pf&&!r.done))&&num(r.reps)>0) c++; }
 });
 return c;
 }
+function loggedSets(){ return countSets(draft,false); }
+function pfSets(){ return countSets(draft,true)-countSets(draft,false); }
+function corCount(d){ var c=0; for(var k in d.corr) if(d.corr[k]) c++; return c; }
+function draftHasWork(d){ return !!d&&(countSets(d,false)>0||corCount(d)>0); }
+function clearLastSaved(){ lastSaved=null; try{ localStorage.removeItem(SKEY); }catch(e){} }
+function dayShort(k){ var p=planByKey(k); return p?p.short:planName(k); }
+var WEEKDAYS=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+function fmtLong(s){ var d=parseIso(s); return d?WEEKDAYS[d.getDay()]+", "+d.getDate()+" "+MONTHS[d.getMonth()]:String(s||""); }
 function plannedSets(){
 var plan=planByKey(draft.planKey), c=0; if(!plan) return 0;
 plan.items.forEach(function(it){ c+=nFor(it); });
@@ -1312,9 +1352,22 @@ if(live&&live.textContent) live.textContent="";
 }
 }
 /* ---------- tab: today ---------- */
+/* never replace a draft that holds logged work: ask first */
+function guardSwitch(key){
+if(draft&&draft.planKey!==key&&draftHasWork(draft)){
+pendingSwitch={key:key}; disarm(); finOpen=false; todayView="list"; chgOpen=false;
+state.ui.tab="today"; persist(); render(); window.scrollTo(0,0); navPush();
+return true;
+}
+return false;
+}
 function openDay(key){
-finOpen=false;
-if(!draft||draft.planKey!==key){ draft=newDraft(key); clearDraftStore(); }
+if(guardSwitch(key)) return;
+doOpenDay(key);
+}
+function doOpenDay(key){
+finOpen=false; pendingSwitch=null;
+if(!draft||draft.planKey!==key){ draft=newDraft(key); clearDraftStore(); staleBanner=false; }
 todayView="list"; chgOpen=false;
 state.ui.tab="today"; persist(); render(); window.scrollTo(0,0); navPush();
 }
@@ -1342,11 +1395,14 @@ function openFinish(){
 finOpen=true; render(loggedSets()>0?"finSave":"finKeep"); scrollToEl($("finPanel"));
 }
 function finPanel(){
-var lg=loggedSets(), pl=plannedSets(), cd=corDone(), ok=lg>0, partial=lg<pl||cd<CORRECTIVE.length;
+var base=countSets(draft,false), pfn=pfSets(), lg=base+(draft.countPf?pfn:0), pl=plannedSets(), cd=corDone(), ok=lg>0, partial=lg<pl||cd<CORRECTIVE.length;
 var box=h("div",{class:"finpanel",id:"finPanel",role:"group","aria-label":"Finish workout"},
 h("div",{class:"kicker"},"Finish workout"),
 ok?h("p",{class:"fp-sum num",id:"finSum"},"Logged: "+lg+" of "+pl+" sets \u00b7 Pelvic routine: "+cd+"/"+CORRECTIVE.length)
 :h("p",{class:"fp-sum",id:"finSum"},"Log at least one set first."),
+pfn>0?h("div",{class:"pfwarn",id:"pfWarn"},
+h("p",{class:"fp-pf"},pfn+(pfn===1?" set still shows":" sets still show")+" last time's numbers but "+(pfn===1?"wasn't":"weren't")+" ticked"),
+h("label",{class:"pfchk","for":"pfCount"},h("input",{type:"checkbox",id:"pfCount",checked:!!draft.countPf,onchange:function(e){draft.countPf=e.target.checked;render("pfCount");}}),h("span",null,"Count them as done"))):null,
 ok&&partial?h("p",{class:"note fp-note"},"Saved as a partial workout. That's fine \u2014 the pelvic routine is optional."):null,
 h("div",{class:"fp-btns"},
 ok?h("button",{class:"btn primary",type:"button",id:"finSave",onclick:saveSession},"Save workout"):null,
@@ -1391,6 +1447,11 @@ if(pl&&exIdx>=0&&exIdx<pl.items.length){ renderExScreen(root,pl); return; }
 todayView="list";
 }
 if(todayView==="cor"){ renderCorScreen(root); return; }
+if(pendingSwitch&&(!draft||pendingSwitch.key===draft.planKey||!draftHasWork(draft))) pendingSwitch=null;
+if(pendingSwitch) root.appendChild(switchPanel());
+if(staleBanner&&!(draft&&countSets(draft,false)>0&&draft.date<today())) staleBanner=false;
+if(staleBanner) root.appendChild(stalePanel());
+if(lastSaved) root.appendChild(savedCard());
 root.appendChild(heroEl());
 var isRest=draft.planKey==="rest";
 if(!isRest){
@@ -1406,7 +1467,8 @@ h("button",{class:"btn small ghost",type:"button",id:"chgBtn","aria-expanded":ch
 draft.resumed?h("span",{class:"pill resumed",role:"status"},"Workout in progress — resumed"):null));
 if(chgOpen){
 var sel=h("select",{id:"daySel","aria-label":"Choose day",onchange:function(e){
-draft=newDraft(e.target.value); clearDraftStore(); finOpen=false; todayView="list"; render("daySel");
+if(guardSwitch(e.target.value)){ return; }
+draft=newDraft(e.target.value); clearDraftStore(); staleBanner=false; finOpen=false; todayView="list"; render("daySel");
 }});
 PLAN.forEach(function(p){sel.appendChild(h("option",{value:p.key},p.name));});
 sel.appendChild(h("option",{value:"rest"},"Rest day"));
@@ -1414,20 +1476,64 @@ sel.value=draft.planKey;
 root.appendChild(h("div",{class:"card",id:"chgPanel"},
 h("label",{class:"fld","for":"daySel"},"Choose day"),sel,
 h("label",{class:"fld","for":"sessDate",style:"margin-top:14px"},"Session date"),
-h("input",{type:"date",id:"sessDate",value:draft.date,oninput:function(e){draft.date=e.target.value;touch();}}),
+h("input",{type:"date",id:"sessDate",value:draft.date,oninput:function(e){if(parseIso(e.target.value)){draft.date=e.target.value;draft.dateSet=true;}touch();}}),
 h("p",{class:"note",style:"margin:12px 0 0"},ROTATION_NOTE)));
 }
 if(isRest) renderRestDay(root); else renderTrainDay(root);
 renderRecent(root);
+}
+function switchPanel(){
+var n=countSets(draft,false), nm=dayShort(draft.planKey), target=dayShort(pendingSwitch.key), isArmed=armed==="swdiscard";
+return h("div",{class:"alertpanel",id:"switchPanel",role:"alertdialog","aria-label":"Unsaved workout"},
+h("div",{class:"kicker"},"Unsaved workout"),
+h("p",{class:"ap-t"},n>0?"You have "+n+(n===1?" set":" sets")+" logged on "+nm+" that aren't saved yet.":"You have pelvic routine ticks on "+nm+" that aren't saved yet."),
+h("p",{class:"note ap-n"},"Switching to "+target+" would replace them."),
+h("div",{class:"fp-btns"},
+n>0?h("button",{class:"btn primary",type:"button",id:"swSave",onclick:function(){
+var key=pendingSwitch.key;
+if(!commitDraft()){ pendingSwitch=null; render(); return; }
+doOpenDay(key);
+}},"Save it, then switch"):null,
+h("button",{class:"btn danger"+(isArmed?" armed":""),type:"button",id:"swDiscard",onclick:function(){
+if(armed==="swdiscard"){ var key=pendingSwitch.key; disarm(); clearDraftStore(); stopRest(); doOpenDay(key); }
+else { arm("swdiscard"); render("swDiscard"); }
+}},isArmed?"Tap again to discard":"Discard and switch"),
+h("button",{class:"btn",type:"button",id:"swKeep",onclick:function(){ pendingSwitch=null; disarm(); render(); window.scrollTo(0,0); }},"Keep this workout")));
+}
+function stalePanel(){
+var n=countSets(draft,false), isArmed=armed==="stalediscard";
+return h("div",{class:"alertpanel",id:"stalePanel",role:"group","aria-label":"Unfinished workout"},
+h("div",{class:"kicker"},"Forgotten workout?"),
+h("p",{class:"ap-t"},"Unfinished workout from "+fmtLong(draft.date)+" \u2014 "+dayShort(draft.planKey)+", "+n+(n===1?" set":" sets")),
+h("div",{class:"fp-btns"},
+h("button",{class:"btn primary",type:"button",id:"staleSave",onclick:function(){
+if(!commitDraft()) return;
+finOpen=false; draft=newDraft(nextPlanKey()); todayView="list"; render(); window.scrollTo(0,0);
+}},"Save it"),
+h("button",{class:"btn danger"+(isArmed?" armed":""),type:"button",id:"staleDiscard",onclick:function(){
+if(armed==="stalediscard"){ disarm(); clearDraftStore(); stopRest(); staleBanner=false; draft=newDraft(nextPlanKey()); finOpen=false; todayView="list"; render(); window.scrollTo(0,0); }
+else { arm("stalediscard"); render("staleDiscard"); }
+}},isArmed?"Tap again to discard":"Discard")));
+}
+function savedCard(){
+var ls=lastSaved;
+return h("div",{class:"savedcard",id:"savedCard",role:"status"},
+h("div",{class:"sc-t"},"Saved: "+ls.name+" \u00b7 "+fmtDate(ls.date)+" \u00b7 "+ls.sets+(ls.sets===1?" set":" sets")),
+h("div",{class:"sc-b"},
+h("button",{class:"btn small",type:"button",id:"savedView",onclick:function(){
+if(ls.first&&EX[ls.first]) tabSel.progressKey=ls.first;
+setTab("progress");
+}},"View in Progress"),
+h("button",{class:"btn small ghost",type:"button",id:"savedDismiss",onclick:function(){ clearLastSaved(); render(); }},"Dismiss")));
 }
 function renderRestDay(root){
 root.appendChild(h("h2",null,"Rest day"));
 root.appendChild(restList());
 root.appendChild(h("div",{style:"margin-top:16px"},
 h("button",{class:"btn primary block",id:"saveRest",type:"button",onclick:function(){
-var d=draft.date||today();
+var d=(draft.dateSet&&draft.date)?draft.date:today();
 state.sessions.push({id:uid("s"),date:d,planKey:"rest"});
-sortAll(state); persist(); clearDraftStore();
+sortAll(state); persist(); clearDraftStore(); staleBanner=false;
 draft=newDraft(nextPlanKey()); draft.msg="Saved ✓"; draft.msgKind="ok";
 render(); window.scrollTo(0,0);
 }},"Log rest day")));
@@ -1493,7 +1599,7 @@ if(draft.msg&&draft.msgKind==="err") fin.appendChild(h("div",{class:"msg err",ro
 var isArmed=armed==="discard";
 fin.appendChild(h("button",{class:"linkbtn"+(isArmed?" armed":""),id:"discardBtn",type:"button",onclick:function(){
 if(armed==="discard"){
-disarm(); clearDraftStore(); stopRest();
+disarm(); clearDraftStore(); stopRest(); staleBanner=false;
 draft=newDraft(nextPlanKey()); finOpen=false; todayView="list"; render(); window.scrollTo(0,0);
 } else { arm("discard"); render("discardBtn"); }
 }},isArmed?"Tap again to discard this workout":"Discard"));
@@ -1570,20 +1676,22 @@ touch(); render("sameLast");
 body.appendChild(h("div",{class:"srow x hd"},h("span",null,"Set"),h("span",null,"kg"),h("span",null,"reps"),h("span",{"aria-hidden":"true"},"\u2713")));
 for(var i=0;i<n;i++){
 (function(i){
-var r=rows[i], ph=last?last[Math.min(i,last.length-1)]:null;
+var r=rows[i], ph=last?last[Math.min(i,last.length-1)]:null, rowEl, capEl;
 if(!r.done&&r.kg===""&&r.reps===""&&ph){ r.kg=ph.kg>0?fmtNum(ph.kg):""; r.reps=String(ph.reps); r.pf=true; }
+function clearPf(){ r.pf=false; if(rowEl) rowEl.classList.remove("pf"); if(capEl) capEl.hidden=true; }
+var isPf=!!(r.pf&&!r.done);
 var kgIn=h("input",{type:"number",inputmode:"decimal",step:"any",class:"cell",id:"kg-"+k+"-"+i,"aria-label":ex.name+" set "+(i+1)+" kg",
-placeholder:ph?fmtNum(ph.kg):"",value:r.kg,oninput:function(e){r.kg=e.target.value;r.pf=false;touch();}});
+placeholder:ph?fmtNum(ph.kg):"",value:r.kg,oninput:function(e){r.kg=e.target.value;clearPf();touch();}});
 var repsIn=h("input",{type:"number",inputmode:"numeric",step:"1",class:"cell",id:"reps-"+k+"-"+i,"aria-label":ex.name+" set "+(i+1)+" reps",
-placeholder:ph?String(ph.reps):"",value:r.reps,oninput:function(e){r.reps=e.target.value;r.pf=false;touch();}});
+placeholder:ph?String(ph.reps):"",value:r.reps,oninput:function(e){r.reps=e.target.value;clearPf();touch();}});
 function bump(field,d,input){
 var cur=num(r[field]); if(isNaN(cur)) cur=0;
 var v=Math.max(0,Math.round((cur+d)*100)/100);
 r[field]=field==="reps"?String(Math.round(v)):fmtNum(v);
-input.value=r[field]; r.pf=false; touch();
+input.value=r[field]; clearPf(); touch();
 }
 function sb(txt,lab,field,d,input,id){ return h("button",{class:"stbtn",type:"button",id:id,"aria-label":lab+" set "+(i+1),onclick:function(){bump(field,d,input);}},txt); }
-body.appendChild(h("div",{class:"srow x"+(r.done?" isdone":"")},
+rowEl=h("div",{class:"srow x"+(r.done?" isdone":"")+(isPf?" pf":"")},
 h("span",{class:"sn num"},i+1),kgIn,repsIn,
 h("button",{class:"dbtn",type:"button",id:"done-"+k+"-"+i,"aria-pressed":r.done?"true":"false","aria-label":"Mark set "+(i+1)+" done",onclick:function(){
 if(r.done){ r.done=false; touch(); render("done-"+k+"-"+i); return; }
@@ -1598,7 +1706,11 @@ if(i+1<n&&nx&&!nx.done&&(nx.pf||(nx.kg===""&&nx.reps===""))){ nx.kg=r.kg; nx.rep
 touch();
 startRest(restSecs(it[3]));
 render("done-"+k+"-"+i);
-}},"\u2713")));
+}},"\u2713"));
+body.appendChild(rowEl);
+capEl=h("div",{class:"pfcap"},"Last time \u2014 tap \u2713 when done");
+if(!isPf) capEl.hidden=true;
+body.appendChild(capEl);
 body.appendChild(h("div",{class:"srow x stp"+(r.done?" isdone":"")},
 h("span",null),
 h("div",{class:"stg"},sb("\u22122.5","kg minus 2.5 for","kg",-2.5,kgIn,"kgm-"+k+"-"+i),sb("+2.5","kg plus 2.5 for","kg",2.5,kgIn,"kgp-"+k+"-"+i)),
@@ -1630,28 +1742,37 @@ sc.appendChild(corList());
 sc.appendChild(h("div",{class:"xnav one"},h("button",{class:"btn primary",type:"button",id:"startLift",onclick:function(){openEx(0);}},"Start lifting ›")));
 root.appendChild(sc);
 }
-function saveSession(){
-var plan=planByKey(draft.planKey), sets={}, any=false, cnt=0, planned=0;
+/* saves the current draft under its own date; returns the session or null when no set qualifies */
+function commitDraft(){
+var plan=planByKey(draft.planKey), sets={}, any=false, cnt=0, planned=0, incPf=!!draft.countPf;
+if(!plan) return null;
 plan.items.forEach(function(it){
 var k=it[0], ak=activeKey(k), out=[];
 planned+=draft.n[k]!=null?draft.n[k]:it[1];
 (draft.sets[k]||[]).slice(0,draft.n[k]!=null?draft.n[k]:it[1]).forEach(function(r){
 var reps=num(r.reps), kg=num(r.kg);
-if(!(reps>0)||(r.pf&&!r.done)) return;
+if(!(reps>0)||(r.pf&&!r.done&&!incPf)) return;
 cnt++;
 out.push({kg:isNaN(kg)?0:kg,reps:reps});
 });
 if(out.length){ sets[ak]=(sets[ak]||[]).concat(out); any=true; }
 });
-if(!any){ finOpen=true; render("finKeep"); return; }
+if(!any) return null;
 var corr=CORRECTIVE.map(function(c){return c[0];}).filter(function(k){return draft.corr[k];});
 var sess={id:uid("s"),date:draft.date||today(),planKey:draft.planKey,sets:sets,corrective:corr,notes:(draft.notes||"").trim()};
 if(cnt<planned||corr.length<CORRECTIVE.length) sess.partial=true;
 state.sessions.push(sess);
 sortAll(state); persist();
+clearDraftStore(); stopRest(); staleBanner=false;
+lastSaved={id:sess.id,planKey:sess.planKey,name:dayShort(sess.planKey),date:sess.date,sets:cnt,first:Object.keys(sets)[0]||null};
+try{ localStorage.setItem(SKEY,JSON.stringify(lastSaved)); }catch(e){}
+return sess;
+}
+function saveSession(){
+var sess=commitDraft();
+if(!sess){ finOpen=true; render("finKeep"); return; }
 finOpen=false;
-clearDraftStore(); stopRest();
-draft=newDraft(nextPlanKey()); draft.msg="Saved ✓"; draft.msgKind="ok";
+draft=newDraft(nextPlanKey());
 todayView="list";
 render();
 window.scrollTo(0,0);
@@ -2087,7 +2208,7 @@ p.appendChild(h("button",{class:"btn block "+(bk.armed?"armed":"danger"),id:"imp
 if(!bk.armed){ bk.armed=true; renderBackup("impGo"); return; }
 state=bk.pending; state.ui.tab=state.ui.tab||"today"; persist();
 bk.pending=null; bk.armed=false; bk.impText=""; bk.msg="Data replaced ✓"; bk.kind="ok";
-draft=null; clearDraftStore(); stopRest(); todayView="list"; render(); renderBackup();
+draft=null; clearDraftStore(); clearLastSaved(); pendingSwitch=null; staleBanner=false; stopRest(); todayView="list"; render(); renderBackup();
 }},bk.armed?"Tap again to confirm":"Replace data"));
 }
 p.appendChild(h("button",{class:"btn block",type:"button",style:"margin-top:14px",onclick:function(){bk.open=false;renderBackup();$("backupBtn").focus();navPush();}},"Close"));
@@ -2095,6 +2216,9 @@ if(focusId&&$(focusId)) $(focusId).focus();
 }
 function showMsg(){var m=$("bkMsg");if(m){m.textContent=bk.msg||"";m.className="msg "+(bk.kind||"ok");}}
 /* ---------- shell ---------- */
+function gotoFinish(){
+disarm(); state.ui.tab="today"; todayView="list"; persist(); openFinish(); window.scrollTo(0,0); navPush();
+}
 function setTab(id){
 disarm();
 if(id==="today"&&state.ui.tab==="today") todayView="list";
@@ -2124,6 +2248,14 @@ else if(tab==="progress") renderProgress(view);
 else if(tab==="body") renderBody(view);
 else if(tab==="food") renderFood(view);
 else renderToday(view);
+if(tab==="plan"||tab==="progress"||tab==="body"||tab==="food"){
+var wn=draft?countSets(draft,false):0;
+if(wn>0){
+view.insertBefore(h("div",{class:"wipstrip",id:"wipStrip",role:"status"},
+h("span",{class:"num"},"Workout in progress: "+wn+(wn===1?" set":" sets")+" not saved"),
+h("button",{class:"btn small primary",type:"button",id:"wipFinish",onclick:gotoFinish},"Finish")),view.firstChild);
+}
+}
 renderNav(); renderBanner();
 if(focusId&&$(focusId)) $(focusId).focus();
 }
@@ -2208,6 +2340,7 @@ persist(); render(); window.scrollTo(0,0);
 } finally { navRestoring=false; }
 });
 draft=loadDraft();
+staleBanner=!!(draft&&countSets(draft,false)>0&&draft.date<today());
 buildRestBar();
 persist();
 render();
