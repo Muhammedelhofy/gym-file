@@ -609,6 +609,41 @@ body.hastimer-c .snack{bottom:calc(124px + env(safe-area-inset-bottom,0px))}
 .chart .bar.bz{fill:var(--line);opacity:1}
 .cwk .chart{margin-top:10px}
 .cdet{font-size:.85rem;color:var(--muted);margin:2px 0 6px}
+/* ===== v10: weigh-in, trend, cardio goal ===== */
+.wrow{display:grid;grid-template-columns:72px minmax(0,1fr) 72px;gap:8px;align-items:center}
+.wrow .btn{min-width:0;min-height:56px;padding-inline:0}
+.wrow input{text-align:center;min-height:64px;font-family:var(--display);font-size:2rem;font-weight:700}
+.wrow input::placeholder{color:var(--muted);opacity:.45}
+.wsum b{text-transform:none}
+.wsum b.up{color:var(--warn)}
+.wsum b.down{color:var(--good)}
+.advice{display:flex;align-items:flex-start;gap:10px;margin-top:12px}
+.advice .chip{flex:none;margin-top:1px}
+.advice .advt{flex:1;min-width:0;overflow-wrap:anywhere;font-size:.95rem}
+.advice.compact .advt{font-size:.85rem;color:var(--muted)}
+.advrow{display:flex;align-items:center;gap:8px;margin-top:14px;padding-top:10px;border-top:1px solid var(--line)}
+.advrow .advice{flex:1;min-width:0;margin-top:0}
+.lnkbtn{flex:none;min-height:44px;padding:6px 10px;background:none;border:0;color:var(--hud-ink);font-family:var(--display);font-weight:600;font-size:.95rem;text-decoration:underline;cursor:pointer}
+.lnkbtn:focus-visible{outline:3px solid var(--hud-ink);outline-offset:-3px}
+.wchip{display:flex;align-items:center;justify-content:space-between;gap:6px;margin:0 0 12px;padding:0 0 0 12px;border:1px solid rgba(var(--hud-rgb),.55);background:rgba(var(--hud-rgb),.09)}
+.wchip .wgo{flex:1;min-width:0;min-height:44px;padding:6px 0;background:none;border:0;color:var(--text);font-family:var(--display);font-weight:600;font-size:.95rem;text-align:left;cursor:pointer}
+.wchip .wx{flex:none;width:44px;min-height:44px;padding:0;background:none;border:0;color:var(--muted);font-size:1rem;cursor:pointer}
+.wchip button:focus-visible{outline:3px solid var(--hud-ink);outline-offset:-3px}
+.gbar{height:12px;background:var(--field);border:1px solid var(--fline);overflow:hidden}
+.gbar i{display:block;height:100%;background:var(--hud)}
+.gbar.ok i{background:var(--good)}
+.gwrap{margin:10px 0 0}
+.glbl{margin-top:6px;font-size:.85rem;color:var(--muted)}
+.glbl.ok{color:var(--good);font-weight:700}
+.goalrow{display:flex;align-items:center;gap:6px;margin-top:10px}
+.gedit{margin-top:8px}
+.cstrip{display:block;width:100%;min-height:44px;margin:0 0 12px;padding:8px 12px;text-align:left;background:var(--surface);border:1px solid var(--line);color:var(--text);cursor:pointer;font:inherit}
+.cstrip .cst{display:block;margin-bottom:6px;font-size:.9rem;font-weight:600}
+.cstrip .gbar{height:8px}
+.cstrip.ok .cst{color:var(--good)}
+.cstrip:focus-visible{outline:3px solid var(--hud-ink);outline-offset:2px}
+.chart .goalln{stroke:var(--warn);stroke-width:1.5;stroke-dasharray:5 4}
+.chart text.goaltx{fill:var(--warn);font-size:10px;font-weight:700}
 </style>
 </head><body>
 <header class="hdr"><div class="in">
@@ -1043,6 +1078,24 @@ const CARDIO_TYPES = [
   ["homeLow","Low-impact home cardio","home","—"]
 ];
 </script>
+<script>// ===== v10 content (authored by Opus — keep text and numbers) =====
+const CARDIO_GOAL_DEFAULT = 90; // minutes per week, user-adjustable
+Object.assign(INFO, {
+  cardioGoal:{t:"Weekly cardio goal",b:["Default 90 minutes a week of easy-to-moderate cardio (effort 3-6), e.g. 3 × 30 min.","It supports fat loss and recovery without hurting your lifting. Daily walking counts too.","⚠️ Assumption, verify: a general starting point for recomposition, not a personal prescription. Change the goal any time."]},
+  weigh:{t:"Why weigh in 2-3 times a week",b:["Your weight moves up and down daily with water, salt and food. One reading means little.","The app compares this week's average with last week's average to see the real trend.","Weigh in the morning, after the bathroom, before eating or drinking, on the same scale."]},
+  calAdvice:{t:"How the calorie advice works",b:["It compares your 7-day average weight with the previous 7 days (needs at least 2 weigh-ins in each week).","Losing more than 0.7 kg a week → add 150-200 kcal (rice or bread). You risk losing muscle.","Losing 0.2-0.7 kg a week → keep calories as they are.","Flat or up for 3 weeks in a row → cut about 150 kcal, only if your waist or InBody fat isn't dropping either (recomposition can keep weight flat while fat goes down).","⚠️ Assumption, verify: coaching rules of thumb, not a medical prescription. Your targets never change automatically."]}
+});
+// Advice rule, used by the app (per-week change = this week's average − last week's average, kg)
+function calorieAdvice(weeks){ // weeks: array of weekly averages oldest→newest (numbers or null)
+  var n=weeks.length; if(n<2||weeks[n-1]==null||weeks[n-2]==null) return {k:"wait",t:"Need at least 2 weigh-ins this week and last week to judge."};
+  var d=weeks[n-1]-weeks[n-2];
+  if(d<-0.7) return {k:"add",t:"Losing "+Math.abs(d).toFixed(1)+" kg/week — faster than planned. Add about 150-200 kcal (rice or bread)."};
+  if(d<=-0.2) return {k:"keep",t:"Losing "+Math.abs(d).toFixed(1)+" kg/week — on track. Keep calories as they are."};
+  var flat=0; for(var i=n-1;i>=1;i--){ if(weeks[i]==null||weeks[i-1]==null) break; if(weeks[i]-weeks[i-1]>-0.2) flat++; else break; }
+  if(flat>=3) return {k:"cut",t:"Flat or up for "+flat+" weeks. If your waist / InBody fat isn't dropping either, cut about 150 kcal."};
+  return {k:"keep",t:"Change "+(d>=0?"+":"")+d.toFixed(1)+" kg/week. Keep calories for now and check again next week (recomposition can keep weight flat)."};
+}
+</script>
 <script>
 (function(){
 "use strict";
@@ -1107,10 +1160,10 @@ var storageOk=true;
 var state=load();
 function defaultState(){
 var m=Object.assign({id:uid("m"),source:"inbody"},FIRST_MEASURE);
-return {version:1,sessions:[],measurements:[m],cardio:[],ui:{tab:"today",mode:"lift",homeLen:"quick"}};
+return {version:1,sessions:[],measurements:[m],cardio:[],weighins:[],ui:{tab:"today",mode:"lift",homeLen:"quick",cardioGoal:CARDIO_GOAL_DEFAULT}};
 }
 function normalize(o){
-var s={version:1,sessions:[],measurements:[],cardio:[],ui:{tab:"today",mode:"lift",homeLen:"quick"}};
+var s={version:1,sessions:[],measurements:[],cardio:[],weighins:[],ui:{tab:"today",mode:"lift",homeLen:"quick",cardioGoal:CARDIO_GOAL_DEFAULT}};
 (o.sessions||[]).forEach(function(x){ if(x&&typeof x==="object"&&typeof x.date==="string"){ if(!x.id) x.id=uid("s"); s.sessions.push(x);} });
 (o.measurements||[]).forEach(function(x){ if(x&&typeof x==="object"&&typeof x.date==="string"){ if(!x.id) x.id=uid("m"); s.measurements.push(x);} });
 if(o.ui&&typeof o.ui.tab==="string") s.ui.tab=o.ui.tab;
@@ -1120,6 +1173,14 @@ var mn=Math.round(+x.min); if(!(mn>0)) return;
 var ef=Math.round(+x.effort); if(!(ef>=1&&ef<=10)) ef=0;
 s.cardio.push({id:x.id?String(x.id):uid("c"),date:x.date,type:x.type,min:mn,effort:ef,detail:typeof x.detail==="string"?x.detail.slice(0,120):""});
 });
+if(Array.isArray(o.weighins)){ var wseen={}; o.weighins.forEach(function(x){
+if(!x||typeof x!=="object"||typeof x.date!=="string"||!parseIso(x.date)) return;
+var kg=+x.kg; if(!(kg>=20&&kg<=400)) return;
+var e={id:x.id?String(x.id):uid("w"),date:x.date,kg:Math.round(kg*100)/100};
+if(wseen[x.date]!=null) s.weighins[wseen[x.date]]=e; else { wseen[x.date]=s.weighins.length; s.weighins.push(e); }
+}); }
+if(o.ui&&typeof o.ui.cardioGoal==="number"&&o.ui.cardioGoal>=0&&o.ui.cardioGoal<=1000) s.ui.cardioGoal=Math.round(o.ui.cardioGoal);
+if(o.ui&&typeof o.ui.weighSnooze==="string"&&parseIso(o.ui.weighSnooze)) s.ui.weighSnooze=o.ui.weighSnooze;
 if(o.ui&&(o.ui.mode==="home"||o.ui.mode==="lift"||o.ui.mode==="cardio")) s.ui.mode=o.ui.mode;
 if(o.ui&&o.ui.setPref&&typeof o.ui.setPref==="object"&&!Array.isArray(o.ui.setPref)){
 var sp={}, anyP=false;
@@ -1138,6 +1199,7 @@ function sortAll(s){
 s.sessions.sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0;});
 s.measurements.sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0;});
 if(s.cardio) s.cardio.sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0;});
+if(s.weighins) s.weighins.sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0;});
 }
 function load(){
 var raw=null;
@@ -1648,6 +1710,7 @@ if(pl&&exIdx>=0&&exIdx<pl.items.length){ renderExScreen(root,pl); return; }
 todayView="list";
 }
 root.appendChild(modeSwitch());
+var wch=weighChip(); if(wch) root.appendChild(wch);
 if(backupDue()) root.appendChild(backupCard());
 if(pendingSwitch&&(!draft||pendingSwitch.key===draft.planKey||!draftHasWork(draft))) pendingSwitch=null;
 if(pendingSwitch) root.appendChild(switchPanel());
@@ -1655,6 +1718,7 @@ if(staleBanner&&!(draft&&countSets(draft,false)>0&&draft.date<today())) staleBan
 if(staleBanner) root.appendChild(stalePanel());
 if(lastSaved) root.appendChild(savedCard());
 root.appendChild(heroEl());
+var cst=cardioStrip(); if(cst) root.appendChild(cst);
 var isRest=draft.planKey==="rest";
 if(!isRest){
 var ri=resumeInfo(), pl2=planByKey(draft.planKey);
@@ -2196,6 +2260,7 @@ ensureHDraft();
 if(hView==="ex"&&hIdx>=0&&hIdx<HSLOTS.length){ renderHEx(root); return; }
 hView="list";
 root.appendChild(modeSwitch());
+var wch2=weighChip(); if(wch2) root.appendChild(wch2);
 root.appendChild(lenSwitch());
 if(backupDue()) root.appendChild(backupCard());
 if(hStale&&!(hCount(hdraft,false)>0&&hdraft.date<today())) hStale=false;
@@ -2624,6 +2689,8 @@ root.appendChild(h("p",{class:"note warn",style:"margin-top:14px;padding:10px 12
 /* ---------- tab: body ---------- */
 var bodyMsg=null;
 function renderBody(root){
+root.appendChild(weighCard());
+root.appendChild(trendCard());
 renderRecovery(root);
 root.appendChild(h("h2",null,"Measurements"));
 var ms=state.measurements;
@@ -2693,6 +2760,130 @@ if(!isNaN(v)) m.visceral=v;
 state.measurements.push(m); sortAll(state); persist();
 bodyMsg={k:"ok",t:"Saved ✓"}; render();
 }
+/* ---------- v10: quick weigh-in + weekly trend ---------- */
+var wf={kg:"",date:today(),msg:null};
+function wfReset(){ wf.kg=""; wf.date=today(); wf.msg=null; }
+function fmtKg(v){ return (Math.round(v*10)/10).toFixed(1); }
+function lastWeighin(){ var w=state.weighins; return w.length?w[w.length-1]:null; }
+function weighAgo(iso){
+var a=parseIso(iso), b=parseIso(today()), n=a&&b?Math.round((b-a)/86400000):0;
+return n<=0?"today":n+(n===1?" day ago":" days ago");
+}
+function weekAvgFrom(startIso){
+var sum=0, c=0, end=addDays(startIso,6);
+state.weighins.forEach(function(x){ if(x.date>=startIso&&x.date<=end){ sum+=x.kg; c++; } });
+return c>=2?sum/c:null;
+}
+function weeklyAverages(n){
+var ws=weekStartIso(today()), out=[];
+for(var i=n-1;i>=0;i--) out.push(weekAvgFrom(addDays(ws,-7*i)));
+return out;
+}
+function weighStart(){
+var l=lastWeighin(); if(l) return l.kg;
+var m=state.measurements.length?num(state.measurements[state.measurements.length-1].weight):NaN;
+return isNaN(m)?70:m;
+}
+function gotoWeighin(){ disarm(); state.ui.tab="body"; persist(); render("wKg"); window.scrollTo(0,0); navPush(); }
+function saveWeighin(){
+var kg=num(wf.kg), d=wf.date;
+if(!parseIso(d)){ wf.msg={k:"err",t:"Pick a valid date."}; render("wDate"); return; }
+if(d>today()){ wf.msg={k:"err",t:"That date is in the future."}; render("wDate"); return; }
+if(isNaN(kg)||!(kg>=20&&kg<=400)){ wf.msg={k:"err",t:"Enter your weight in kg (20 to 400)."}; render("wKg"); return; }
+kg=Math.round(kg*100)/100;
+var e={id:uid("w"),date:d,kg:kg}, prev=null, idx=-1;
+state.weighins.forEach(function(x,i){ if(x.date===d) idx=i; });
+if(idx>=0){ prev=state.weighins[idx]; state.weighins[idx]=e; } else state.weighins.push(e);
+sortAll(state); persist();
+wfReset();
+render("wSave");
+snack(fmtKg(kg)+" kg saved"+(prev?" (replaced "+fmtKg(prev.kg)+")":""),function(){
+var i=-1; state.weighins.forEach(function(x,j){ if(x.id===e.id) i=j; });
+if(i>=0){ if(prev) state.weighins[i]=prev; else state.weighins.splice(i,1); }
+sortAll(state); persist(); render();
+},function(){ return state.weighins.some(function(x){ return x.id===e.id; }); });
+}
+function weighCard(){
+var l=lastWeighin();
+var kgIn=h("input",{type:"number",inputmode:"decimal",step:"any",min:"20",max:"400",id:"wKg","aria-label":"Weight in kg",placeholder:fmtKg(weighStart()),value:wf.kg,
+oninput:function(e){ wf.kg=e.target.value; },
+onkeydown:function(e){ if(e.key==="Enter"){ e.preventDefault(); saveWeighin(); } }});
+function bump(d){ var cur=num(wf.kg); if(isNaN(cur)) cur=weighStart(); wf.kg=String(Math.max(0,Math.round((cur+d)*10)/10)); kgIn.value=wf.kg; }
+return h("div",{class:"card",id:"weighCard"},
+h("div",{class:"titlerow"},h("h3",null,"Weigh-in"),infoBtn("weigh","weigh-ins")),
+h("p",{class:"small muted",id:"wLast",style:"margin:4px 0 12px"},l?"Last: "+fmtKg(l.kg)+" kg · "+weighAgo(l.date):"No weigh-ins yet."),
+h("label",{class:"fld","for":"wKg"},"Weight (kg)"),
+h("div",{class:"wrow"},
+h("button",{class:"btn",type:"button",id:"wMinus","aria-label":"Minus 0.1 kg",onclick:function(){ bump(-0.1); }},"−0.1"),
+kgIn,
+h("button",{class:"btn",type:"button",id:"wPlus","aria-label":"Plus 0.1 kg",onclick:function(){ bump(0.1); }},"+0.1")),
+h("label",{class:"fld","for":"wDate",style:"margin-top:14px"},"Date"),
+h("input",{type:"date",id:"wDate",value:wf.date,oninput:function(e){ if(parseIso(e.target.value)) wf.date=e.target.value; }}),
+wf.msg?h("div",{class:"msg "+wf.msg.k,role:"status",style:"margin:12px 0 0"},wf.msg.t):null,
+h("button",{class:"btn primary block",type:"button",id:"wSave",style:"margin-top:14px",onclick:saveWeighin},"Save weight"));
+}
+function adviceEl(compact){
+var a=calorieAdvice(weeklyAverages(8));
+var cc={keep:"now",add:"inc",cut:"inc",wait:"early"}[a.k]||"early";
+return h("div",{class:"advice"+(compact?" compact":""),id:compact?"foodAdvice":"trendAdvice","data-k":a.k},
+h("span",{class:"chip "+cc},a.k),h("span",{class:"advt"},a.t));
+}
+function trendSvg(wk){
+var W=320,H=132,pl=36,pr=22,pt=14,pb=26, n=wk.length, vals=[];
+wk.forEach(function(v){ if(v!=null) vals.push(v); });
+var mn=Math.min.apply(null,vals), mx=Math.max.apply(null,vals);
+if(mx-mn<0.4){ var mid=(mx+mn)/2; mn=mid-0.3; mx=mid+0.3; }
+function X(i){ return pl+(W-pl-pr)*i/(n-1); }
+function Y(v){ return pt+(H-pt-pb)*(1-(v-mn)/(mx-mn)); }
+var ws=weekStartIso(today());
+var s='<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Weekly average weight, last 8 weeks: '+wk.map(function(v,i){ return shortDate(addDays(ws,-7*(n-1-i)))+" "+(v==null?"no data":fmtKg(v)+" kg"); }).join(", ")+'">';
+[mn,mx].forEach(function(v){ var y=Y(v); s+='<line class="grid" x1="'+pl+'" x2="'+(W-pr)+'" y1="'+y.toFixed(1)+'" y2="'+y.toFixed(1)+'"/><text x="'+(pl-5)+'" y="'+(y+3.5).toFixed(1)+'" text-anchor="end">'+fmtKg(v)+'</text>'; });
+var d="", lastI=-1;
+wk.forEach(function(v,i){ if(v==null) return; d+=(d?"L":"M")+X(i).toFixed(1)+" "+Y(v).toFixed(1)+" "; lastI=i; });
+s+='<path class="ln" d="'+d+'"/>';
+wk.forEach(function(v,i){ if(v!=null) s+='<circle class="dot'+(i===lastI?" last":"")+'" cx="'+X(i).toFixed(1)+'" cy="'+Y(v).toFixed(1)+'" r="3.5"/>'; });
+for(var i=0;i<n;i++) if(i%2===(n-1)%2) s+='<text x="'+X(i).toFixed(1)+'" y="'+(H-8)+'" text-anchor="middle">'+shortDate(addDays(ws,-7*(n-1-i)))+'</text>';
+s+='</svg>';
+var dv=document.createElement("div"); dv.innerHTML=s; return dv.firstChild;
+}
+function trendCard(){
+var wk=weeklyAverages(8), cur=wk[7], prev=wk[6], any=wk.some(function(v){ return v!=null; });
+var chg="—", cls="";
+if(cur!=null&&prev!=null){ var d=cur-prev; var r=Math.round(Math.abs(d)*10)/10; chg=(r===0?"":(d<0?"−":"+"))+r.toFixed(1)+" kg"; cls=d<0?"down":d>0?"up":""; }
+return h("div",{class:"card",id:"trendCard"},
+h("div",{class:"titlerow"},h("h3",null,"Weekly trend"),infoBtn("calAdvice","the calorie advice")),
+any?trendSvg(wk):h("p",{class:"muted",id:"trendNone",style:"margin:8px 0"},"The line appears once a week has 2 weigh-ins."),
+h("div",{class:"sum three wsum"},
+h("div",null,"This week",h("b",{class:"num",id:"wThis"},cur!=null?fmtKg(cur)+" kg":"—")),
+h("div",null,"Last week",h("b",{class:"num",id:"wPrev"},prev!=null?fmtKg(prev)+" kg":"—")),
+h("div",null,"Change",h("b",{class:"num "+cls,id:"wChg"},chg))),
+adviceEl(false),
+h("p",{class:"note",style:"margin:10px 0 0"},"Your targets never change automatically."));
+}
+function weighChip(){
+var l=lastWeighin();
+if(l&&l.date>=addDays(today(),-2)) return null;
+if(state.ui.weighSnooze===today()) return null;
+return h("div",{class:"wchip",id:"weighChip"},
+h("button",{class:"wgo",type:"button",id:"weighGo",onclick:gotoWeighin},"Weigh in today?",h("span",{"aria-hidden":"true"}," ›")),
+h("button",{class:"wx",type:"button",id:"weighHide","aria-label":"Hide until tomorrow",onclick:function(){ state.ui.weighSnooze=today(); persist(); render(); }},"✕"));
+}
+/* ---------- v10: weekly cardio goal ---------- */
+function cardioGoal(){ var g=state.ui.cardioGoal; return (typeof g==="number"&&g>=0)?g:CARDIO_GOAL_DEFAULT; }
+function setGoal(v){ v=Math.max(0,Math.min(1000,Math.round(v))); state.ui.cardioGoal=v; persist(); }
+function gbar(tot,goal,live){
+var ok=tot>=goal, pct=Math.min(100,Math.round(tot/goal*100));
+var o={class:"gbar"+(ok?" ok":"")};
+if(live!==false){ o.role="progressbar"; o["aria-valuemin"]="0"; o["aria-valuemax"]=String(goal); o["aria-valuenow"]=String(Math.min(tot,goal)); o["aria-label"]="Weekly cardio progress"; }
+else o["aria-hidden"]="true";
+return h("div",o,h("i",{style:"width:"+pct+"%"}));
+}
+function cardioStrip(){
+var g=cardioGoal(); if(!(g>0)) return null;
+var t=sumArr(weekMinutes(weekStartIso(today())));
+return h("button",{class:"cstrip"+(t>=g?" ok":""),type:"button",id:"cardioStrip",onclick:function(){ setMode("cardio"); }},
+h("span",{class:"cst num"},"Cardio this week: "+t+" / "+g+" min"+(t>=g?" ✓":"")),gbar(t,g,false));
+}
 /* ---------- tab: food ---------- */
 function calcMeal(meal){
 var rows=[], kc=0, pr=0, ca=0, fa=0;
@@ -2734,7 +2925,8 @@ h("label",{class:"fld","for":"milkKcal",style:"margin-top:14px"},"Protein milk c
 milkIn,
 h("p",{class:"small",style:"margin-top:12px"},"+ Protein milk: "+SHAKE.protein+" g protein, calories from the label"),
 h("p",{style:"font-weight:700;margin:0"},"Total protein: ",h("span",{class:"num"},T.prot+SHAKE.protein)," g"),
-h("p",{class:"note",style:"margin:8px 0 0"},SHAKE.note)));
+h("p",{class:"note",style:"margin:8px 0 0"},SHAKE.note),
+h("div",{class:"advrow"},adviceEl(true),h("button",{class:"lnkbtn",type:"button",id:"foodLogWeight",onclick:gotoWeighin},"Log weight"))));
 MEALS.forEach(function(m,i){
 var c=calc[i];
 root.appendChild(h("h2",null,m.name,h("span",{class:"tag"},m.time)));
@@ -2760,7 +2952,7 @@ root.appendChild(box);
 }
 /* ---------- backup ---------- */
 var bk={open:false,msg:null,kind:"ok",pending:null,armed:false,impText:"",expText:""};
-function summarize(o){return {s:o.sessions.length,m:o.measurements.length,c:(o.cardio||[]).length};}
+function summarize(o){return {s:o.sessions.length,m:o.measurements.length,c:(o.cardio||[]).length,w:(o.weighins||[]).length};}
 function parseImport(text){
 var o;
 try{ o=JSON.parse(text); }catch(e){ return {err:"That text isn't valid JSON. Make sure you copied the whole backup."}; }
@@ -2813,12 +3005,12 @@ rd.readAsText(f);
 p.appendChild(h("button",{class:"btn block",id:"impReview",type:"button",style:"margin-top:10px",onclick:function(){reviewImport($("impText").value);}},"Review data"));
 if(bk.pending){
 var c=summarize(bk.pending);
-p.appendChild(h("div",{class:"warnbox",style:"margin-top:10px"},"This will replace: "+c.s+" workouts, "+c.m+" measurements, "+c.c+" cardio"));
+p.appendChild(h("div",{class:"warnbox",style:"margin-top:10px"},"This will replace: "+c.s+" workouts, "+c.m+" measurements, "+c.c+" cardio, "+c.w+" weigh-ins"));
 p.appendChild(h("button",{class:"btn block "+(bk.armed?"armed":"danger"),id:"impGo",type:"button",style:"margin-top:8px",onclick:function(){
 if(!bk.armed){ bk.armed=true; renderBackup("impGo"); return; }
 state=bk.pending; state.ui.tab=state.ui.tab||"today"; persist();
 bk.pending=null; bk.armed=false; bk.impText=""; bk.msg="Data replaced ✓"; bk.kind="ok";
-draft=null; cf=null; snackHide(); clearDraftStore(); clearLastSaved(); pendingSwitch=null; staleBanner=false; stopRest(); todayView="list"; render(); renderBackup();
+draft=null; cf=null; wfReset(); cgOpen=false; snackHide(); clearDraftStore(); clearLastSaved(); pendingSwitch=null; staleBanner=false; stopRest(); todayView="list"; render(); renderBackup();
 }},bk.armed?"Tap again to confirm":"Replace data"));
 }
 p.appendChild(h("button",{class:"btn block",type:"button",style:"margin-top:14px",onclick:function(){bk.open=false;renderBackup();$("backupBtn").focus();navPush();}},"Close"));
@@ -2987,8 +3179,8 @@ var out=[0,0,0,0,0,0,0], a=parseIso(startIso);
 (state.cardio||[]).forEach(function(c){ var b=parseIso(c.date); if(!a||!b) return; var diff=Math.round((b-a)/86400000); if(diff>=0&&diff<7) out[diff]+=c.min; });
 return out;
 }
-function barChart(vals,labels,aria,hi){
-var W=320,H=150,pl=10,pr=10,pt=24,pb=30, n=vals.length, mx=Math.max.apply(null,vals.concat([1])), slot=(W-pl-pr)/n, bw=Math.min(34,slot*0.56);
+function barChart(vals,labels,aria,hi,goal){
+var W=320,H=150,pl=10,pr=10,pt=24,pb=30, n=vals.length, mx=Math.max.apply(null,vals.concat([1,goal>0?goal:1])), slot=(W-pl-pr)/n, bw=Math.min(34,slot*0.56);
 var s='<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+aria+'">';
 s+='<line class="grid" x1="'+pl+'" x2="'+(W-pr)+'" y1="'+(H-pb)+'" y2="'+(H-pb)+'"/>';
 vals.forEach(function(v,i){
@@ -2997,10 +3189,11 @@ s+='<rect class="bar'+(v>0?"":" bz")+(i===hi?" hi":"")+'" x="'+x.toFixed(1)+'" y
 if(v>0) s+='<text class="lv" x="'+cx.toFixed(1)+'" y="'+(y-5).toFixed(1)+'" text-anchor="middle">'+fmtNum(v)+'</text>';
 s+='<text x="'+cx.toFixed(1)+'" y="'+(H-10)+'" text-anchor="middle">'+labels[i]+'</text>';
 });
+if(goal>0){ var gy=H-pb-(H-pt-pb)*goal/mx; s+='<line class="goalln" x1="'+pl+'" x2="'+(W-pr)+'" y1="'+gy.toFixed(1)+'" y2="'+gy.toFixed(1)+'"/><text class="goaltx" x="'+(W-pr)+'" y="'+(gy-4).toFixed(1)+'" text-anchor="end">goal '+goal+'</text>'; }
 s+='</svg>';
 var d=document.createElement("div"); d.innerHTML=s; return d.firstChild;
 }
-var cf=null;
+var cf=null, cgOpen=false;
 function cfReset(){
 var l=state.ui.cardioLast;
 cf={type:(l&&cardioType(l.type))?l.type:CARDIO_TYPES[0][0],date:today(),min:String((l&&l.min>0)?l.min:30),effort:0,detail:"",msg:null};
@@ -3008,12 +3201,37 @@ cf={type:(l&&cardioType(l.type))?l.type:CARDIO_TYPES[0][0],date:today(),min:Stri
 function renderCardioToday(root){
 if(!cf) cfReset();
 root.appendChild(modeSwitch());
+var wch3=weighChip(); if(wch3) root.appendChild(wch3);
 if(backupDue()) root.appendChild(backupCard());
 var wm=weekMinutes(weekStartIso(today())), tot=sumArr(wm), ti=(parseIso(today()).getDay()+6)%7;
 var aria="Cardio minutes per day this week: "+DAYN.map(function(d,i){ return d+" "+wm[i]; }).join(", ");
+var gtitle=h("h3",{id:"cardioTitle"},"This week: "+tot+" min"), gwrap=h("div",{class:"gwrap",id:"goalWrap"});
+function paintGoal(){
+var g=cardioGoal();
+gtitle.textContent=g>0?"This week: "+tot+" / "+g+" min":"This week: "+tot+" min";
+gwrap.textContent=""; gwrap.hidden=!(g>0);
+if(g>0){ gwrap.appendChild(gbar(tot,g,false)); gwrap.appendChild(h("div",{class:"glbl"+(tot>=g?" ok":""),id:"goalLbl"},tot>=g?"Goal reached \u2713":(g-tot)+" min to go")); }
+}
+paintGoal();
+var gedit=null;
+if(cgOpen){
+var gin=h("input",{type:"number",inputmode:"numeric",min:"0",max:"1000",step:"1",id:"cardioGoalIn","aria-label":"Weekly cardio goal in minutes",value:String(cardioGoal()),oninput:function(e){ var v=num(e.target.value); if(!isNaN(v)&&v>=0){ setGoal(v); paintGoal(); } }});
+function gbump(d){ setGoal(cardioGoal()+d); gin.value=String(cardioGoal()); paintGoal(); }
+gedit=h("div",{class:"gedit",id:"goalEdit"},
+h("div",{class:"minrow"},
+h("button",{class:"btn",type:"button",id:"goalMinus","aria-label":"Minus 15 minutes",onclick:function(){ gbump(-15); }},"\u221215"),
+gin,
+h("button",{class:"btn",type:"button",id:"goalPlus","aria-label":"Plus 15 minutes",onclick:function(){ gbump(15); }},"+15")),
+h("p",{class:"note",style:"margin:6px 0 0"},"Minutes per week. 0 means no goal."));
+}
 root.appendChild(h("div",{class:"card cwk",id:"cardioWeek"},
-h("div",{class:"titlerow"},h("h3",{id:"cardioTitle"},"This week: "+tot+" min"),infoBtn("cardio","cardio")),
+h("div",{class:"titlerow"},gtitle,infoBtn("cardio","cardio")),
+gwrap,
 barChart(wm,DAYN,aria,ti),
+h("div",{class:"goalrow"},
+h("button",{class:"btn small",type:"button",id:"goalBtn","aria-expanded":cgOpen?"true":"false","aria-controls":"goalEdit",onclick:function(){ cgOpen=!cgOpen; render("goalBtn"); }},cgOpen?"Done":"Edit goal"),
+infoBtn("cardioGoal","the weekly cardio goal")),
+gedit,
 h("p",{class:"note",style:"margin:8px 0 0"},"Monday to Sunday. Optional, and separate from your lifting rotation and recovery.")));
 /* form */
 var tc=cardioType(cf.type)||CARDIO_TYPES[0], hint=tc[3]&&tc[3]!=="—"?tc[3]:"";
@@ -3094,8 +3312,9 @@ for(var i=5;i>=0;i--){
 var st=addDays(ws,-7*i); vals.push(sumArr(weekMinutes(st))); labs.push(shortDate(st));
 }
 root.appendChild(h("h2",{id:"cardioProg"},"Cardio"));
-root.appendChild(h("p",{class:"note",style:"margin-top:-6px"},"Minutes per week (Monday to Sunday), last 6 weeks. The label is the Monday of each week."));
-root.appendChild(barChart(vals,labs,"Cardio minutes per week, last 6 weeks: "+labs.map(function(l,i){ return l+" "+vals[i]; }).join(", "),5));
+var pg=cardioGoal();
+root.appendChild(h("p",{class:"note",style:"margin-top:-6px"},"Minutes per week (Monday to Sunday), last 6 weeks. The label is the Monday of each week."+(pg>0?" The dashed line is your goal ("+pg+" min).":"")));
+root.appendChild(barChart(vals,labs,"Cardio minutes per week, last 6 weeks: "+labs.map(function(l,i){ return l+" "+vals[i]; }).join(", ")+(pg>0?". Weekly goal "+pg+" minutes":""),5,pg));
 }
 
 /* ---------- shell ---------- */
