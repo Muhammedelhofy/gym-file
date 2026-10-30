@@ -644,6 +644,20 @@ body.hastimer-c .snack{bottom:calc(124px + env(safe-area-inset-bottom,0px))}
 .cstrip:focus-visible{outline:3px solid var(--hud-ink);outline-offset:2px}
 .chart .goalln{stroke:var(--warn);stroke-width:1.5;stroke-dasharray:5 4}
 .chart text.goaltx{fill:var(--warn);font-size:10px;font-weight:700}
+.hdrR{display:flex;align-items:center;gap:10px;flex:none}
+.syncdot{display:inline-block;width:12px;height:12px;border-radius:50%;background:#7b8aa8;box-shadow:0 0 0 3px rgba(123,138,168,.25);flex:none}
+.syncdot.ok{background:var(--good);box-shadow:0 0 0 3px rgba(56,232,160,.25),0 0 8px var(--good)}
+.syncdot.wait{background:var(--warn);box-shadow:0 0 0 3px rgba(255,194,77,.25),0 0 8px var(--warn)}
+#syncBox{margin:10px 0 16px;padding:12px;border:1px solid var(--line);background:var(--surface)}
+#syncBox .pwrow{display:flex;gap:8px;align-items:stretch}
+#syncBox .pwrow .btn{flex:none;min-width:64px}
+#syncBox input[type=email],#syncBox input[type=text],#syncBox input[type=password]{font:inherit;font-size:16px;width:100%;min-height:46px;padding:8px 10px;border-radius:2px;border:1px solid var(--fline);background:var(--field);color:var(--text)}
+#syncBox input:focus{outline:2px solid var(--hud);outline-offset:1px;border-color:var(--hud)}
+#syncBox .sline{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;margin:6px 0 10px;font-weight:600}
+#syncBox .sline .syncdot{margin-right:2px}
+#syncBox .srow2{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+#syncBox .srow2 .btn{flex:1 1 130px}
+#syncBox .msg{margin:8px 0 0;overflow-wrap:anywhere}
 </style>
 </head><body>
 <header class="hdr"><div class="in">
@@ -1096,6 +1110,7 @@ function calorieAdvice(weeks){ // weeks: array of weekly averages oldest→newes
   return {k:"keep",t:"Change "+(d>=0?"+":"")+d.toFixed(1)+" kg/week. Keep calories for now and check again next week (recomposition can keep weight flat)."};
 }
 </script>
+<script>const SUPA_URL="https://sjomysminfzohkbauahw.supabase.co"; const SUPA_KEY="sb_publishable_X4_vBV9fue_i4cLPNGGcQQ_M6nVEI0q";</script>
 <script>
 (function(){
 "use strict";
@@ -1159,14 +1174,19 @@ function planType(k){if(k==="rest"||k==="home") return "rest";var p=planByKey(k)
 var storageOk=true;
 var state=load();
 function defaultState(){
-var m=Object.assign({id:uid("m"),source:"inbody"},FIRST_MEASURE);
-return {version:1,sessions:[],measurements:[m],cardio:[],weighins:[],ui:{tab:"today",mode:"lift",homeLen:"quick",cardioGoal:CARDIO_GOAL_DEFAULT}};
+var m=Object.assign({id:"m_seed",source:"inbody"},FIRST_MEASURE);
+return {version:1,sessions:[],measurements:[m],cardio:[],weighins:[],deleted:{sessions:[],measurements:[],weighins:[],cardio:[]},rev:0,ui:{tab:"today",mode:"lift",homeLen:"quick",cardioGoal:CARDIO_GOAL_DEFAULT}};
 }
 function normalize(o){
-var s={version:1,sessions:[],measurements:[],cardio:[],weighins:[],ui:{tab:"today",mode:"lift",homeLen:"quick",cardioGoal:CARDIO_GOAL_DEFAULT}};
+var s={version:1,sessions:[],measurements:[],cardio:[],weighins:[],deleted:{sessions:[],measurements:[],weighins:[],cardio:[]},rev:0,ui:{tab:"today",mode:"lift",homeLen:"quick",cardioGoal:CARDIO_GOAL_DEFAULT}};
 (o.sessions||[]).forEach(function(x){ if(x&&typeof x==="object"&&typeof x.date==="string"){ if(!x.id) x.id=uid("s"); s.sessions.push(x);} });
 (o.measurements||[]).forEach(function(x){ if(x&&typeof x==="object"&&typeof x.date==="string"){ if(!x.id) x.id=uid("m"); s.measurements.push(x);} });
 if(o.ui&&typeof o.ui.tab==="string") s.ui.tab=o.ui.tab;
+if(o.deleted&&typeof o.deleted==="object") ["sessions","measurements","weighins","cardio"].forEach(function(k){
+if(!Array.isArray(o.deleted[k])) return; var seen={};
+o.deleted[k].forEach(function(v){ v=String(v); if(v&&!seen[v]&&s.deleted[k].length<5000){ seen[v]=1; s.deleted[k].push(v); } });
+});
+if(+o.rev>0) s.rev=Math.floor(+o.rev);
 if(Array.isArray(o.cardio)) o.cardio.forEach(function(x){
 if(!x||typeof x!=="object"||typeof x.date!=="string"||!parseIso(x.date)||!cardioType(x.type)) return;
 var mn=Math.round(+x.min); if(!(mn>0)) return;
@@ -1212,9 +1232,40 @@ if(o&&Array.isArray(o.sessions)&&Array.isArray(o.measurements)) return normalize
 }
 return defaultState();
 }
+var SYNC_ON=(typeof SUPA_URL==="string"&&SUPA_URL.length>0&&typeof SUPA_KEY==="string"&&SUPA_KEY.length>0);
+var SUPA_BASE=SYNC_ON?SUPA_URL.replace(/\/+$/,""):"";
+var AKEY="gymAuth_v1";
+var LOCAL_UI=["tab","weighSnooze","backupSnooze","cardioLast"];
+var auth=SYNC_ON?readAuth():null;
+var sy={email:"",pw:"",showPw:false,busy:false,msg:"",kind:"ok",status:"idle",err:"",last:0,pending:false,running:false,again:false,out:false,chg:0,t:null,outT:null,promise:null,lastDue:false};
+function canon(v){
+if(Array.isArray(v)) return "["+v.map(canon).join(",")+"]";
+if(v&&typeof v==="object") return "{"+Object.keys(v).sort().filter(function(k){return v[k]!==undefined;}).map(function(k){return JSON.stringify(k)+":"+canon(v[k]);}).join(",")+"}";
+return JSON.stringify(v);
+}
+function sigOf(s){
+var ui={}, d={}, k;
+for(k in (s.ui||{})) if(LOCAL_UI.indexOf(k)<0) ui[k]=s.ui[k];
+["sessions","measurements","weighins","cardio"].forEach(function(n){ d[n]=((s.deleted||{})[n]||[]).slice().sort(); });
+function byKey(a,f){ return (a||[]).slice().sort(function(x,y){ var p=String(x[f]),q=String(y[f]); return p<q?-1:p>q?1:0; }); }
+return canon({s:byKey(s.sessions,"id"),m:byKey(s.measurements,"id"),c:byKey(s.cardio,"id"),w:byKey(s.weighins,"date"),d:d,u:ui});
+}
+var lastSig=sigOf(state);
 function persist(){
+var sg=sigOf(state), changed=(sg!==lastSig);
+if(changed){ lastSig=sg; state.rev=Math.max(Date.now(),(state.rev||0)+1); }
 try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){ storageOk=false; }
 renderBanner();
+if(changed) syncNoteChange();
+}
+function tomb(kind,key){
+if(!state.deleted) state.deleted={sessions:[],measurements:[],weighins:[],cardio:[]};
+if(!state.deleted[kind]) state.deleted[kind]=[];
+key=String(key); if(state.deleted[kind].indexOf(key)<0) state.deleted[kind].push(key);
+}
+function untomb(kind,key){
+var a=state.deleted&&state.deleted[kind]; if(!a) return;
+var i=a.indexOf(String(key)); if(i>=0) a.splice(i,1);
 }
 function renderBanner(){
 var b=$("banner"); b.textContent="";
@@ -2026,7 +2077,7 @@ h("div",{class:"t"},
 h("div",{class:"nm"},planName(s.planKey),s.planKey==="home"?h("span",{class:"ptag htag"},"Bodyweight"):null,s.partial?h("span",{class:"ptag"},"Partial"):null),
 h("div",{class:"small muted num"},fmtDate(s.date)+(s.planKey==="rest"?"":" — "+setCount(s)+" sets"))),
 h("button",{class:"btn small danger"+(isArmed?" armed":""),type:"button",id:id,onclick:function(){
-if(armed===id){ disarm(); state.sessions=state.sessions.filter(function(x){return x.id!==s.id;}); persist(); render(); }
+if(armed===id){ disarm(); state.sessions=state.sessions.filter(function(x){return x.id!==s.id;}); tomb("sessions",s.id); persist(); render(); }
 else { arm(id); render(id); }
 }},isArmed?"Tap again to confirm":"Delete")));
 });
@@ -2741,7 +2792,7 @@ h("td",{class:"num"},m.visceral!=null?fmtNum(num(m.visceral)):"—"),
 h("td",null,dv(num(m.weight),p?num(p.weight):null," kg")),
 h("td",null,dv(num(m.fatPct),p?num(p.fatPct):null,"%")),
 h("td",null,h("button",{class:"btn small danger"+(isArmed?" armed":""),type:"button",id:id,onclick:function(){
-if(armed===id){ disarm(); state.measurements=state.measurements.filter(function(x){return x.id!==m.id;}); persist(); render(); }
+if(armed===id){ disarm(); state.measurements=state.measurements.filter(function(x){return x.id!==m.id;}); tomb("measurements",m.id); persist(); render(); }
 else { arm(id); render(id); }
 }},isArmed?"Tap again to confirm":"Delete"))));
 })(i);
@@ -2794,12 +2845,13 @@ kg=Math.round(kg*100)/100;
 var e={id:uid("w"),date:d,kg:kg}, prev=null, idx=-1;
 state.weighins.forEach(function(x,i){ if(x.date===d) idx=i; });
 if(idx>=0){ prev=state.weighins[idx]; state.weighins[idx]=e; } else state.weighins.push(e);
+untomb("weighins",d);
 sortAll(state); persist();
 wfReset();
 render("wSave");
 snack(fmtKg(kg)+" kg saved"+(prev?" (replaced "+fmtKg(prev.kg)+")":""),function(){
 var i=-1; state.weighins.forEach(function(x,j){ if(x.id===e.id) i=j; });
-if(i>=0){ if(prev) state.weighins[i]=prev; else state.weighins.splice(i,1); }
+if(i>=0){ if(prev) state.weighins[i]=prev; else { state.weighins.splice(i,1); tomb("weighins",e.date); } }
 sortAll(state); persist(); render();
 },function(){ return state.weighins.some(function(x){ return x.id===e.id; }); });
 }
@@ -2976,7 +3028,8 @@ p.textContent="";
 if(!bk.open) return;
 var exp=h("textarea",{id:"expText",readonly:true,"aria-label":"Backup text",rows:"4"},bk.expText);
 p.appendChild(h("div",{class:"titlerow"},h("h3",null,"Backup"),infoBtn("backup","backup and restore")));
-p.appendChild(h("p",{class:"note"},"Your data is saved in this browser only. Take a copy now and then."));
+if(SYNC_ON) p.appendChild(h("div",{id:"syncBox"}));
+p.appendChild(h("p",{class:"note"},(SYNC_ON&&auth)?"Your data is saved in this browser and synced to your cloud account. You can still take a copy below.":"Your data is saved in this browser only. Take a copy now and then."));
 p.appendChild(exp);
 p.appendChild(h("div",{class:"row2",style:"margin-top:8px"},
 h("button",{class:"btn",id:"bkCopy",type:"button",onclick:function(){
@@ -3008,12 +3061,18 @@ var c=summarize(bk.pending);
 p.appendChild(h("div",{class:"warnbox",style:"margin-top:10px"},"This will replace: "+c.s+" workouts, "+c.m+" measurements, "+c.c+" cardio, "+c.w+" weigh-ins"));
 p.appendChild(h("button",{class:"btn block "+(bk.armed?"armed":"danger"),id:"impGo",type:"button",style:"margin-top:8px",onclick:function(){
 if(!bk.armed){ bk.armed=true; renderBackup("impGo"); return; }
-state=bk.pending; state.ui.tab=state.ui.tab||"today"; persist();
+var prevSt=state; state=bk.pending; state.ui.tab=state.ui.tab||"today";
+[["sessions","id"],["measurements","id"],["cardio","id"],["weighins","date"]].forEach(function(kk){
+var have={}; (state[kk[0]]||[]).forEach(function(x){ have[x[kk[1]]]=1; });
+(prevSt[kk[0]]||[]).forEach(function(x){ if(!have[x[kk[1]]]) tomb(kk[0],x[kk[1]]); });
+});
+persist();
 bk.pending=null; bk.armed=false; bk.impText=""; bk.msg="Data replaced ✓"; bk.kind="ok";
 draft=null; cf=null; wfReset(); cgOpen=false; snackHide(); clearDraftStore(); clearLastSaved(); pendingSwitch=null; staleBanner=false; stopRest(); todayView="list"; render(); renderBackup();
 }},bk.armed?"Tap again to confirm":"Replace data"));
 }
 p.appendChild(h("button",{class:"btn block",type:"button",style:"margin-top:14px",onclick:function(){bk.open=false;renderBackup();$("backupBtn").focus();navPush();}},"Close"));
+if(SYNC_ON) paintSync();
 if(focusId&&$(focusId)) $(focusId).focus();
 }
 /* remember when the user last took a backup (copy or download) */
@@ -3042,6 +3101,7 @@ markBackup(); done(true,"Download started.");
 }
 function backupDue(){
 if(!state.sessions.length) return false;
+if(SYNC_ON&&auth&&sy.status==="ok"&&!sy.pending) return false;
 if(state.ui.backupSnooze===today()) return false;
 var lb=state.ui.lastBackup;
 if(!lb||!parseIso(lb)) return true;
@@ -3279,7 +3339,7 @@ h("div",{class:"t"},
 h("div",{class:"nm"},cardioName(c.type)+" · "+c.min+" min"),
 h("div",{class:"small muted num",style:"overflow-wrap:anywhere"},fmtDate(c.date)+(c.effort?" — effort "+c.effort:"")+(c.detail?" — "+c.detail:""))),
 h("button",{class:"btn small danger"+(isArmed?" armed":""),type:"button",id:id,onclick:function(){
-if(armed===id){ disarm(); state.cardio=state.cardio.filter(function(x){ return x.id!==c.id; }); persist(); render(); }
+if(armed===id){ disarm(); state.cardio=state.cardio.filter(function(x){ return x.id!==c.id; }); tomb("cardio",c.id); persist(); render(); }
 else { arm(id); render(id); }
 }},isArmed?"Tap again to confirm":"Delete")));
 });
@@ -3300,7 +3360,7 @@ persist();
 cfReset();
 render("cardioSave");
 snack(cardioName(e.type)+" · "+mn+" min saved",function(){
-state.cardio=state.cardio.filter(function(x){ return x.id!==e.id; });
+state.cardio=state.cardio.filter(function(x){ return x.id!==e.id; }); tomb("cardio",e.id);
 if(prevLast) state.ui.cardioLast=prevLast; else delete state.ui.cardioLast;
 persist(); render();
 },function(){ return state.cardio.some(function(x){ return x.id===e.id; }); });
@@ -3470,5 +3530,248 @@ buildRestBar();
 persist();
 render();
 try{ history.replaceState({root:1},""); history.pushState(navState(),""); }catch(e){}
+initSync();
+/* ---------- v11: cloud sync (plain fetch, no library) ---------- */
+function readAuth(){
+try{ var a=JSON.parse(localStorage.getItem(AKEY)||"null"); if(a&&a.access_token&&a.refresh_token&&a.uid) return a; }catch(e){}
+return null;
+}
+function writeAuth(a){ auth=a; try{ if(a) localStorage.setItem(AKEY,JSON.stringify(a)); else localStorage.removeItem(AKEY); }catch(e){} }
+function setSession(j,emailFallback){
+var u=j.user||{}, prev=auth||{};
+writeAuth({access_token:j.access_token,refresh_token:j.refresh_token||prev.refresh_token,expires_at:Date.now()+(+j.expires_in||3600)*1000,uid:u.id||prev.uid,email:u.email||emailFallback||prev.email||""});
+}
+function sbReq(path,method,body,token,extra){
+var ctl=(typeof AbortController!=="undefined")?new AbortController():null, to=null, k;
+var headers={"apikey":SUPA_KEY,"Content-Type":"application/json"};
+if(token) headers.Authorization="Bearer "+token;
+if(extra) for(k in extra) headers[k]=extra[k];
+var opt={method:method,headers:headers};
+if(body!=null) opt.body=JSON.stringify(body);
+if(ctl){ opt.signal=ctl.signal; to=setTimeout(function(){ try{ctl.abort();}catch(e){} },20000); }
+return fetch(SUPA_BASE+path,opt).then(function(res){
+return res.text().then(function(t){ clearTimeout(to); var j=null; try{ j=t?JSON.parse(t):null; }catch(e){} return {ok:res.ok,status:res.status,json:j}; });
+},function(){ clearTimeout(to); throw {net:true}; });
+}
+var refreshP=null;
+function refreshAuth(){
+if(refreshP) return refreshP;
+if(!auth) return Promise.reject({expired:true});
+refreshP=sbReq("/auth/v1/token?grant_type=refresh_token","POST",{refresh_token:auth.refresh_token},null).then(function(r){
+refreshP=null;
+if(r.ok&&r.json&&r.json.access_token){ setSession(r.json); return; }
+if(r.status===400||r.status===401||r.status===403||r.status===422){ writeAuth(null); throw {expired:true}; }
+throw {http:r.status,msg:errText(r)};
+},function(e){ refreshP=null; throw e; });
+return refreshP;
+}
+function errText(r){ var j=r&&r.json; return (j&&(j.msg||j.error_description||j.message||j.error))||""; }
+function authed(path,method,body,extra,retried){
+var p=(auth&&auth.expires_at-Date.now()<60000)?refreshAuth():Promise.resolve();
+return p.then(function(){
+if(!auth) throw {expired:true};
+return sbReq(path,method,body,auth.access_token,extra);
+}).then(function(r){
+if(r.status===401&&!retried) return refreshAuth().then(function(){ return authed(path,method,body,extra,true); });
+return r;
+});
+}
+/* merge two normalized states: union by id (weigh-ins by date), minus tombstones */
+function mergeStates(L,R){
+var rn=(R.rev||0)>(L.rev||0), older=rn?L:R, newer=rn?R:L;
+var del={};
+["sessions","measurements","weighins","cardio"].forEach(function(k){
+var seen=Object.create(null), a=[];
+[(L.deleted||{})[k],(R.deleted||{})[k]].forEach(function(l){ (l||[]).forEach(function(v){ if(!seen[v]){ seen[v]=1; a.push(v); } }); });
+del[k]=a;
+});
+function uni(kind,keyf){
+var tm=Object.create(null); del[kind].forEach(function(v){ tm[v]=1; });
+var map=Object.create(null), order=[];
+[older,newer].forEach(function(side){ (side[kind]||[]).forEach(function(x){
+var k=keyf(x); if(tm[k]) return;
+if(!(k in map)) order.push(k);
+map[k]=x;
+}); });
+return order.map(function(k){ return map[k]; });
+}
+var ms=uni("measurements",function(x){return x.id;}), mseen=Object.create(null);
+ms=ms.filter(function(x){ var c=Object.assign({},x); delete c.id; var ck=canon(c); if(mseen[ck]) return false; mseen[ck]=1; return true; });
+var ui=Object.assign({},newer.ui);
+LOCAL_UI.forEach(function(k){ if(L.ui&&L.ui[k]!==undefined) ui[k]=L.ui[k]; else delete ui[k]; });
+return normalize({version:1,
+sessions:uni("sessions",function(x){return x.id;}),
+measurements:ms,
+cardio:uni("cardio",function(x){return x.id;}),
+weighins:uni("weighins",function(x){return x.date;}),
+deleted:del,rev:Math.max(L.rev||0,R.rev||0),ui:ui});
+}
+function softRender(){
+var a=document.activeElement, v=$("view");
+if(a&&v&&v.contains(a)&&(a.tagName==="INPUT"||a.tagName==="TEXTAREA"||a.tagName==="SELECT")) return;
+var y=window.scrollY||0; render(); try{ window.scrollTo(0,y); }catch(e){}
+}
+function applyMerged(m){
+var keepMode=(draft&&draftHasWork(draft))||(hdraft&&hCount(hdraft,false)>0);
+if(keepMode&&state.ui.mode) m.ui.mode=state.ui.mode;
+state=m; lastSig=sigOf(state); persist();
+softRender();
+}
+function doSync(){
+var c0=sy.chg;
+return authed("/rest/v1/gym_state?select=data,updated_at&user_id=eq."+encodeURIComponent(auth.uid),"GET").then(function(r){
+if(!r.ok) throw {http:r.status,msg:errText(r)};
+var row=Array.isArray(r.json)?r.json[0]:null, remote=null;
+if(row&&row.data&&typeof row.data==="object"){ try{ remote=normalize(clone(row.data)); }catch(e){ remote=null; } }
+if(remote){
+var merged=mergeStates(state,remote);
+if(sigOf(merged)!==sigOf(state)) applyMerged(merged);
+else if((merged.rev||0)!==(state.rev||0)){ state.rev=merged.rev; try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){} }
+}
+if(remote&&sigOf(state)===sigOf(remote)) return c0;
+var snap=clone(state);
+return authed("/rest/v1/gym_state","POST",{user_id:auth.uid,data:snap,updated_at:new Date().toISOString(),device:devId()},{"Prefer":"resolution=merge-duplicates,return=minimal"}).then(function(w){
+if(!w.ok) throw {http:w.status,msg:errText(w)};
+return c0;
+});
+}).then(function(c){
+if(sy.chg===c) sy.pending=false;
+sy.status="ok"; sy.err=""; sy.last=Date.now();
+});
+}
+function syncNow(){
+if(!SYNC_ON||!auth) return Promise.resolve();
+if(sy.running){ sy.again=true; return sy.promise||Promise.resolve(); }
+sy.running=true; sy.status="syncing"; paintStatus();
+sy.promise=Promise.resolve().then(doSync).then(null,function(e){
+if(e&&e.net){ sy.status="offline"; sy.pending=true; }
+else if(e&&e.expired){ sy.status="idle"; sy.pending=false; sy.last=0; sy.msg="Your session expired. Please sign in again."; sy.kind="err"; }
+else { sy.status="error"; sy.pending=true; sy.err=(e&&e.msg)?String(e.msg):(e&&e.http?"the server answered "+e.http:"something unexpected happened"); }
+}).then(function(){
+sy.running=false; paintStatus();
+try{ var d=backupDue(); if(d!==sy.lastDue){ sy.lastDue=d; softRender(); } }catch(e){}
+if(!auth&&bk.open) renderBackup();
+if(sy.again){ sy.again=false; return syncNow(); }
+});
+return sy.promise;
+}
+function syncNoteChange(){
+if(!SYNC_ON||!auth) return;
+sy.chg++; sy.pending=true; paintStatus();
+clearTimeout(sy.t); sy.t=setTimeout(function(){ syncNow(); },2000);
+}
+function devId(){
+var d=rawGet("gymDevice_v1"); if(!d){ d=uid("d"); rawPut("gymDevice_v1",d); } return d;
+}
+function agoText(){
+var s=Math.round((Date.now()-sy.last)/1000);
+if(s<60) return "just now";
+if(s<3600) return Math.round(s/60)+" min ago";
+var d=new Date(sy.last); return "at "+pad(d.getHours())+":"+pad(d.getMinutes());
+}
+function statusText(){
+if(!auth) return "Not signed in";
+if(sy.status==="syncing") return "Syncing…";
+if(sy.status==="offline") return "Offline — will sync when back online";
+if(sy.status==="error") return "Sync problem: "+sy.err;
+if(sy.pending) return "Changes waiting to sync…";
+if(sy.last) return "Synced "+agoText();
+return "Waiting to sync…";
+}
+function dotState(){
+if(!auth) return "";
+return (sy.status==="ok"&&!sy.pending)?"ok":"wait";
+}
+function paintStatus(){
+var dot=$("syncDot");
+if(dot){
+var ds=dotState();
+dot.className="syncdot"+(ds?" "+ds:"");
+var lab="Cloud sync: "+(!auth?"not signed in":(ds==="ok"?"all changes synced":(sy.status==="offline"?"offline, changes waiting":(sy.status==="error"?"problem, changes waiting":"syncing or waiting"))));
+dot.setAttribute("aria-label",lab); dot.setAttribute("title",lab);
+}
+var st=$("syStatus"); if(st) st.textContent=statusText();
+var rt=$("syRetry"); if(rt) rt.hidden=(sy.status!=="error");
+var sd=$("syLineDot"); if(sd) sd.className="syncdot"+(dotState()?" "+dotState():"");
+}
+function syMsg(t,k){ sy.msg=t; sy.kind=k||"ok"; var m=$("syMsg"); if(m){ m.textContent=t||""; m.className="msg "+(sy.kind); } }
+var OFFLINE_MSG="Can't reach the server. Check your connection and try again.";
+function signIn(){
+if(sy.busy) return;
+var em=String(sy.email||"").trim().toLowerCase(), pw=String(sy.pw||"");
+if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)){ syMsg("Enter a valid email address.","err"); return; }
+if(!pw){ syMsg("Enter your password.","err"); return; }
+sy.email=em; sy.busy=true; sy.msg="Signing in…"; sy.kind="ok"; paintSync();
+sbReq("/auth/v1/token?grant_type=password","POST",{email:em,password:pw},null).then(function(r){
+sy.busy=false;
+if(r.ok&&r.json&&r.json.access_token&&r.json.user&&r.json.user.id){
+setSession(r.json,em);
+sy.pw=""; sy.showPw=false; sy.msg=""; sy.status="idle"; sy.pending=false; sy.last=0; sy.out=false;
+renderBackup("syNow"); paintStatus(); syncNow();
+} else {
+sy.pw="";
+sy.msg=(r.status===429)?"Too many tries — wait a minute.":((r.status===400||r.status===401||r.status===422)?"Wrong email or password.":"Something went wrong (error "+r.status+"). Please try again in a moment.");
+sy.kind="err"; paintSync("syPw");
+}
+},function(){ sy.busy=false; sy.msg=OFFLINE_MSG; sy.kind="err"; paintSync(); });
+}
+function signOutTap(){
+if(!sy.out){
+sy.out=true; clearTimeout(sy.outT); sy.outT=setTimeout(function(){ sy.out=false; paintSync(); },4000);
+paintSync("syOut"); return;
+}
+clearTimeout(sy.outT); sy.out=false;
+var tok=auth&&auth.access_token;
+writeAuth(null); clearTimeout(sy.t);
+sy.status="idle"; sy.pending=false; sy.last=0; sy.err=""; sy.msg=""; sy.pw="";
+if(tok) sbReq("/auth/v1/logout","POST",{},tok).then(function(){},function(){});
+paintStatus(); renderBackup("syEmail");
+try{ var d=backupDue(); if(d!==sy.lastDue){ sy.lastDue=d; softRender(); } }catch(e){}
+}
+function paintSync(focusId){
+var box=$("syncBox"); if(!box) return;
+var fid=focusId||((document.activeElement&&box.contains(document.activeElement))?document.activeElement.id:null);
+box.textContent="";
+box.appendChild(h("div",{class:"titlerow"},h("h3",null,"Cloud sync")));
+if(auth){
+box.appendChild(h("div",{class:"sline"},h("span",{class:"syncdot",id:"syLineDot","aria-hidden":"true"}),h("span",null,"Synced as "+auth.email)));
+box.appendChild(h("div",{class:"sline",style:"margin-top:0"},h("span",{id:"syStatus",role:"status","aria-live":"polite"}),h("button",{class:"txtbtn",type:"button",id:"syRetry",hidden:true,onclick:function(){ syncNow(); }},"Retry")));
+box.appendChild(h("div",{class:"srow2"},
+h("button",{class:"btn",type:"button",id:"syNow",onclick:function(){ syncNow(); }},"Sync now"),
+h("button",{class:"btn "+(sy.out?"armed":"danger"),type:"button",id:"syOut",onclick:signOutTap},sy.out?"Tap again to sign out":"Sign out")));
+box.appendChild(h("p",{class:"note",style:"margin:10px 0 0"},"Signing out keeps your data on this device."));
+} else {
+box.appendChild(h("p",{class:"note"},"Sign in to keep your workouts in sync across your devices. Use the same email and password as your Family Wallet app."));
+box.appendChild(h("label",{class:"fld","for":"syEmail"},"Email"));
+box.appendChild(h("input",{type:"email",id:"syEmail",inputmode:"email",autocomplete:"username",autocapitalize:"off",value:sy.email,
+oninput:function(e){ sy.email=e.target.value; },
+onkeydown:function(e){ if(e.key==="Enter"){ e.preventDefault(); sy.email=e.target.value; var p=$("syPw"); if(p) p.focus(); } }}));
+box.appendChild(h("label",{class:"fld","for":"syPw",style:"margin-top:10px"},"Password"));
+box.appendChild(h("div",{class:"pwrow"},
+h("input",{type:sy.showPw?"text":"password",id:"syPw",autocomplete:"current-password",autocapitalize:"off",value:sy.pw,
+oninput:function(e){ sy.pw=e.target.value; },
+onkeydown:function(e){ if(e.key==="Enter"){ e.preventDefault(); sy.pw=e.target.value; signIn(); } }}),
+h("button",{class:"btn small",type:"button",id:"syShow","aria-pressed":sy.showPw?"true":"false","aria-label":sy.showPw?"Hide password":"Show password",onclick:function(){ sy.showPw=!sy.showPw; paintSync("syPw"); }},sy.showPw?"Hide":"Show")));
+box.appendChild(h("button",{class:"btn primary block",type:"button",id:"syIn",style:"margin-top:12px",disabled:sy.busy,onclick:signIn},"Sign in"));
+}
+box.appendChild(h("div",{id:"syMsg",class:"msg "+(sy.kind||"ok"),role:"status"},sy.msg||""));
+paintStatus();
+if(fid&&$(fid)){ try{ $(fid).focus(); }catch(e){} }
+}
+function initSync(){
+if(!SYNC_ON) return;
+var btn=$("backupBtn"), dot=h("span",{class:"syncdot",id:"syncDot",role:"img"});
+var wrap=h("div",{class:"hdrR"});
+btn.parentNode.insertBefore(wrap,btn); wrap.appendChild(dot); wrap.appendChild(btn);
+paintStatus();
+sy.lastDue=backupDue();
+document.addEventListener("visibilitychange",function(){ if(auth&&(!document.hidden||sy.pending)) syncNow(); });
+window.addEventListener("online",function(){ if(auth) syncNow(); });
+window.addEventListener("pageshow",function(e){ if(e.persisted&&auth) syncNow(); });
+setInterval(function(){ if(auth&&sy.pending&&!sy.running) syncNow(); },60000);
+setInterval(function(){ if(auth&&!sy.running) paintStatus(); },20000);
+if(auth) syncNow();
+}
+
 })();
 </script>
