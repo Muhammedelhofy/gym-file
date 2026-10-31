@@ -142,6 +142,13 @@ details.day .ex,.dfull .ex{margin-top:2px;background:var(--surface2)}
 .imgs img{display:block;width:100%;max-width:100%;aspect-ratio:4/3;object-fit:cover;background:var(--surface2);border:1px solid rgba(var(--hud-rgb),.3)}
 .imgs figcaption{font-family:var(--display);font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-size:.8rem;color:var(--muted);margin-top:2px}
 .imgmiss{aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;text-align:center;font-size:.85rem;color:var(--muted);background:var(--surface2);padding:6px}
+.howto{margin:10px 0 4px}
+.howto .ht-h{font-family:var(--display);font-weight:600;font-size:.8rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:12px 0 6px}
+.ht-steps{margin:0;padding-left:22px}.ht-steps li{margin:4px 0}
+.ht-more{min-height:44px}
+.ht-mis{margin:6px 0}.ht-bad{font-weight:600}.ht-fix{color:var(--muted)}.ht-fix b{color:var(--good)}
+.ht-disc{color:var(--muted);font-size:.85rem;margin:10px 0 0}
+.xfwarn{margin:8px 0}
 .noimg{background:var(--surface2);padding:10px;color:var(--muted);font-size:.9rem;margin:6px 0;border-left:3px solid var(--hud)}
 .cue{margin:6px 0}
 a.vid{display:inline-flex;align-items:center;min-height:44px;color:var(--hud-ink);font-weight:600}
@@ -1448,6 +1455,123 @@ Object.assign(INFO, {
     "⚠️ Assumption, verify: rule of thumb, not a personal prescription."]}
 });
 </script>
+<script>// ===== focus-a-muscle + 4 ab exercises (new block; earlier data blocks untouched) =====
+Object.assign(EX,{
+  cableCrunch:{name:"Cable Crunch (kneeling)",img:"Cable_Crunch",q:"kneeling cable crunch form",cue:"Hips still, curl the ribs toward the hips; the arms just hold the rope."},
+  hangKnee:{name:"Hanging Knee Raise",img:null,q:"hanging knee raise captains chair form",cue:"No swinging: curl the pelvis up at the top, lower slowly."},
+  abMach:{name:"Ab Crunch Machine",img:"Ab_Crunch_Machine",q:"ab crunch machine form",cue:"Ribs to hips, slow; don't pull with the arms."},
+  pallof:{name:"Pallof Press",img:"Pallof_Press",q:"pallof press form",cue:"Press out and resist the twist; hips and shoulders stay square."}
+});
+Object.assign(MUSCLES,{cableCrunch:["Core"],hangKnee:["Core"],abMach:["Core"],pallof:["Core"]});
+(function(){
+  var more=[["cableCrunch",2,"10-15","60 s"],["hangKnee",2,"8-12","60 s"],["abMach",2,"10-15","60 s"],["pallof",2,"8-10 per side","60 s"]];
+  for(var t in EXTRAS) EXTRAS[t].forEach(function(c){ if(c[0]==="Core") more.forEach(function(m){ c[1].push(m.slice()); }); });
+})();
+// muscle -> [[exKey, sets, reps, rest], ...] for the "Focus: any muscle" picker (usable on any lifting day)
+const EXTRAS_FOCUS = (function(){
+  var a="60-90 s", core=[["plank",2,"20-40 s","60 s"],["sidePlank",2,"20-30 s per side","60 s"],["deadBug",2,"8 per side","60 s"],["cableCrunch",2,"10-15","60 s"],["hangKnee",2,"8-12","60 s"],["abMach",2,"10-15","60 s"],["pallof",2,"8-10 per side","60 s"]];
+  function L(reps,rest,keys){ return keys.map(function(k){ return [k,2,reps,rest]; }); }
+  var m={
+    "Chest":L("10-15",a,["pecDeck","lowCable","dbFly"]),
+    "Shoulders":L("12-15",a,["cableLatRaise","latRaise"]).concat(L("10-12","90 s",["cableShPress"])),
+    "Rear delts":L("12-15",a,["cableRearFly","dbRearDelt","revFly","facePull"]),
+    "Triceps":L("10-15",a,["vbarPush","dbTriExt","pushdown","cableTriExt"]),
+    "Biceps":L("10-15",a,["cableCurl","preacherMach","cableHammer","dbCurl","machCurl"]),
+    "Lats":L("12-15",a,["straightArm"]).concat(L("10-12","90 s",["vbarPulldown"])),
+    "Mid back":L("10-12","90 s",["oneArmCableRow","isoRow"]),
+    "Quads":L("12-15",a,["slLegExt","legExt"]).concat(L("10-12","90 s",["gobletSquat"])),
+    "Hamstrings":L("10-15",a,["standLegCurl","seatedCurl","lyingCurl"]),
+    "Glutes":L("10-12","90 s",["pullThrough","gluteBridgeBB"]),
+    "Calves":L("10-15","60 s",["legPressCalf","calfSeat","calfStand"]),
+    "Core":core
+  };
+  for(var k in m) m[k]=m[k].filter(function(x){ return EX[x[0]]; }); /* skip any key not in EX */
+  return m;
+})();
+const FOCUS_MUSCLES=["Chest","Shoulders","Rear delts","Triceps","Biceps","Lats","Mid back","Quads","Hamstrings","Glutes","Calves","Core"];
+INFO.extras.b.splice(3,0,"Focus: add any muscle on any day (still max 2). The app warns if that muscle was trained recently.");
+</script>
+<script>// ===== HOW-TO (general guidance written by Opus — not a trainer; keep text) =====
+// key -> {s:[steps], m:[[mistake, fix], ...]}. Shown on the exercise screen and form guide.
+const HOWTO = {
+ bench:{s:["Lie with eyes under the bar, feet flat, shoulder blades pinched back and down.","Grip a little wider than shoulders, unrack with straight arms over the shoulders.","Lower under control to mid-chest, elbows about 45° from the body.","Press up and slightly back toward the shoulders; keep the butt on the bench."],
+  m:[["Elbows flared to 90°","tuck them to about 45° to protect the shoulders."],["Bouncing the bar off the chest","touch lightly and pause for a moment."]]},
+ chestPressMach:{s:["Set the seat so the handles line up with mid-chest.","Sit tall, shoulder blades back against the pad.","Press forward until the arms are almost straight.","Return slowly until you feel a stretch in the chest."],
+  m:[["Shoulders rolling forward at the end","keep the shoulder blades on the pad."],["Seat too high or low","handles at mid-chest, not at the neck or belly."]]},
+ incDb:{s:["Set the bench to about 30°, dumbbells on the thighs.","Kick them up one at a time and lie back, shoulder blades pinched.","Lower to the sides of the upper chest, elbows about 45°.","Press up and slightly in, without clanking the weights."],
+  m:[["Bench too steep (45°+)","about 30° keeps the work on the upper chest, not the shoulders."],["Short range","lower until you feel a stretch, as long as the shoulders feel fine."]]},
+ dbOhp:{s:["Sit on an upright bench, back against the pad, feet planted.","Start with dumbbells at shoulder height, palms forward or slightly in.","Press up until the arms are nearly straight above the head.","Lower under control back to shoulder height."],
+  m:[["Lower back arching off the pad","squeeze the glutes and keep the ribs down."],["Dropping the weights fast","take about 2 seconds on the way down."]]},
+ machOhp:{s:["Set the seat so the handles start at shoulder height.","Back flat on the pad, core braced.","Press up until the arms are nearly straight.","Lower slowly to shoulder height."],
+  m:[["Lower back arching","keep the back flat on the pad and the ribs down."],["Shrugging the shoulders up","keep the shoulders down away from the ears."]]},
+ latRaise:{s:["Stand tall, dumbbells at the sides, slight bend in the elbows.","Raise the arms out to the sides, leading with the elbows.","Stop at shoulder height, thumbs level or slightly down.","Lower slowly over about 2 seconds."],
+  m:[["Swinging the body to lift","use a lighter weight and keep the torso still."],["Shrugging the traps","think 'arms long, shoulders down'."]]},
+ pushdown:{s:["Attach the rope high, stand close, slight forward lean.","Pin the elbows to your sides.","Push down until the arms are straight, spreading the rope ends apart.","Let the hands come back up to about chest height, elbows still pinned."],
+  m:[["Elbows drifting forward","keep them glued to your sides; only the forearms move."],["Leaning over the rope to push","stand tall and use a weight you can control."]]},
+ ohExt:{s:["Attach the rope low, face away, rope behind the head.","Step forward into a split stance, elbows pointing up and forward.","Straighten the arms overhead.","Bend the elbows slowly until you feel a stretch in the back of the arms."],
+  m:[["Lower back arching","keep the ribs stacked over the pelvis."],["Upper arms swinging forward","keep them still; the elbows drive the movement."]]},
+ dipMach:{s:["Set the seat so the handles start around chest level.","Sit tall, slight forward lean, elbows pointing back.","Push down until the arms are straight.","Return slowly until the elbows reach about 90°."],
+  m:[["Elbows flaring out","keep them pointing back."],["Going too deep","stop around 90° if the front of the shoulder feels strained."]]},
+ skull:{s:["Lie on a flat bench, EZ bar held above the chest, arms straight.","Tilt the arms slightly back toward the head.","Bend only at the elbows, lowering the bar to just above the forehead.","Straighten the arms back to the start."],
+  m:[["Elbows flaring wide","keep them about shoulder-width."],["Moving the shoulders","only the forearms move; upper arms stay put."]]},
+ crossover:{s:["Set both pulleys high, take a handle in each hand, step forward.","Slight bend in the elbows, chest up.","Bring the hands together in a hugging arc in front of the lower chest.","Open back slowly until you feel a chest stretch."],
+  m:[["Bending the elbows to press","keep the elbow angle fixed; it is a hug, not a press."],["Too heavy, body rocking","lighter weight, stable stance."]]},
+ dbBench:{s:["Sit with dumbbells on the thighs, lie back and bring them over the chest.","Shoulder blades pinched, feet planted.","Lower to the sides of the chest, elbows about 45°.","Press up and slightly in."],
+  m:[["Elbows flared to 90°","tuck to about 45°."],["Losing tightness at the bottom","keep the shoulder blades pinched the whole set."]]},
+ pulldown:{s:["Set the thigh pad snug, grip the bar a little wider than shoulders.","Sit tall, chest up, slight lean back.","Pull the bar to the upper chest, driving the elbows down.","Let the bar rise slowly until the arms are straight."],
+  m:[["Leaning far back and swinging","small lean only; use a weight you can control."],["Pulling behind the neck","always pull to the front, upper chest."]]},
+ assistPull:{s:["Set the assistance weight (more weight = easier).","Grip slightly wider than shoulders, hang with straight arms.","Pull the chest toward the bar, elbows driving down.","Lower slowly to straight arms."],
+  m:[["Half reps","go to straight arms at the bottom each rep."],["Kicking the legs","keep the body still and core braced."]]},
+ cableRow:{s:["Sit with feet on the platform, knees slightly bent.","Hold the handle with straight arms, chest up.","Pull the handle to the lower ribs, squeezing the shoulder blades together.","Let the arms straighten slowly, feeling the back stretch."],
+  m:[["Rocking the torso back and forth","keep the torso almost still."],["Shrugging up","pull the elbows back, shoulders down."]]},
+ dbRow:{s:["One knee and hand on a bench, back flat, dumbbell in the free hand.","Let the arm hang straight.","Row the dumbbell toward the hip, elbow close to the body.","Lower slowly to a full stretch."],
+  m:[["Twisting the torso to lift","keep the hips and shoulders square."],["Rowing to the chest","pull toward the hip to hit the lats."]]},
+ facePull:{s:["Set the rope at face height or higher.","Grip the rope ends, step back so the arms are straight.","Pull toward the face, spreading the hands apart past the ears.","Return slowly with control."],
+  m:[["Pulling to the chest","aim at the eyes or forehead."],["Using momentum","lighter weight, pause for a second at the end."]]},
+ revFly:{s:["Set the handles so the arms are at shoulder height, face the pad.","Grip with a slight bend in the elbows.","Open the arms out wide in an arc.","Return slowly without letting the weight stack touch."],
+  m:[["Squeezing the shoulder blades hard","keep it in the rear shoulders; arms do the work."],["Too heavy, short range","lighter weight, full arc."]]},
+ bbCurl:{s:["Stand tall, bar at shoulder width, arms straight.","Elbows at your sides.","Curl the bar up, keeping the elbows in place.","Lower slowly to straight arms."],
+  m:[["Swinging the hips","stand tall; use a lighter bar."],["Elbows moving forward","keep them by your sides."]]},
+ hammer:{s:["Stand with dumbbells at the sides, palms facing in.","Elbows at your sides.","Curl up keeping the palms facing in.","Lower slowly."],
+  m:[["Swinging the dumbbells","slower, lighter."],["Short range at the bottom","straighten the arms fully each rep."]]},
+ incCurl:{s:["Set the bench to about 45-60°, sit back, arms hanging straight down.","Palms forward, shoulders back against the pad.","Curl up without moving the upper arms.","Lower slowly to a full stretch."],
+  m:[["Shoulders rolling forward","keep the back and shoulders on the pad."],["Too heavy for the stretch","this angle is harder; start light."]]},
+ squat:{s:["Bar on the upper back, feet about shoulder-width, toes slightly out.","Brace the core, chest up.","Sit down and back, knees in line with the toes.","Drive up through the whole foot."],
+  m:[["Knees caving in","push the knees out over the toes."],["Lower back rounding at the bottom","only go as deep as you can keep a flat back."]]},
+ hackSquat:{s:["Back and shoulders against the pads, feet about shoulder-width on the platform.","Release the safeties, brace the core.","Lower until the thighs are about parallel or as deep as the back stays on the pad.","Push back up through the whole foot."],
+  m:[["Lower back lifting off the pad","reduce the depth."],["Heels lifting","place the feet a bit higher on the platform."]]},
+ legPress:{s:["Sit with the back flat on the pad, feet shoulder-width mid-platform.","Release the safeties.","Lower until the knees reach about 90°.","Press back up without locking the knees."],
+  m:[["Hips lifting off the seat at the bottom","reduce the depth."],["Locking the knees at the top","stop just short of straight."]]},
+ rdl:{s:["Stand with the bar at the thighs, feet hip-width.","Soft knees, push the hips back.","Slide the bar down the legs until you feel a hamstring stretch.","Drive the hips forward to stand tall."],
+  m:[["Rounding the lower back","stop where the back stays flat."],["Bar drifting away from the legs","keep it touching or close to the legs."]]},
+ pullThrough:{s:["Attach the rope to a low pulley, face away, rope between the legs.","Walk forward, feet a bit wider than hips.","Hinge back, letting the rope pull the hands between the legs.","Drive the hips forward and squeeze the glutes to stand."],
+  m:[["Squatting instead of hinging","push the hips back, knees only slightly bent."],["Leaning back at the top","finish tall with a glute squeeze."]]},
+ hipThrust:{s:["Upper back on a bench, bar over the hips with a pad.","Feet flat, about hip-width, shins vertical at the top.","Drive the hips up, chin slightly tucked.","Squeeze the glutes at the top, lower under control."],
+  m:[["Arching the lower back at the top","finish with the glutes, ribs down."],["Feet too far or too close","shins about vertical at the top."]]},
+ splitSquat:{s:["Stand in a long split stance, dumbbells at the sides.","Front foot flat, back heel up.","Lower straight down until the back knee nearly touches the floor.","Push up through the front foot."],
+  m:[["Front knee caving in","keep it in line with the toes."],["Stance too short","step longer so the front heel stays down."]]},
+ smithSplit:{s:["Set the bar on the upper back, step into a long split stance.","Front foot slightly ahead of the bar.","Lower straight down until the back knee nearly touches the floor.","Push up through the front foot."],
+  m:[["Front heel lifting","move the front foot further forward."],["Leaning forward a lot","stay tall; the bar guides the path."]]},
+ lyingCurl:{s:["Lie face down, pad just above the heels, knees just off the bench edge.","Hold the handles, hips pressed down.","Curl the heels toward the glutes.","Lower slowly to almost straight."],
+  m:[["Hips lifting off the pad","lighter weight, hips down."],["Fast drops","about 2 seconds on the way down."]]},
+ seatedCurl:{s:["Set the back pad so the knees line up with the machine's pivot.","Lap pad snug on the thighs, lower pad above the heels.","Curl the legs down and back.","Return slowly to almost straight."],
+  m:[["Knees not lined up with the pivot","adjust the back pad first."],["Short reps","full range each rep."]]},
+ legExt:{s:["Set the back pad so the knees line up with the pivot.","Pad on the lower shins, hold the handles.","Straighten the legs fully.","Lower slowly."],
+  m:[["Swinging the weight up","lighter, controlled."],["Lifting the hips","hold the handles and stay seated."]]},
+ calfStand:{s:["Shoulders under the pads, balls of the feet on the edge.","Knees straight but not locked.","Lower the heels for a full stretch.","Rise as high as possible, pause a second."],
+  m:[["Bouncing at the bottom","pause in the stretch."],["Half reps","full stretch to full rise."]]},
+ calfSeat:{s:["Sit with the pad on the lower thighs, balls of the feet on the edge.","Release the safety.","Lower the heels for a full stretch.","Push up as high as possible and pause."],
+  m:[["Bouncing","pause at the bottom."],["Short range","full stretch each rep."]]},
+ cableCrunch:{s:["Kneel facing a high pulley, rope held beside the head.","Hips stay still above the knees.","Curl the ribs down toward the hips, rounding the back.","Return slowly to the stretch."],
+  m:[["Pulling with the arms","hands stay by the head; the abs do the work."],["Sitting back on the heels","keep the hips high and still."]]},
+ hangKnee:{s:["Back against the pad of a captain's chair, or hang from a bar.","Arms locked, shoulders down.","Raise the knees toward the chest, tilting the pelvis up.","Lower slowly without swinging."],
+  m:[["Swinging","pause at the bottom each rep."],["Only lifting the legs","curl the pelvis up at the top."]]},
+ abMach:{s:["Set the seat so the pads sit on the upper chest or the handles are by the head.","Feet under the rollers if there are any.","Crunch down by curling the ribs toward the hips.","Return slowly."],
+  m:[["Pulling with the arms","think 'ribs to hips'."],["Using momentum","slow, controlled reps."]]},
+ pallof:{s:["Set a cable at chest height, stand side-on to it.","Hold the handle at the chest with both hands, feet shoulder-width.","Press the arms straight out without letting the body rotate.","Hold 2 seconds, bring back to the chest."],
+  m:[["Torso twisting toward the cable","step closer or use a lighter weight."],["Leaning away","stand tall, hips square."]]}
+};
+</script>
 <script>// ===== first-run setup additions (new consts; owner-authored blocks untouched) =====
 const PROT_PER_KG = {cut:2.0, recomp:1.8, bulk:1.6}; // g protein per kg body weight when there is no body-fat data
 const HOME_QUICK_N = [["pushups",2,"stop 2 reps short of failure"],["bwSquat",2,"15"],["revLunge",1,"10 per leg"],["sidePlank",1,"20-30 s per side"],["deadBug",1,"8 per side"]];
@@ -1887,11 +2011,13 @@ function extraAllowedKeys(planKey,d){
 var plan=planByKey(planKey), out=[], skip={}; if(!plan||!EXTRAS[plan.type]) return out;
 plan.items.forEach(function(it){ skip[it[0]]=1; if(d){ var c=normChoice(it[0],d.choice?d.choice[it[0]]:null)||recKey(it[0]); if(c) skip[c]=1; } });
 EXTRAS[plan.type].forEach(function(c){ c[1].forEach(function(x){ if(!skip[x[0]]&&EX[x[0]]&&out.indexOf(x[0])<0) out.push(x[0]); }); });
+FOCUS_MUSCLES.forEach(function(m){ EXTRAS_FOCUS[m].forEach(function(x){ if(!skip[x[0]]&&EX[x[0]]&&out.indexOf(x[0])<0) out.push(x[0]); }); }); /* focus keys: any lifting day */
 return out;
 }
 function extraEntry(planKey,k){
 var plan=planByKey(planKey), r=null; if(!plan||!EXTRAS[plan.type]) return null;
 EXTRAS[plan.type].forEach(function(c){ c[1].forEach(function(x){ if(x[0]===k&&!r) r=x; }); });
+if(!r) FOCUS_MUSCLES.forEach(function(m){ EXTRAS_FOCUS[m].forEach(function(x){ if(x[0]===k&&!r) r=x; }); }); /* day entry first, else focus entry */
 return r;
 }
 function extraSets(d){ var c=0; d.extras.forEach(function(e){ c+=e.n; }); return c; }
@@ -2030,16 +2156,43 @@ wrap.appendChild(chips); wrap.appendChild(txt);
 }
 return wrap;
 }
+/* "How to do it" (first 2 steps + toggle) and "Common mistakes"; null when HOWTO has no entry for the key */
+function howtoBlock(key){
+var ht=(typeof HOWTO!=="undefined")&&HOWTO[key]; if(!ht||!ht.s||!ht.s.length) return null;
+var wrap=h("div",{class:"howto"});
+wrap.appendChild(h("h4",{class:"ht-h"},"How to do it"));
+var ol=h("ol",{class:"ht-steps"}), more=ht.s.length>3?ht.s.length-2:0;
+ht.s.forEach(function(t,i){ var li=h("li",null,t); if(more&&i>=2) li.hidden=true; ol.appendChild(li); });
+wrap.appendChild(ol);
+if(more){
+var tg=h("button",{class:"linkbtn ht-more",type:"button","aria-expanded":"false"},more+" more steps \u25be");
+tg.addEventListener("click",function(){
+var on=tg.getAttribute("aria-expanded")!=="true";
+tg.setAttribute("aria-expanded",on?"true":"false");
+Array.prototype.forEach.call(ol.children,function(li,i){ if(i>=2) li.hidden=!on; });
+tg.textContent=on?"Show fewer \u25b4":more+" more steps \u25be";
+});
+wrap.appendChild(tg);
+}
+if(ht.m&&ht.m.length){
+wrap.appendChild(h("h4",{class:"ht-h"},"Common mistakes"));
+ht.m.forEach(function(m){ wrap.appendChild(h("div",{class:"ht-mis"},h("div",{class:"ht-bad"},"\u2715 "+m[0]),h("div",{class:"ht-fix"},h("b",null,"Fix:")," "+m[1]))); });
+}
+wrap.appendChild(h("p",{class:"ht-disc"},"General guidance, not a personal trainer. Stop if anything hurts."));
+return wrap;
+}
 function explainBody(key){
 var wrap=h("div",{class:"explain"});
 wrap.appendChild(imgsBlock(key));
 wrap.appendChild(cueBlock(key));
+var hb=howtoBlock(key); if(hb) wrap.appendChild(hb);
 return wrap;
 }
 /* exercise screen: cue + chips stay above the sets, images go in a collapsed guide below them */
 function guideBelow(key){
-if(!EX[key].img) return null;
-return h("details",{class:"expl xguide"},h("summary",null,"Form guide"),h("div",{class:"explain"},imgsBlock(key)));
+var hb=howtoBlock(key); if(!EX[key].img&&!hb) return null;
+var bx=h("div",{class:"explain"}); if(EX[key].img) bx.appendChild(imgsBlock(key)); if(hb) bx.appendChild(hb);
+return h("details",{class:"expl xguide"},h("summary",null,"Form guide"),bx);
 }
 function explainToggle(key){
 return h("details",{class:"expl"},h("summary",null,"Form guide"),explainBody(key));
@@ -2339,7 +2492,7 @@ return ul;
 function addExtra(k){
 var en=extraEntry(draft.planKey,k);
 if(!en||draft.extras.length>=EXTRAS_MAX||extraIdx(draft,k)>=0||extraAllowedKeys(draft.planKey,draft).indexOf(k)<0) return;
-draft.extras.push({k:k,n:en[1]}); draft.xpick=false; touch(); render("xr-"+k);
+draft.extras.push({k:k,n:en[1]}); draft.xpick=false; draft.xfocus=null; touch(); render("xr-"+k);
 }
 function removeExtra(k){
 var i=extraIdx(draft,k); if(i<0) return;
@@ -2381,17 +2534,31 @@ sec.appendChild(h("p",{class:"note xnote",id:"xMax"},"Max 2 extras \u2014 enough
 sec.appendChild(h("button",{class:"btn block",type:"button",id:"addExtra","aria-expanded":draft.xpick?"true":"false",onclick:function(){ draft.xpick=!draft.xpick; render("addExtra"); }},draft.xpick?"Close":"+ Add extra"));
 if(draft.xpick){
 var pk=h("div",{class:"xpick",id:"xPick",role:"group","aria-label":"Choose an extra"}), ok=extraAllowedKeys(draft.planKey,draft);
+function xRow(x){
+var hint=extraHint(x[0]);
+return h("button",{class:"optrow",type:"button","data-key":x[0],onclick:function(){ addExtra(x[0]); }},thumbEl(x[0],true,true),
+h("span",{class:"optmain"},h("span",{class:"optname"},EX[x[0]].name),
+h("span",{class:"optbadges"},EXTRAS_REC[x[0]]?h("span",{class:"segrec"},"Recommended"):null,hint?eqTag(hint):null,h("span",{class:"num",style:"color:var(--muted);font-size:.85rem"},x[1]+" \u00d7 "+x[2]))));
+}
+pk.appendChild(h("div",{class:"xcat"},"Focus: any muscle"));
+var fc=h("div",{class:"fchips xfocus",id:"xFocus",role:"group","aria-label":"Focus muscle"});
+FOCUS_MUSCLES.forEach(function(m){
+fc.appendChild(h("button",{class:"fchip",type:"button","data-m":m,"aria-pressed":draft.xfocus===m?"true":"false",onclick:function(){ draft.xfocus=draft.xfocus===m?null:m; render("addExtra"); }},m));
+});
+pk.appendChild(fc);
+if(draft.xfocus&&EXTRAS_FOCUS[draft.xfocus]){
+var fm=draft.xfocus, fr=recAdj(recoveryFor(fm));
+if(fr.pct<60) pk.appendChild(h("p",{class:"note warn xfwarn",id:"xFocusWarn",role:"status"},"\u26a0\ufe0f "+fm+" is about "+fr.pct+"% recovered \u2014 trained recently. Extra sets now may slow recovery."));
+var fks=EXTRAS_FOCUS[fm].filter(function(x){ return ok.indexOf(x[0])>=0&&extraIdx(draft,x[0])<0; });
+if(fks.length){ var fl=h("div",{class:"optlist",id:"xFocusList"}); fks.forEach(function(x){ fl.appendChild(xRow(x)); }); pk.appendChild(fl); }
+else pk.appendChild(h("p",{class:"note"},"Nothing left for "+fm+" today."));
+}
 EXTRAS[plan.type].forEach(function(c){
 var ks=c[1].filter(function(x){ return ok.indexOf(x[0])>=0&&extraIdx(draft,x[0])<0; });
 if(!ks.length) return;
 pk.appendChild(h("div",{class:"xcat"},c[0]));
 var ul=h("div",{class:"optlist"});
-ks.forEach(function(x){
-var hint=extraHint(x[0]);
-ul.appendChild(h("button",{class:"optrow",type:"button","data-key":x[0],onclick:function(){ addExtra(x[0]); }},thumbEl(x[0],true,true),
-h("span",{class:"optmain"},h("span",{class:"optname"},EX[x[0]].name),
-h("span",{class:"optbadges"},EXTRAS_REC[x[0]]?h("span",{class:"segrec"},"Recommended"):null,hint?eqTag(hint):null,h("span",{class:"num",style:"color:var(--muted);font-size:.85rem"},x[1]+" \u00d7 "+x[2])))));
-});
+ks.forEach(function(x){ ul.appendChild(xRow(x)); });
 pk.appendChild(ul);
 });
 sec.appendChild(pk);
