@@ -827,6 +827,14 @@ details.expl{margin:0}
 .wmt.lv-g{border-left-color:var(--good)} .wmt.lv-g .wp{color:var(--good)}
 .wmt.lv-a{border-left-color:var(--warn)} .wmt.lv-a .wp{color:var(--warn)}
 .wmt.lv-r{border-left-color:var(--bad)} .wmt.lv-r .wp{color:var(--bad)}
+.bldbtn{margin-top:12px}.bldnote{margin:12px 0 0;color:var(--muted)}
+.tdot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--c);margin-right:7px;vertical-align:baseline}
+.bchips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}.bchip{display:inline-flex;align-items:center;gap:7px}
+.bchip[aria-pressed="true"]{background:var(--hud);border-color:var(--hud);color:var(--pull-ink)}
+.bchip .bp{font-size:.8rem;letter-spacing:0}.bchip .bp.lv-g{color:var(--good)}.bchip .bp.lv-a{color:var(--warn)}.bchip .bp.lv-r{color:var(--bad)}
+.bchip[aria-pressed="true"] .bp{color:inherit}
+.bld .bgh{margin:18px 0 6px}.bld .bwarn{margin:0 0 8px}.bld .xlist{display:grid;gap:8px}.bld .bfoot{margin:16px 0 8px}.bld #bldStart{margin-top:12px}
+.brow{min-height:64px}.brow.on{border-color:var(--c,var(--hud))}.bchk{min-width:32px;text-align:center}
 .wmt:focus-visible{outline:3px solid var(--hud-ink);outline-offset:-3px}
 /* coach bubble */
 .cbubble{position:fixed;right:max(12px,env(safe-area-inset-right,0px));bottom:calc(72px + env(safe-area-inset-bottom,0px));z-index:18;width:48px;height:48px;padding:0;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(10,17,36,.92);color:var(--hud-ink);border:1.5px solid rgba(var(--hud-rgb),.7);box-shadow:0 0 14px rgba(var(--hud-rgb),.35),0 2px 10px rgba(0,0,0,.5);cursor:pointer}
@@ -1073,6 +1081,26 @@ const PROGRAMS = {
  ul4:{name:"4-day Upper / Lower", short:"Upper / Lower ×2", days:4, note:"Fixed order: Upper A → Lower A → Upper B → Lower B. Every muscle twice a week in 4 sessions. Good for 4 days a week (e.g. Sun, Mon, Wed, Thu)."},
  fb3:{name:"3-day Full Body", short:"Full body ×3", days:3, note:"Fixed order: Full A → Full B → Full C, with a rest day between sessions. Every muscle 2-3 times a week. Best for beginners or busy weeks."}
 };
+</script>
+<script>// ===== BUILD MY DAY suggestions (written by Opus) =====
+// muscle -> ordered exercise slots [key, sets, reps, rest]. Slot keys are plan keys where possible,
+// so machine/free swaps (OPTIONS/ALTS), how-to and "last time" work as on plan days.
+const BUILD_MAP = {
+ "Chest":[["bench",3,"6-8","2-3 min"],["incDb",3,"8-12","2 min"],["crossover",2,"12-15","60-90 s"]],
+ "Shoulders":[["dbOhp",3,"8-12","2 min"],["latRaise",3,"12-15","60-90 s"]],
+ "Rear delts":[["facePull",2,"12-15","60-90 s"],["revFly",2,"12-15","60-90 s"]],
+ "Triceps":[["pushdown",3,"10-15","60-90 s"],["ohExt",2,"10-15","60-90 s"]],
+ "Biceps":[["bbCurl",3,"8-12","60-90 s"],["incCurl",2,"10-12","60-90 s"],["hammer",2,"10-12","60-90 s"]],
+ "Lats":[["pulldown",3,"8-12","2 min"],["assistPull",3,"6-10","2 min"]],
+ "Mid back":[["cableRow",3,"8-12","2 min"],["dbRow",3,"8-12 per arm","2 min"]],
+ "Quads":[["squat",3,"6-8","2-3 min"],["legPress",3,"10-12","2 min"],["legExt",2,"12-15","60-90 s"]],
+ "Hamstrings":[["rdl",3,"8-10","2-3 min"],["lyingCurl",3,"10-12","90 s"]],
+ "Glutes":[["hipThrust",3,"8-12","2 min"],["splitSquat",3,"8-10 per leg","2 min"]],
+ "Calves":[["calfStand",3,"10-15","60 s"],["calfSeat",3,"12-15","60 s"]],
+ "Core":[["cableCrunch",2,"10-15","60 s"],["plank",2,"20-40 s","60 s"],["pallof",2,"8-10 per side","60 s"]]
+};
+const BUILD_BIG = ["Chest","Lats","Mid back","Quads","Hamstrings","Glutes"]; // 2 pre-ticked; others 1
+const BUILD_MAX_MUSCLES = 4, BUILD_SETS_WARN = 20;
 </script>
 <script>const IMG_DATA={};</script>
 <script>
@@ -1728,7 +1756,14 @@ return parseFloat(s);
 function uid(p){return p+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 function hasWarn(t){return String(t).indexOf("⚠️")>=0;}
 var ALL_DAYS=PLAN.concat(PLAN_UL4,PLAN_FB3);
-function planByKey(k){for(var i=0;i<ALL_DAYS.length;i++) if(ALL_DAYS[i].key===k) return ALL_DAYS[i]; return null;}
+/* custom ("Build my day") plan: lives on the draft; in history it is an empty stub */
+function customPlan(c){ return {key:"custom",name:c.title,short:"My day",type:c.type,xt:"full",items:c.items}; }
+function planFor(d){ return d.planKey==="custom"?(d.custom?customPlan(d.custom):planByKey("custom")):planByKey(d.planKey); }
+function planByKey(k){
+if(k==="custom") return (draft&&draft.planKey==="custom"&&draft.custom)?customPlan(draft.custom):{key:"custom",name:"My day",short:"My day",type:"pull",xt:"full",items:[]};
+for(var i=0;i<ALL_DAYS.length;i++) if(ALL_DAYS[i].key===k) return ALL_DAYS[i];
+return null;
+}
 /* program choice: ui.program, else owner -> ppl6, non-owner -> from setup days */
 function curProgram(){
 var u=state&&state.ui, p=u&&u.program;
@@ -1739,7 +1774,11 @@ return "ppl6";
 }
 function activePlan(){ var p=curProgram(); return p==="ul4"?PLAN_UL4:p==="fb3"?PLAN_FB3:PLAN; }
 function progForDays(d){ return d===3?"fb3":d===4?"ul4":"ppl6"; }
-function planName(k){if(k==="rest") return "Rest day";if(k==="home") return homeName();var p=planByKey(k);return p?p.name:k;}
+function planName(k){if(k==="rest") return "Rest day";if(k==="custom") return planByKey("custom").name;if(k==="home") return homeName();var p=planByKey(k);return p?p.name:k;}
+function sessName(x){ return x.planKey==="custom"?(typeof x.title==="string"&&x.title.trim()?x.title.trim().slice(0,80):"My day"):planName(x.planKey); }
+function sessShort(x){ return x.planKey==="custom"?sessName(x):dayShort(x.planKey); }
+function sessType(x){ return x.planKey==="custom"?(x.type==="push"||x.type==="pull"||x.type==="legs"?x.type:"pull"):planType(x.planKey); }
+function tdot(t){ return h("span",{class:"tdot t-"+t,"aria-hidden":"true"}); }
 function planType(k){if(k==="rest"||k==="home") return "rest";var p=planByKey(k);return p?p.type:"rest";}
 /* ---------- state / storage ---------- */
 var storageOk=true;
@@ -1987,9 +2026,10 @@ return {opt:toOpt("free"),reason:"Back to free weight after a machine block"};
 }
 return {opt:toOpt("free"),reason:"Progressing on free weight \u2014 keep it"};
 }
-function newDraft(planKey){
+function newDraft(planKey,custom){
 var d={planKey:planKey,date:today(),dateSet:false,countPf:false,prevN:0,n:{},sets:{},choice:{},corr:{},notes:"",cur:0,extras:[],msg:null,msgKind:"ok",dirty:false,resumed:false};
-var p=planKey==="rest"?null:planByKey(planKey);
+if(planKey==="custom"&&custom) d.custom=custom;
+var p=planKey==="rest"?null:planFor(d);
 if(p) p.items.forEach(function(it){
 var k=it[0], lc=OPTIONS[k]?lastChoiceFor(planKey,k):null;
 if(lc) d.choice[k]=lc; else if(ALTS[k]) d.choice[k]=recKey(k);
@@ -2002,7 +2042,7 @@ function lastChoiceFor(planKey,k){
 var ks=optKeys(k); if(!ks.length) return null;
 for(var i=state.sessions.length-1;i>=0;i--){
 var s=state.sessions[i];
-if(s.planKey!==planKey||!s.sets) continue;
+if((planKey!=="custom"&&s.planKey!==planKey)||!s.sets) continue;
 for(var j=0;j<ks.length;j++) if(s.sets[ks[j]]&&s.sets[ks[j]].length&&EX[ks[j]]) return ks[j];
 }
 return null;
@@ -2031,7 +2071,7 @@ function ensureDraft(){ if(!draft) draft=newDraft(nextPlanKey()); else if(!draft
 function saveDraft(){
 if(!draft||!draft.dirty) return;
 try{
-localStorage.setItem(DKEY,JSON.stringify({planKey:draft.planKey,date:draft.date,dateSet:!!draft.dateSet,n:draft.n,sets:draft.sets,choice:draft.choice,corr:draft.corr,notes:draft.notes,cur:draft.cur||0,extras:draft.extras}));
+localStorage.setItem(DKEY,JSON.stringify({planKey:draft.planKey,date:draft.date,dateSet:!!draft.dateSet,n:draft.n,sets:draft.sets,choice:draft.choice,corr:draft.corr,notes:draft.notes,cur:draft.cur||0,extras:draft.extras,custom:draft.planKey==="custom"?draft.custom:undefined}));
 }catch(e){}
 }
 function clearDraftStore(){ try{ localStorage.removeItem(DKEY); }catch(e){} }
@@ -2043,14 +2083,30 @@ draft.prevN=nowN;
 if(nowN>0&&lastSaved) clearLastSaved();
 draft.dirty=true; draft.resumed=false; saveDraft();
 }
+/* custom day from storage: title string <= 80, type push/pull/legs, <= 12 items [EX key, sets 1-6, reps, rest] */
+function cleanCustom(c){
+if(!c||typeof c!=="object"||!Array.isArray(c.items)) return null;
+var items=[], seen={};
+c.items.forEach(function(it){
+if(!Array.isArray(it)||items.length>=12||typeof it[0]!=="string"||!Object.prototype.hasOwnProperty.call(EX,it[0])||seen[it[0]]) return;
+var n=Math.floor(+it[1]); if(!(n>=1&&n<=6)) return;
+seen[it[0]]=1;
+items.push([it[0],n,typeof it[2]==="string"?it[2].slice(0,20):"8-12",typeof it[3]==="string"?it[3].slice(0,20):""]);
+});
+if(!items.length) return null;
+var t=typeof c.title==="string"?c.title.trim().slice(0,80):"";
+return {title:t||"My day",type:(c.type==="push"||c.type==="pull"||c.type==="legs")?c.type:"pull",items:items};
+}
 function loadDraft(){
 var raw=null, o;
 try{ raw=localStorage.getItem(DKEY); }catch(e){ return null; }
 if(!raw) return null;
 try{ o=JSON.parse(raw); }catch(e2){ return null; }
 if(!o||typeof o!=="object") return null;
-if(o.planKey!=="rest"&&!planByKey(o.planKey)) return null;
-var d=newDraft(o.planKey);
+var cu=null;
+if(o.planKey==="custom"){ cu=cleanCustom(o.custom); if(!cu) return null; }
+else if(o.planKey!=="rest"&&!planByKey(o.planKey)) return null;
+var d=newDraft(o.planKey,cu);
 if(typeof o.date==="string"&&parseIso(o.date)) d.date=o.date;
 d.dateSet=!!o.dateSet;
 if(typeof o.notes==="string") d.notes=o.notes;
@@ -2064,10 +2120,10 @@ return {kg:r.kg==null?"":String(r.kg),reps:r.reps==null?"":String(r.reps),done:!
 }
 if(o.choice&&typeof o.choice==="object") for(var k4 in o.choice){ var nc=normChoice(k4,o.choice[k4]); if(nc&&(ALTS[k4]||OPTIONS[k4])) d.choice[k4]=nc; }
 if(o.corr&&typeof o.corr==="object") for(var k3 in o.corr) d.corr[k3]=!!o.corr[k3];
-var p=planByKey(o.planKey);
+var p=planFor(d);
 d.cur=Math.max(0,Math.min(p?p.items.length-1:0,Math.floor(+o.cur)||0));
 if(Array.isArray(o.extras)){
-var okx=extraAllowedKeys(o.planKey);
+var okx=extraAllowedKeys(o.planKey,o.planKey==="custom"?d:undefined);
 o.extras.forEach(function(e){
 if(!e||typeof e!=="object"||d.extras.length>=EXTRAS_MAX) return;
 var nx=Math.floor(+e.n);
@@ -2093,7 +2149,7 @@ return c;
 }
 /* sets with reps>0 in draft d; rows still showing untouched last-time numbers (pf) count only when incPf */
 function countSets(d,incPf){
-var plan=d&&planByKey(d.planKey), c=0; if(!plan) return 0;
+var plan=d&&planFor(d), c=0; if(!plan) return 0;
 plan.items.forEach(function(it){
 var rows=d.sets[it[0]]||[], n=nFor(it,d);
 for(var i=0;i<n;i++){ var r=rows[i]; if(r&&(incPf||!(r.pf&&!r.done))&&num(r.reps)>0) c++; }
@@ -2117,7 +2173,7 @@ return c;
 function extraIdx(d,k){ for(var i=0;i<d.extras.length;i++) if(d.extras[i].k===k) return i; return -1; }
 /* keys offered for a plan day: not one of its items, and (with a draft) not the variant chosen for any slot today */
 function extraAllowedKeys(planKey,d){
-var plan=planByKey(planKey), out=[], skip={}; if(!plan||!EXTRAS[plan.xt||plan.type]) return out;
+var plan=(d&&d.planKey===planKey)?planFor(d):planByKey(planKey), out=[], skip={}; if(!plan||!EXTRAS[plan.xt||plan.type]) return out;
 plan.items.forEach(function(it){ skip[it[0]]=1; if(d){ var c=normChoice(it[0],d.choice?d.choice[it[0]]:null)||recKey(it[0]); if(c) skip[c]=1; } });
 EXTRAS[plan.xt||plan.type].forEach(function(c){ c[1].forEach(function(x){ if(!skip[x[0]]&&EX[x[0]]&&out.indexOf(x[0])<0) out.push(x[0]); }); });
 FOCUS_MUSCLES.forEach(function(m){ EXTRAS_FOCUS[m].forEach(function(x){ if(!skip[x[0]]&&EX[x[0]]&&out.indexOf(x[0])<0) out.push(x[0]); }); }); /* focus keys: any lifting day */
@@ -2497,6 +2553,7 @@ var pl=planByKey(draft.planKey);
 if(pl&&exIdx>=0&&exIdx<pl.items.length){ renderExScreen(root,pl); return; }
 todayView="list";
 }
+if(todayView==="build"){ if(bld){ renderBuilder(root); return; } todayView="list"; }
 root.appendChild(modeSwitch()); todoRow(root);
 if(pendingSwitch&&(!draft||pendingSwitch.key===draft.planKey||!draftHasWork(draft))) pendingSwitch=null;
 if(pendingSwitch) root.appendChild(switchPanel());
@@ -2525,6 +2582,7 @@ if(guardSwitch(e.target.value)){ return; }
 draft=newDraft(e.target.value); clearDraftStore(); staleBanner=false; finOpen=false; todayView="list"; render("daySel");
 }});
 activePlan().forEach(function(p){sel.appendChild(h("option",{value:p.key},p.name));});
+if(draft.planKey==="custom") sel.appendChild(h("option",{value:"custom"},planName("custom")));
 sel.appendChild(h("option",{value:"rest"},"Rest day"));
 sel.value=draft.planKey;
 root.appendChild(h("div",{class:"card",id:"chgPanel"},
@@ -2533,9 +2591,91 @@ h("label",{class:"fld","for":"sessDate",style:"margin-top:14px"},"Session date")
 h("input",{type:"date",id:"sessDate",value:draft.date,oninput:function(e){if(parseIso(e.target.value)){draft.date=e.target.value;draft.dateSet=true;}touch();}}),
 h("p",{class:"note",style:"margin:12px 0 0"},rotNote())));
 }
+if(loggedSets()>0) root.appendChild(h("p",{class:"note bldnote",id:"bldNote"},"Finish or save this workout first"));
+else root.appendChild(h("button",{class:"btn block ghost bldbtn",type:"button",id:"bldBtn",onclick:openBuilder},"Build my day (bonus)"));
 if(isRest) renderRestDay(root); else renderTrainDay(root);
 renderRecent(root);
 root.appendChild(safetyLink());
+}
+/* ---------- Build my day: bonus custom session (never moves the rotation) ---------- */
+var bld=null; /* {sel:[muscles in tap order], tick:{key:true}, msg:""} */
+var BUILD_TYPE={"Chest":"push","Shoulders":"push","Triceps":"push","Core":"push","Lats":"pull","Mid back":"pull","Rear delts":"pull","Biceps":"pull","Quads":"legs","Hamstrings":"legs","Glutes":"legs","Calves":"legs"};
+function bid(m){ return m.replace(/\W+/g,"-"); }
+function openBuilder(){
+if(loggedSets()>0) return;
+bld={sel:[],tick:{},msg:""}; todayView="build"; chgOpen=false; render("bldBack"); window.scrollTo(0,0); navPush();
+}
+function closeBuilder(){ bld=null; todayView="list"; render("bldBtn"); window.scrollTo(0,0); navPush(); }
+/* groups in tap order; a key already listed under an earlier muscle is not repeated */
+function bldGroups(){
+var seen={}, out=[];
+bld.sel.forEach(function(m){
+var rows=[]; BUILD_MAP[m].forEach(function(sl){ if(!seen[sl[0]]&&EX[sl[0]]){ seen[sl[0]]=1; rows.push(sl); } });
+out.push({m:m,rows:rows});
+});
+return out;
+}
+function bldToggleMuscle(m){
+var i=bld.sel.indexOf(m), g=bldGroups();
+if(i>=0){
+g[i].rows.forEach(function(sl){ delete bld.tick[sl[0]]; });
+bld.sel.splice(i,1); bld.msg="";
+} else {
+if(bld.sel.length>=BUILD_MAX_MUSCLES){ bld.msg="Max "+BUILD_MAX_MUSCLES+" muscles \u2014 keep the session focused."; render("bm-"+bid(m)); return; }
+bld.sel.push(m); bld.msg="";
+var ng=bldGroups(), rows=ng[ng.length-1].rows, pre=BUILD_BIG.indexOf(m)>=0?2:1;
+rows.forEach(function(sl,j){ if(j<pre) bld.tick[sl[0]]=true; });
+}
+render("bm-"+bid(m));
+}
+function bldTotals(){
+var ex=0, sets=0;
+bldGroups().forEach(function(gr){ gr.rows.forEach(function(sl){ if(bld.tick[sl[0]]){ ex++; sets+=sl[1]; } }); });
+return {ex:ex,sets:sets};
+}
+function bldStart(){
+var items=[], ms=[];
+bldGroups().forEach(function(gr){ var any=false; gr.rows.forEach(function(sl){ if(bld.tick[sl[0]]){ items.push(sl.slice()); any=true; } }); if(any) ms.push(gr.m); });
+if(!items.length) return;
+var cu={title:"My day \u2014 "+ms.join(" + "),type:BUILD_TYPE[ms[0]]||"push",items:items.slice(0,12)};
+draft=newDraft("custom",cu); clearDraftStore(); draft.dirty=true; saveDraft();
+bld=null; todayView="list"; chgOpen=false; finOpen=false; staleBanner=false; pendingSwitch=null;
+render(); window.scrollTo(0,0); navPush();
+}
+function renderBuilder(root){
+var sc=h("section",{class:"bld","aria-label":"Build my day"});
+sc.appendChild(h("button",{class:"xback",type:"button",id:"bldBack",onclick:closeBuilder},h("span",{"aria-hidden":"true"},"\u2039 "),"Today"));
+sc.appendChild(h("h2",{id:"bldTitle"},"Build my day"));
+sc.appendChild(h("p",{class:"muted",style:"margin:0 0 12px"},"A bonus session: your plan rotation stays where it is."));
+var chips=h("div",{class:"fchips bchips",id:"bldChips",role:"group","aria-label":"Muscles"});
+Object.keys(BUILD_MAP).forEach(function(m){
+var r=recAdj(recoveryFor(m)), lv=r.pct>=100?"g":r.pct>=85?"a":"r", on=bld.sel.indexOf(m)>=0;
+chips.appendChild(h("button",{class:"fchip bchip",type:"button",id:"bm-"+bid(m),"data-m":m,"aria-pressed":on?"true":"false","aria-label":m+", "+r.pct+" percent recovered",onclick:function(){ bldToggleMuscle(m); }},
+h("span",null,m),h("span",{class:"bp num lv-"+lv},r.pct+"%")));
+});
+sc.appendChild(chips);
+if(bld.msg) sc.appendChild(h("p",{class:"note warn",id:"bldMsg",role:"status"},bld.msg));
+bldGroups().forEach(function(gr){
+var r=recAdj(recoveryFor(gr.m));
+sc.appendChild(h("h3",{class:"bgh","data-m":gr.m},gr.m+" \u00b7 "+r.pct+"% recovered"));
+if(r.pct<60) sc.appendChild(h("p",{class:"note warn bwarn","data-m":gr.m,role:"status"},"\u26a0\ufe0f Trained recently \u2014 extra work may slow recovery."));
+var list=h("div",{class:"xlist t-"+(BUILD_TYPE[gr.m]||"push")});
+gr.rows.forEach(function(sl){
+var k=sl[0], on=!!bld.tick[k];
+list.appendChild(h("button",{class:"xrow brow"+(on?" on":""),type:"button",role:"checkbox","aria-checked":on?"true":"false",id:"br-"+k,"data-key":k,onclick:function(){ if(bld.tick[k]) delete bld.tick[k]; else bld.tick[k]=true; render("br-"+k); }},
+thumbEl(k,false,true),
+h("span",{class:"xmain"},h("span",{class:"xname"},EX[k].name),h("span",{class:"xtarget num"},sl[1]+" \u00d7 "+sl[2]+" \u00b7 "+sl[3]+" rest")),
+h("span",{class:"pill bchk"+(on?" done":""),"aria-hidden":"true"},on?"\u2713":"")));
+});
+sc.appendChild(list);
+});
+var t=bldTotals();
+if(bld.sel.length){
+sc.appendChild(h("p",{class:"note num bfoot",id:"bldFoot"},t.ex+(t.ex===1?" exercise":" exercises")+" \u00b7 "+t.sets+" sets \u00b7 \u2248 "+(t.sets*3)+" min"));
+if(t.sets>BUILD_SETS_WARN) sc.appendChild(h("div",{class:"warnbox",id:"bldWarn",role:"status"},"\u26a0\ufe0f About "+t.sets+" sets \u2014 over ~20 is a lot for one session on a cut. Assumption, verify: rule of thumb."));
+} else sc.appendChild(h("p",{class:"note",id:"bldHint"},"Tap up to "+BUILD_MAX_MUSCLES+" muscles. The app suggests exercises; tick or untick as you like."));
+sc.appendChild(h("button",{class:"btn primary block",type:"button",id:"bldStart",disabled:t.ex===0,onclick:bldStart},"Start"));
+root.appendChild(sc);
 }
 function switchPanel(){
 var n=countSets(draft,false), nm=dayShort(draft.planKey), target=dayShort(pendingSwitch.key), isArmed=armed==="swdiscard";
@@ -2894,13 +3034,14 @@ if(out.length){ sets[e.k]=sets[e.k]?sets[e.k].concat(out):out; xk.push(e.k); } /
 });
 var corr=CORRECTIVE.map(function(c){return c[0];}).filter(function(k){return draft.corr[k];});
 var sess={id:uid("s"),date:draft.date||today(),planKey:draft.planKey,sets:sets,corrective:corr,notes:(draft.notes||"").trim()};
+if(draft.planKey==="custom"&&draft.custom){ sess.title=draft.custom.title; sess.type=draft.custom.type; }
 if(xk.length) sess.extras=xk;
 if(cnt<planned) sess.partial=true;
 var nbf=nbFields(sess);
 state.sessions.push(sess);
 sortAll(state); persist();
 clearDraftStore(); stopRest(); staleBanner=false;
-lastSaved={id:sess.id,planKey:sess.planKey,name:dayShort(sess.planKey),date:sess.date,sets:cnt,first:Object.keys(sets)[0]||null};
+lastSaved={id:sess.id,planKey:sess.planKey,name:sessShort(sess),date:sess.date,sets:cnt,first:Object.keys(sets)[0]||null};
 if(nbf.nb) lastSaved.nb=nbf.nb; if(nbf.nbm) lastSaved.nbm=nbf.nbm;
 try{ localStorage.setItem(SKEY,JSON.stringify(lastSaved)); }catch(e){}
 return sess;
@@ -2924,7 +3065,7 @@ list.forEach(function(s){
 var id="del-s-"+s.id, isArmed=armed===id;
 card.appendChild(h("div",{class:"sess"},
 h("div",{class:"t"},
-h("div",{class:"nm"},planName(s.planKey),s.planKey==="home"?h("span",{class:"ptag htag"},"Bodyweight"):null,s.partial?h("span",{class:"ptag"},"Partial"):null),
+h("div",{class:"nm"},s.planKey==="custom"?tdot(sessType(s)):null,sessName(s),s.planKey==="home"?h("span",{class:"ptag htag"},"Bodyweight"):null,s.partial?h("span",{class:"ptag"},"Partial"):null),
 h("div",{class:"small muted num"},fmtDate(s.date)+(s.planKey==="rest"?"":" — "+setCount(s)+" sets"))),
 h("button",{class:"btn small danger"+(isArmed?" armed":""),type:"button",id:id,onclick:function(){
 if(armed===id){ disarm(); state.sessions=state.sessions.filter(function(x){return x.id!==s.id;}); tomb("sessions",s.id); persist(); render(); }
@@ -4747,7 +4888,8 @@ else L.push(isOwner()?"Plan: 6-day rotation Push A → Pull A → Legs A → Pus
 var sess=state.sessions.filter(function(s){ return inR(s.date)&&s.planKey&&s.planKey!=="rest"; });
 var lifts=sess.filter(function(s){ return s.planKey!=="home"; }), homes=sess.length-lifts.length;
 L.push("");
-L.push("WORKOUTS: "+lifts.length+" lifting sessions (plan is "+weekTarget()+" a week)"+(homes?", "+homes+" home/bodyweight sessions":"")+".");
+var bonus=lifts.filter(function(s){ return s.planKey==="custom"; }).length;
+L.push("WORKOUTS: "+lifts.length+" lifting sessions (plan is "+weekTarget()+" a week"+(bonus?"; "+bonus+" of them bonus custom session"+(bonus===1?"":"s")+" outside the rotation":"")+")"+(homes?", "+homes+" home/bodyweight sessions":"")+".");
 var wk=[];
 for(var i=0;i<n;i++){ var w=addDays(ws0,7*i), c=lifts.filter(function(s){ return inWk(s.date,w); }).length; wk.push("wk of "+shortDate(w)+": "+c); }
 L.push("Lifting sessions per week: "+wk.join(" · "));
@@ -5187,13 +5329,16 @@ function card(title,id,kids){ return h("div",{class:"card sumcard",id:id},h("h3"
 /* workouts */
 var sess=state.sessions.filter(function(x){ return inWk(x.date,ws)&&x.planKey&&x.planKey!=="rest"; });
 var lifts=sess.filter(function(x){ return x.planKey!=="home"; }), homes=sess.filter(function(x){ return x.planKey==="home"; });
-var wkN=weekTarget(), wk=[sumRow("Lifting sessions",lifts.length+" / "+wkN),gbar(Math.min(lifts.length,wkN),wkN,false),sumRow("Home sessions",String(homes.length))];
+var bonusN=lifts.filter(function(x){ return x.planKey==="custom"; }).length, progN=lifts.length-bonusN;
+var wkN=weekTarget(), wk=[sumRow("Lifting sessions",progN+" / "+wkN+(bonusN?" +"+bonusN+" bonus":"")),gbar(Math.min(progN,wkN),wkN,false),sumRow("Home sessions",String(homes.length))];
 var nbN=0; sess.forEach(function(x){ nbN+=newBests(x).length; });
 if(nbN>0) wk.push(sumRow("New bests this week",String(nbN)));
 if(sess.length){
 sess.slice().sort(function(p,q){ return p.date<q.date?-1:p.date>q.date?1:0; }).forEach(function(x){
 var dn=DAYN[(parseIso(x.date).getDay()+6)%7];
-wk.push(sumRow(dn+" "+shortDate(x.date),x.planKey==="home"?homeName():dayShort(x.planKey)));
+var cu=x.planKey==="custom", srow=sumRow(dn+" "+shortDate(x.date),x.planKey==="home"?homeName():sessShort(x)+(cu?" (bonus)":""));
+if(cu) srow.lastChild.insertBefore(tdot(sessType(x)),srow.lastChild.firstChild);
+wk.push(srow);
 });
 } else wk.push(h("p",{class:"muted small",style:"margin:6px 0 0"},"No sessions saved this week."));
 sc.appendChild(card("Workouts","sumWorkouts",wk));
@@ -5513,7 +5658,7 @@ persist(); render(); window.scrollTo(0,0);
 draft=loadDraft();
 /* an unfinished workout from an earlier day is saved as partial on open, so it can't be lost by Discard or a new day */
 var autoSaved=[], autoIds=[];
-if(draft&&countSets(draft,false)>0&&draft.date<today()){ var as1=commitDraft(); if(as1){ autoIds.push(as1.id); autoSaved.push(dayShort(as1.planKey)+" "+shortDate(as1.date)); draft=newDraft(nextPlanKey()); } }
+if(draft&&countSets(draft,false)>0&&draft.date<today()){ var as1=commitDraft(); if(as1){ autoIds.push(as1.id); autoSaved.push(sessShort(as1)+" "+shortDate(as1.date)); draft=newDraft(nextPlanKey()); } }
 staleBanner=!!(draft&&countSets(draft,false)>0&&draft.date<today());
 hdraft=hLoadDraft();
 if(hdraft&&hCount(hdraft,false)>0&&hdraft.date<today()){ var as2=hCommit(); if(as2){ autoIds.push(as2.id); autoSaved.push(homeName()+" "+shortDate(as2.date)); hdraft=hNew(); } }
