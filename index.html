@@ -5357,12 +5357,19 @@ persist(); render(); window.scrollTo(0,0);
 } finally { navRestoring=false; }
 });
 draft=loadDraft();
+/* an unfinished workout from an earlier day is saved as partial on open, so it can't be lost by Discard or a new day */
+var autoSaved=[], autoIds=[];
+if(draft&&countSets(draft,false)>0&&draft.date<today()){ var as1=commitDraft(); if(as1){ autoIds.push(as1.id); autoSaved.push(dayShort(as1.planKey)+" "+shortDate(as1.date)); draft=newDraft(nextPlanKey()); } }
 staleBanner=!!(draft&&countSets(draft,false)>0&&draft.date<today());
 hdraft=hLoadDraft();
+if(hdraft&&hCount(hdraft,false)>0&&hdraft.date<today()){ var as2=hCommit(); if(as2){ autoIds.push(as2.id); autoSaved.push(homeName()+" "+shortDate(as2.date)); hdraft=hNew(); } }
 hStale=!!(hdraft&&hCount(hdraft,false)>0&&hdraft.date<today());
 buildRestBar();
 persist();
 render();
+if(autoSaved.length) snack("Saved unfinished workout"+(autoSaved.length>1?"s":"")+" as partial: "+autoSaved.join(", "),function(){
+state.sessions=state.sessions.filter(function(x){ return autoIds.indexOf(x.id)<0; }); autoIds.forEach(function(id){ tomb("sessions",id); }); persist(); render();
+});
 try{ history.replaceState({root:1},""); history.pushState(navState(),""); }catch(e){}
 maybeAutoSummary();
 document.addEventListener("visibilitychange",function(){ if(!document.hidden) maybeAutoSummary(); });
