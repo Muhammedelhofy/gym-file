@@ -848,6 +848,16 @@ details.expl{margin:0}
 body.setupmode #tabbar,body.setupmode #backupBtn,body.setupmode .hdrR,body.setupmode .cbubble,body.setupmode .restbar{display:none!important}
 .setup .modesw{margin:0 0 10px}
 .setup .modesw.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.setup .modesw.four{grid-template-columns:repeat(4,minmax(0,1fr))}
+.progopt{display:flex;align-items:flex-start;gap:12px;width:100%;min-height:56px;margin:0 0 8px;padding:10px 12px;text-align:left;font:inherit;color:var(--text);background:var(--field);border:1px solid var(--fline);border-radius:2px;cursor:pointer}
+.progopt .pdot{flex:none;width:20px;height:20px;margin-top:2px;border:2px solid var(--muted);border-radius:50%;box-sizing:border-box}
+.progopt.on{border:2px solid var(--hud);background:rgba(var(--hud-rgb),.14);padding:9px 11px}
+.progopt.on .pdot{border-color:var(--hud-ink);background:radial-gradient(circle,var(--hud-ink) 0 40%,transparent 45%)}
+.progopt.armed{border-color:var(--warn)}
+.progopt .pn{display:block;font-family:var(--display);font-weight:700;font-size:1.05rem;letter-spacing:.03em}
+.progopt .pt{display:block;margin-top:2px;font-size:.88rem;color:var(--muted);line-height:1.35}
+.progopt:focus-visible{outline:3px solid var(--hud-ink);outline-offset:2px}
+.savedcard .sc-nb{margin-top:6px;font-weight:600;overflow-wrap:anywhere}
 .setup details.day>summary{cursor:pointer}
 .setup .row2>div{margin-top:12px}
 </style>
@@ -855,7 +865,7 @@ body.setupmode #tabbar,body.setupmode #backupBtn,body.setupmode .hdrR,body.setup
 <header class="hdr"><div class="in">
 <div>
 <h1>GYM FILE</h1>
-<div class="sub">Push / Pull / Legs ×2 · core &amp; hips</div>
+<div class="sub" id="hdrSub">Push / Pull / Legs ×2 · core &amp; hips</div>
 </div>
 <button class="btn small" id="backupBtn" type="button" aria-expanded="false" aria-controls="backupPanel">Backup</button>
 </div></header>
@@ -1028,6 +1038,41 @@ const COACH_NOTES = [
  "Frequency: each muscle twice a week. Schoenfeld et al. 2016 found twice a week better than once; a later volume-matched meta-analysis (Schoenfeld et al. 2019) found little difference when total weekly sets are equal. Twice a week is mainly an easy way to fit enough weekly sets with good quality."
 ];
 const FIRST_MEASURE = {date:"2026-10-21", weight:79.3, fatPct:27.7, fatKg:22.0, muscle:32.0, visceral:9};
+</script>
+<script>// ===== PROGRAMS (written by Opus — keep numbers) =====
+// Same exercise keys as the 6-day plan, so swaps (ALTS/OPTIONS), how-to, extras and recovery all work.
+// Weekly direct sets per muscle ≈ 6-12 (plus helper work from big lifts), every muscle trained 2-3× a week.
+// xt = extras category set to offer on that day (push / pull / legs / upper / full).
+const PLAN_UL4 = [
+ {key:"upA", name:"Upper A — Chest & Back", short:"Upper A", type:"push", xt:"upper", items:[
+   ["bench",3,"6-8","2-3 min"],["pulldown",3,"8-12","2 min"],["dbOhp",3,"8-12","2 min"],
+   ["cableRow",3,"8-12","2 min"],["latRaise",2,"12-15","60-90 s"],["pushdown",2,"10-15","60-90 s"],["bbCurl",2,"8-12","60-90 s"]]},
+ {key:"loA", name:"Lower A — Squat", short:"Lower A", type:"legs", xt:"legs", items:[
+   ["squat",3,"6-8","2-3 min"],["rdl",3,"8-10","2-3 min"],["hipThrust",2,"8-12","2 min"],
+   ["legExt",2,"12-15","60-90 s"],["lyingCurl",2,"10-12","90 s"],["calfStand",3,"10-15","60 s"]]},
+ {key:"upB", name:"Upper B — Shoulders & Arms", short:"Upper B", type:"pull", xt:"upper", items:[
+   ["incDb",3,"8-12","2 min"],["assistPull",3,"6-10","2 min"],["machOhp",3,"8-12","2 min"],
+   ["dbRow",3,"8-12 per arm","2 min"],["facePull",2,"12-15","60-90 s"],["ohExt",2,"10-15","60-90 s"],["hammer",2,"10-12","60-90 s"]]},
+ {key:"loB", name:"Lower B — Glutes", short:"Lower B", type:"legs", xt:"legs", items:[
+   ["legPress",3,"10-12","2 min"],["splitSquat",3,"8-10 per leg","2 min"],["hipThrust",3,"10-12","2 min"],
+   ["seatedCurl",3,"10-12","90 s"],["calfSeat",3,"12-15","60 s"]]}
+];
+const PLAN_FB3 = [
+ {key:"fbA", name:"Full Body A", short:"Full A", type:"push", xt:"full", items:[
+   ["squat",3,"6-8","2-3 min"],["bench",3,"6-8","2-3 min"],["pulldown",3,"8-12","2 min"],
+   ["rdl",2,"8-10","2-3 min"],["latRaise",2,"12-15","60-90 s"],["pushdown",2,"10-15","60-90 s"]]},
+ {key:"fbB", name:"Full Body B", short:"Full B", type:"pull", xt:"full", items:[
+   ["legPress",3,"10-12","2 min"],["dbOhp",3,"8-12","2 min"],["cableRow",3,"8-12","2 min"],
+   ["incDb",2,"8-12","2 min"],["lyingCurl",2,"10-12","90 s"],["bbCurl",2,"8-12","60-90 s"]]},
+ {key:"fbC", name:"Full Body C", short:"Full C", type:"legs", xt:"full", items:[
+   ["hipThrust",3,"8-12","2 min"],["dbBench",3,"8-12","2 min"],["assistPull",3,"6-10","2 min"],
+   ["splitSquat",2,"8-10 per leg","2 min"],["facePull",2,"12-15","60-90 s"],["calfStand",3,"10-15","60 s"]]}
+];
+const PROGRAMS = {
+ ppl6:{name:"6-day Push / Pull / Legs", short:"Push / Pull / Legs ×2", days:6, note:"Fixed order: Push A → Pull A → Legs A → Push B → Pull B → Legs B. Every muscle twice a week. Best if you can train 5-6 days."},
+ ul4:{name:"4-day Upper / Lower", short:"Upper / Lower ×2", days:4, note:"Fixed order: Upper A → Lower A → Upper B → Lower B. Every muscle twice a week in 4 sessions. Good for 4 days a week (e.g. Sun, Mon, Wed, Thu)."},
+ fb3:{name:"3-day Full Body", short:"Full body ×3", days:3, note:"Fixed order: Full A → Full B → Full C, with a rest day between sessions. Every muscle 2-3 times a week. Best for beginners or busy weeks."}
+};
 </script>
 <script>const IMG_DATA={};</script>
 <script>
@@ -1491,6 +1536,21 @@ const EXTRAS_FOCUS = (function(){
 const FOCUS_MUSCLES=["Chest","Shoulders","Rear delts","Triceps","Biceps","Lats","Mid back","Quads","Hamstrings","Glutes","Calves","Core"];
 INFO.extras.b.splice(3,0,"Focus: add any muscle on any day (still max 2). The app warns if that muscle was trained recently.");
 </script>
+<script>// ===== extras for the Upper/Lower and Full Body programs (new block): categories merged by name, keys de-duplicated =====
+(function(){
+  function merge(types){
+    var out=[], seen={};
+    types.forEach(function(t){ EXTRAS[t].forEach(function(c){
+      var g=null; out.forEach(function(o){ if(o[0]===c[0]) g=o; });
+      if(!g){ g=[c[0],[]]; out.push(g); }
+      c[1].forEach(function(x){ if(!seen[x[0]]){ seen[x[0]]=1; g[1].push(x.slice()); } });
+    }); });
+    return out;
+  }
+  EXTRAS.upper=merge(["push","pull"]);
+  EXTRAS.full=merge(["push","pull","legs"]);
+})();
+</script>
 <script>// ===== HOW-TO (general guidance written by Opus — not a trainer; keep text) =====
 // key -> {s:[steps], m:[[mistake, fix], ...]}. Shown on the exercise screen and form guide.
 const HOWTO = {
@@ -1667,7 +1727,18 @@ return parseFloat(s);
 }
 function uid(p){return p+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 function hasWarn(t){return String(t).indexOf("⚠️")>=0;}
-function planByKey(k){for(var i=0;i<PLAN.length;i++) if(PLAN[i].key===k) return PLAN[i]; return null;}
+var ALL_DAYS=PLAN.concat(PLAN_UL4,PLAN_FB3);
+function planByKey(k){for(var i=0;i<ALL_DAYS.length;i++) if(ALL_DAYS[i].key===k) return ALL_DAYS[i]; return null;}
+/* program choice: ui.program, else owner -> ppl6, non-owner -> from setup days */
+function curProgram(){
+var u=state&&state.ui, p=u&&u.program;
+if(typeof p==="string"&&Object.prototype.hasOwnProperty.call(PROGRAMS,p)) return p;
+var pr=u&&u.profile;
+if(pr&&pr.owner!==true) return pr.days===3?"fb3":pr.days===4?"ul4":"ppl6";
+return "ppl6";
+}
+function activePlan(){ var p=curProgram(); return p==="ul4"?PLAN_UL4:p==="fb3"?PLAN_FB3:PLAN; }
+function progForDays(d){ return d===3?"fb3":d===4?"ul4":"ppl6"; }
 function planName(k){if(k==="rest") return "Rest day";if(k==="home") return homeName();var p=planByKey(k);return p?p.name:k;}
 function planType(k){if(k==="rest"||k==="home") return "rest";var p=planByKey(k);return p?p.type:"rest";}
 /* ---------- state / storage ---------- */
@@ -1679,7 +1750,7 @@ var su={step:1,goal:"cut",days:5,w:"",ib:false,bf:"",fk:"",mu:"",vi:"",sex:"",ag
 var state=load();
 function isOwner(){ return !!(state.ui&&state.ui.profile&&state.ui.profile.owner===true); }
 function needSetup(){ return !(state.ui&&state.ui.profile); }
-function profDays(){ var p=state.ui&&state.ui.profile; return (p&&p.owner!==true&&(p.days===4||p.days===5||p.days===6))?p.days:6; }
+function profDays(){ var p=state.ui&&state.ui.profile; return (p&&p.owner!==true&&(p.days===3||p.days===4||p.days===5||p.days===6))?p.days:6; }
 function homeName(){ return isOwner()?"Home + Pelvic":"Home"; }
 function defaultState(){
 return {version:1,sessions:[],measurements:[],cardio:[],weighins:[],foodlog:[],customFoods:[],waist:[],daily:[],deleted:{sessions:[],measurements:[],weighins:[],cardio:[],foodlog:[],customFoods:[],waist:[],daily:[]},rev:0,ui:{tab:"today",mode:"lift",homeLen:"quick",cardioGoal:CARDIO_GOAL_DEFAULT,goal:"cut",stepGoal:STEP_GOAL_DEFAULT,stepsToCardio:false}};
@@ -1716,6 +1787,7 @@ if(anyP) s.ui.setPref=sp;
 }
 if(o.ui&&o.ui.cardioLast&&typeof o.ui.cardioLast==="object"&&cardioType(o.ui.cardioLast.type)&&+o.ui.cardioLast.min>0&&+o.ui.cardioLast.min<=600) s.ui.cardioLast={type:o.ui.cardioLast.type,min:Math.round(+o.ui.cardioLast.min)};
 if(o.ui&&o.ui.homeLen==="full") s.ui.homeLen="full";
+if(o.ui&&typeof o.ui.program==="string"&&Object.prototype.hasOwnProperty.call(PROGRAMS,o.ui.program)) s.ui.program=o.ui.program;
 if(o.ui&&typeof o.ui.goal==="string"&&Object.prototype.hasOwnProperty.call(GOALS,o.ui.goal)) s.ui.goal=o.ui.goal;
 if(o.ui&&o.ui.profile&&typeof o.ui.profile==="object"&&!Array.isArray(o.ui.profile)){
 var pr=o.ui.profile, np=null;
@@ -1723,7 +1795,7 @@ if(pr.owner===true) np={owner:true};
 else if(pr.owner===false){
 np={owner:false,goal:"cut",days:5};
 if(typeof pr.goal==="string"&&Object.prototype.hasOwnProperty.call(GOALS,pr.goal)) np.goal=pr.goal;
-if(pr.days===4||pr.days===5||pr.days===6) np.days=pr.days;
+if(pr.days===3||pr.days===4||pr.days===5||pr.days===6) np.days=pr.days;
 if(pr.sex==="male"||pr.sex==="female") np.sex=pr.sex;
 var pa=+pr.age; if(pa>=14&&pa<=90) np.age=Math.round(pa);
 var ph=+pr.heightCm; if(ph>=120&&ph<=230) np.heightCm=Math.round(ph*10)/10;
@@ -1846,11 +1918,28 @@ for(var i=state.sessions.length-1;i>=0;i--) if(state.sessions[i].planKey&&state.
 return null;
 }
 function nextPlanKey(){
-var l=lastTrainingSession();
-if(!l) return "pushA";
-for(var i=0;i<PLAN.length;i++) if(PLAN[i].key===l.planKey) return PLAN[(i+1)%PLAN.length].key;
-return "pushA";
+var ap=activePlan(), i, j;
+for(i=state.sessions.length-1;i>=0;i--){
+var pk=state.sessions[i].planKey;
+for(j=0;j<ap.length;j++) if(ap[j].key===pk) return ap[(j+1)%ap.length].key;
 }
+return ap[0].key;
+}
+/* "new best" = this session's best set of an exercise beats the best of all earlier sessions (heaviest kg, tie: more reps; bodyweight: most reps/seconds). First time ever is not a new best. */
+function newBests(sess){
+var idx=state.sessions.indexOf(sess), out=[], k;
+if(idx<0) idx=state.sessions.length;
+function best(sets,b){ (sets||[]).forEach(function(r){ var kg=+r.kg||0, rp=+r.reps||0; if(rp>0&&(!b||kg>b.kg||(kg===b.kg&&rp>b.reps))) b={kg:kg,reps:rp,unit:r.unit==="s"?"s":""}; }); return b; }
+for(k in (sess.sets||{})){
+var cur=best(sess.sets[k],null), prev=null, i;
+if(!cur) continue;
+for(i=0;i<idx;i++) if(state.sessions[i].sets&&state.sessions[i].sets[k]) prev=best(state.sessions[i].sets[k],prev);
+if(prev&&(cur.kg>prev.kg||(cur.kg===prev.kg&&cur.reps>prev.reps)))
+out.push({k:k,text:(EX[k]?EX[k].name:k)+" "+(cur.kg>0?fmtNum(cur.kg)+" kg \u00d7 "+cur.reps:cur.reps+(cur.unit==="s"?" s":" reps"))});
+}
+return out;
+}
+function nbFields(sess){ var nb=newBests(sess), f={}; if(nb.length){ f.nb=nb.slice(0,3).map(function(x){ return x.text; }); if(nb.length>3) f.nbm=nb.length-3; } return f; }
 function lastFor(key){
 for(var i=state.sessions.length-1;i>=0;i--){
 var s=state.sessions[i];
@@ -2028,15 +2117,15 @@ return c;
 function extraIdx(d,k){ for(var i=0;i<d.extras.length;i++) if(d.extras[i].k===k) return i; return -1; }
 /* keys offered for a plan day: not one of its items, and (with a draft) not the variant chosen for any slot today */
 function extraAllowedKeys(planKey,d){
-var plan=planByKey(planKey), out=[], skip={}; if(!plan||!EXTRAS[plan.type]) return out;
+var plan=planByKey(planKey), out=[], skip={}; if(!plan||!EXTRAS[plan.xt||plan.type]) return out;
 plan.items.forEach(function(it){ skip[it[0]]=1; if(d){ var c=normChoice(it[0],d.choice?d.choice[it[0]]:null)||recKey(it[0]); if(c) skip[c]=1; } });
-EXTRAS[plan.type].forEach(function(c){ c[1].forEach(function(x){ if(!skip[x[0]]&&EX[x[0]]&&out.indexOf(x[0])<0) out.push(x[0]); }); });
+EXTRAS[plan.xt||plan.type].forEach(function(c){ c[1].forEach(function(x){ if(!skip[x[0]]&&EX[x[0]]&&out.indexOf(x[0])<0) out.push(x[0]); }); });
 FOCUS_MUSCLES.forEach(function(m){ EXTRAS_FOCUS[m].forEach(function(x){ if(!skip[x[0]]&&EX[x[0]]&&out.indexOf(x[0])<0) out.push(x[0]); }); }); /* focus keys: any lifting day */
 return out;
 }
 function extraEntry(planKey,k){
-var plan=planByKey(planKey), r=null; if(!plan||!EXTRAS[plan.type]) return null;
-EXTRAS[plan.type].forEach(function(c){ c[1].forEach(function(x){ if(x[0]===k&&!r) r=x; }); });
+var plan=planByKey(planKey), r=null; if(!plan||!EXTRAS[plan.xt||plan.type]) return null;
+EXTRAS[plan.xt||plan.type].forEach(function(c){ c[1].forEach(function(x){ if(x[0]===k&&!r) r=x; }); });
 if(!r) FOCUS_MUSCLES.forEach(function(m){ EXTRAS_FOCUS[m].forEach(function(x){ if(x[0]===k&&!r) r=x; }); }); /* day entry first, else focus entry */
 return r;
 }
@@ -2435,14 +2524,14 @@ var sel=h("select",{id:"daySel","aria-label":"Choose day",onchange:function(e){
 if(guardSwitch(e.target.value)){ return; }
 draft=newDraft(e.target.value); clearDraftStore(); staleBanner=false; finOpen=false; todayView="list"; render("daySel");
 }});
-PLAN.forEach(function(p){sel.appendChild(h("option",{value:p.key},p.name));});
+activePlan().forEach(function(p){sel.appendChild(h("option",{value:p.key},p.name));});
 sel.appendChild(h("option",{value:"rest"},"Rest day"));
 sel.value=draft.planKey;
 root.appendChild(h("div",{class:"card",id:"chgPanel"},
 h("label",{class:"fld","for":"daySel"},"Choose day"),sel,
 h("label",{class:"fld","for":"sessDate",style:"margin-top:14px"},"Session date"),
 h("input",{type:"date",id:"sessDate",value:draft.date,oninput:function(e){if(parseIso(e.target.value)){draft.date=e.target.value;draft.dateSet=true;}touch();}}),
-h("p",{class:"note",style:"margin:12px 0 0"},ROTATION_NOTE)));
+h("p",{class:"note",style:"margin:12px 0 0"},rotNote())));
 }
 if(isRest) renderRestDay(root); else renderTrainDay(root);
 renderRecent(root);
@@ -2485,6 +2574,7 @@ function savedCard(){
 var ls=lastSaved;
 return h("div",{class:"savedcard",id:"savedCard",role:"status"},
 h("div",{class:"sc-t"},"Saved: "+ls.name+" \u00b7 "+fmtDate(ls.date)+" \u00b7 "+ls.sets+(ls.sets===1?" set":" sets")),
+Array.isArray(ls.nb)&&ls.nb.length?h("div",{class:"sc-nb",id:"savedNb"},"\ud83c\udfc6 New best: "+ls.nb.filter(function(t){ return typeof t==="string"; }).slice(0,3).join(", ")+(ls.nbm>0?" +"+Math.floor(ls.nbm)+" more":"")):null,
 h("div",{class:"sc-b"},
 h("button",{class:"btn small",type:"button",id:"savedView",onclick:function(){
 if(ls.first&&EX[ls.first]) tabSel.progressKey=ls.first;
@@ -2573,7 +2663,7 @@ var fks=EXTRAS_FOCUS[fm].filter(function(x){ return ok.indexOf(x[0])>=0&&extraId
 if(fks.length){ var fl=h("div",{class:"optlist",id:"xFocusList"}); fks.forEach(function(x){ fl.appendChild(xRow(x)); }); pk.appendChild(fl); }
 else pk.appendChild(h("p",{class:"note"},"Nothing left for "+fm+" today."));
 }
-EXTRAS[plan.type].forEach(function(c){
+EXTRAS[plan.xt||plan.type].forEach(function(c){
 var ks=c[1].filter(function(x){ return ok.indexOf(x[0])>=0&&extraIdx(draft,x[0])<0; });
 if(!ks.length) return;
 pk.appendChild(h("div",{class:"xcat"},c[0]));
@@ -2806,10 +2896,12 @@ var corr=CORRECTIVE.map(function(c){return c[0];}).filter(function(k){return dra
 var sess={id:uid("s"),date:draft.date||today(),planKey:draft.planKey,sets:sets,corrective:corr,notes:(draft.notes||"").trim()};
 if(xk.length) sess.extras=xk;
 if(cnt<planned) sess.partial=true;
+var nbf=nbFields(sess);
 state.sessions.push(sess);
 sortAll(state); persist();
 clearDraftStore(); stopRest(); staleBanner=false;
 lastSaved={id:sess.id,planKey:sess.planKey,name:dayShort(sess.planKey),date:sess.date,sets:cnt,first:Object.keys(sets)[0]||null};
+if(nbf.nb) lastSaved.nb=nbf.nb; if(nbf.nbm) lastSaved.nbm=nbf.nbm;
 try{ localStorage.setItem(SKEY,JSON.stringify(lastSaved)); }catch(e){}
 return sess;
 }
@@ -3045,10 +3137,12 @@ if(sl.grp==="pel"&&all&&out.length&&corr.indexOf(sl.key)<0) corr.push(sl.key);
 if(!cnt) return null;
 var sess={id:uid("s"),date:hdraft.date||today(),planKey:"home",sets:sets,corrective:corr,notes:(hdraft.notes||"").trim(),kind:"home",len:state.ui.homeLen==="full"?"full":"quick"};
 if(cnt<planned) sess.partial=true;
+var nbf=nbFields(sess);
 state.sessions.push(sess);
 sortAll(state); persist();
 hClearStore(); hStale=false;
 lastSaved={id:sess.id,planKey:"home",name:homeName(),date:sess.date,sets:cnt,first:Object.keys(sets)[0]||null};
+if(nbf.nb) lastSaved.nb=nbf.nb; if(nbf.nbm) lastSaved.nbm=nbf.nbm;
 try{ localStorage.setItem(SKEY,JSON.stringify(lastSaved)); }catch(e){}
 return sess;
 }
@@ -3251,20 +3345,49 @@ h("h4",{class:"hgrp2"},"Quick · ≈ "+qn+" min"),listCards(own?HOME_QUICK:HOME_
 own?h("h4",{class:"hgrp2"},"Full · pelvic routine"):null,own?listCards(CORRECTIVE,false):null,
 h("h4",{class:"hgrp2"},own?"Full · home exercises":"Full · "+fn+" min"),listCards(HOME,false)));
 }
+function rotNote(){ var p=curProgram(); return p==="ppl6"?ROTATION_NOTE:PROGRAMS[p].note; }
+function hdrText(){ var p=curProgram(); return p==="ppl6"?"Push / Pull / Legs \u00d72 \u00b7 core & hips":PROGRAMS[p].short; }
+function weekTarget(){ var p=curProgram(); return p==="ppl6"?profDays():PROGRAMS[p].days; }
+function programCard(){
+var cur=curProgram(), card=h("div",{class:"card",id:"progCard",role:"radiogroup","aria-label":"Program"});
+card.appendChild(h("h2",{style:"margin-top:0"},"Program"));
+["ppl6","ul4","fb3"].forEach(function(k){
+var on=cur===k, ar=armed==="prog:"+k;
+card.appendChild(h("button",{class:"progopt"+(on?" on":"")+(ar?" armed":""),type:"button",role:"radio","aria-checked":on?"true":"false",id:"prog-"+k,onclick:function(){ pickProgram(k); }},
+h("span",{class:"pdot","aria-hidden":"true"}),
+h("span",null,h("span",{class:"pn"},PROGRAMS[k].name+(on?" \u2713":"")),h("span",{class:"pt"},ar?"Tap again to switch \u2014 your history stays; the rotation starts at day 1 of the new program":PROGRAMS[k].note))));
+});
+if(progMsg) card.appendChild(h("div",{class:"msg err",id:"progMsg",role:"status"},progMsg));
+return card;
+}
+var progMsg="";
+function pickProgram(k){
+if(k===curProgram()) return;
+if(draft&&draftHasWork(draft)){ disarm(); progMsg="Finish or save today's workout first"; render("prog-"+k); return; }
+progMsg="";
+if(armed!=="prog:"+k){ arm("prog:"+k); render("prog-"+k); return; }
+disarm();
+state.ui.program=k;
+clearDraftStore(); stopRest(); staleBanner=false; finOpen=false; todayView="list"; pendingSwitch=null;
+draft=newDraft(nextPlanKey());
+persist(); render("prog-"+k);
+}
 function renderPlan(root){
+progMsg=progMsg&&(draft&&draftHasWork(draft))?progMsg:"";
 planSaved=null;
 var sw=h("div",{class:"searchwrap"},
 h("input",{type:"text",id:"planSearch",placeholder:"Search exercises","aria-label":"Search exercises",autocomplete:"off",autocapitalize:"off",spellcheck:"false",enterkeyhint:"search",value:planQ,oninput:function(e){planQ=e.target.value;applySearch();}}));
 sw.insertAdjacentHTML("afterbegin",'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>');
 root.appendChild(sw);
 root.appendChild(h("p",{id:"planNone",class:"muted hide",role:"status"},"No matches"));
+root.appendChild(programCard());
 var nx=h("div",{class:"nx"});
 nx.appendChild(h("h2",null,"Week"));
-var wk=h("div",{class:"week"});
-PLAN.forEach(function(p,i){ wk.appendChild(h("button",{class:"wd t-"+p.type,type:"button","data-day":p.key,onclick:function(){openDay(p.key);}},h("b",{class:"num"},i+1),h("span",null,p.short))); });
-wk.appendChild(h("button",{class:"wd t-rest",type:"button","data-day":"rest",onclick:function(){openDay("rest");}},h("b",{class:"num"},7),h("span",null,"Rest")));
+var wk=h("div",{class:"week"}), ap=activePlan();
+ap.forEach(function(p,i){ wk.appendChild(h("button",{class:"wd t-"+p.type,type:"button","data-day":p.key,onclick:function(){openDay(p.key);}},h("b",{class:"num"},i+1),h("span",null,p.short))); });
+wk.appendChild(h("button",{class:"wd t-rest",type:"button","data-day":"rest",onclick:function(){openDay("rest");}},h("b",{class:"num"},ap.length+1),h("span",null,"Rest")));
 nx.appendChild(wk);
-nx.appendChild(h("p",{class:"note",style:"margin-top:12px"},ROTATION_NOTE));
+nx.appendChild(h("p",{class:"note",style:"margin-top:12px",id:"rotNote"},rotNote()));
 nx.appendChild(h("p",{class:"note",id:"homeWeekNote"},homeName()+": on rest days or any evening, 2-3× a week"));
 if(!isOwner()) nx.appendChild(h("p",{class:"note",id:"daysNote"},"You train "+profDays()+" days a week: just continue the rotation where you stopped."));
 var cl=h("ul",null);
@@ -3274,7 +3397,7 @@ nx.appendChild(h("div",{class:"panel"},h("h3",null,"Coach notes"),cl));
 nx.appendChild(h("div",{class:"panel"},h("div",{class:"titlerow"},h("h3",null,"Progression"),infoBtn("progression","progression")),h("ul",{style:"margin-top:6px"},noteItem(PROGRESSION,"prog"))));
 root.appendChild(nx);
 root.appendChild(h("h2",{class:"nx"},"Training days"));
-PLAN.forEach(function(p){
+ap.forEach(function(p){
 var strip=h("div",{class:"strip",role:"region","aria-label":p.name+" exercises",tabindex:"0"},
 p.items.map(function(it){var t=thumbEl(it[0],true);t.setAttribute("title",EX[it[0]].name);return t;}));
 var list=uniqMuscles(p.items);
@@ -3463,7 +3586,7 @@ return out;
 }
 function planKeysFor(m){
 var seen={},out=[];
-PLAN.forEach(function(p){p.items.forEach(function(it){ if(!seen[it[0]]&&muscles(it[0]).indexOf(m)>=0){seen[it[0]]=1;out.push(it[0]);} });});
+activePlan().forEach(function(p){p.items.forEach(function(it){ if(!seen[it[0]]&&muscles(it[0]).indexOf(m)>=0){seen[it[0]]=1;out.push(it[0]);} });});
 return out;
 }
 function recoveryDetail(m){
@@ -4618,12 +4741,13 @@ L.push("");
 L.push("MY DATA: last "+n+" weeks ("+fmtDate(ws0)+" to "+fmtDate(end)+", the current week is still in progress), from my gym tracking app.");
 var gk=goalKey(), T=targetsFor(gk);
 L.push("Goal: "+GOALS[gk].name+(T?" · target ≈ "+kfmt(T.kcal)+" kcal, "+T.protein+" g protein ("+(T.ib.est?"estimated from my weight "+fmtKg(T.ib.weight)+" kg, height, age and sex, no body-fat data":"calculated from my InBody of "+fmtDate(T.ib.date)+", lean mass "+fmtKg(T.ib.lbm)+" kg")+")":" · no body-fat or weight data yet, so no calorie/protein target"));
-L.push(isOwner()?"Plan: 6-day rotation Push A → Pull A → Legs A → Push B → Pull B → Legs B → Rest. Next workout: "+dayShort(nextPlanKey())+".":"Plan: rotation Push A → Pull A → Legs A → Push B → Pull B → Legs B → Rest. I train "+profDays()+" days a week and continue where I stopped. Next workout: "+dayShort(nextPlanKey())+".");
+if(curProgram()!=="ppl6") L.push("Plan: "+PROGRAMS[curProgram()].name+": "+activePlan().map(function(p){ return p.short; }).join(" \u2192 ")+" \u2192 Rest. I train "+weekTarget()+" days a week and continue where I stopped. Next workout: "+dayShort(nextPlanKey())+".");
+else L.push(isOwner()?"Plan: 6-day rotation Push A → Pull A → Legs A → Push B → Pull B → Legs B → Rest. Next workout: "+dayShort(nextPlanKey())+".":"Plan: rotation Push A → Pull A → Legs A → Push B → Pull B → Legs B → Rest. I train "+profDays()+" days a week and continue where I stopped. Next workout: "+dayShort(nextPlanKey())+".");
 /* workouts */
 var sess=state.sessions.filter(function(s){ return inR(s.date)&&s.planKey&&s.planKey!=="rest"; });
 var lifts=sess.filter(function(s){ return s.planKey!=="home"; }), homes=sess.length-lifts.length;
 L.push("");
-L.push("WORKOUTS: "+lifts.length+" lifting sessions (plan is "+profDays()+" a week)"+(homes?", "+homes+" home/bodyweight sessions":"")+".");
+L.push("WORKOUTS: "+lifts.length+" lifting sessions (plan is "+weekTarget()+" a week)"+(homes?", "+homes+" home/bodyweight sessions":"")+".");
 var wk=[];
 for(var i=0;i<n;i++){ var w=addDays(ws0,7*i), c=lifts.filter(function(s){ return inWk(s.date,w); }).length; wk.push("wk of "+shortDate(w)+": "+c); }
 L.push("Lifting sessions per week: "+wk.join(" · "));
@@ -5063,7 +5187,9 @@ function card(title,id,kids){ return h("div",{class:"card sumcard",id:id},h("h3"
 /* workouts */
 var sess=state.sessions.filter(function(x){ return inWk(x.date,ws)&&x.planKey&&x.planKey!=="rest"; });
 var lifts=sess.filter(function(x){ return x.planKey!=="home"; }), homes=sess.filter(function(x){ return x.planKey==="home"; });
-var wk=[sumRow("Lifting sessions",lifts.length+" / "+profDays()),gbar(Math.min(lifts.length,profDays()),profDays(),false),sumRow("Home sessions",String(homes.length))];
+var wkN=weekTarget(), wk=[sumRow("Lifting sessions",lifts.length+" / "+wkN),gbar(Math.min(lifts.length,wkN),wkN,false),sumRow("Home sessions",String(homes.length))];
+var nbN=0; sess.forEach(function(x){ nbN+=newBests(x).length; });
+if(nbN>0) wk.push(sumRow("New bests this week",String(nbN)));
 if(sess.length){
 sess.slice().sort(function(p,q){ return p.date<q.date?-1:p.date>q.date?1:0; }).forEach(function(x){
 var dn=DAYN[(parseIso(x.date).getDay()+6)%7];
@@ -5154,6 +5280,7 @@ var tab=state.ui.tab, pt;
 if(tab==="today"||(tab!=="plan"&&tab!=="progress"&&tab!=="body"&&tab!=="food")){ ensureDraft(); pt=(state.ui.mode==="home"||state.ui.mode==="cardio")?"rest":planType(draft.planKey); }
 else pt=planType(nextPlanKey());
 document.documentElement.setAttribute("data-plate",pt);
+var hs=$("hdrSub"); if(hs) hs.textContent=hdrText();
 }
 /* ---------- first-run setup (shown until a profile exists) ---------- */
 function finishOwnerSetup(){
@@ -5215,7 +5342,7 @@ if(!isNaN(mu)) m.muscle=mu;
 if(!isNaN(vi)) m.visceral=vi;
 state.measurements.push(m);
 }
-state.ui.profile=prof; state.ui.goal=su.goal; state.ui.tab="today"; state.ui.mode="lift";
+state.ui.profile=prof; state.ui.program=progForDays(su.days); state.ui.goal=su.goal; state.ui.tab="today"; state.ui.mode="lift";
 sortAll(state); su.step=1; su.err={}; su.top="";
 persist(); render(); window.scrollTo(0,0);
 }
@@ -5250,7 +5377,8 @@ box.appendChild(suSeg("suSex",[["male","Male"],["female","Female"]],su.sex,funct
 if(e.sex) box.appendChild(h("div",{class:"msg err",id:"suSexErr",role:"alert",style:"margin:-8px 0 0"},e.sex));
 box.appendChild(h("div",{class:"row2"},suFld("suAge","Age","age","numeric","e.g. 30",e.age),suFld("suHt","Height (cm)","ht","decimal","e.g. 175",e.ht)));
 box.appendChild(h("label",{class:"fld",style:"margin-top:14px"},"Training days per week"));
-box.appendChild(suSeg("suDays",[[4,"4"],[5,"5"],[6,"6"]],su.days,function(v,fid){ su.days=v; render(fid); },"three"));
+box.appendChild(suSeg("suDays",[[3,"3"],[4,"4"],[5,"5"],[6,"6"]],su.days,function(v,fid){ su.days=v; render(fid); },"four"));
+box.appendChild(h("p",{class:"note",id:"suProgNote",style:"margin:0 0 6px"},su.days+" days \u2192 "+PROGRAMS[progForDays(su.days)].name));
 box.appendChild(h("p",{class:"note",style:"margin:0"},"Saved only on this phone. Use Backup to keep a copy."));
 if(su.top) box.appendChild(h("div",{class:"msg err",id:"suTop",role:"alert"},su.top));
 box.appendChild(h("button",{class:"btn primary block",type:"button",id:"suGo",style:"margin-top:12px",onclick:suStart},"Start"));
@@ -5477,6 +5605,7 @@ var ms=uni("measurements",function(x){return x.id;}), mseen=Object.create(null);
 ms=ms.filter(function(x){ var c=Object.assign({},x); delete c.id; var ck=canon(c); if(mseen[ck]) return false; mseen[ck]=1; return true; });
 var ui=Object.assign({},newer.ui);
 if(!ui.profile&&older.ui&&older.ui.profile) ui.profile=older.ui.profile;
+if(!ui.program&&older.ui&&older.ui.program) ui.program=older.ui.program;
 LOCAL_UI.forEach(function(k){ if(L.ui&&L.ui[k]!==undefined) ui[k]=L.ui[k]; else delete ui[k]; });
 return normalize({version:1,
 sessions:uni("sessions",function(x){return x.id;}),
