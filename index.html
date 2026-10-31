@@ -748,6 +748,12 @@ body.hastimer-c .snack{bottom:calc(124px + env(safe-area-inset-bottom,0px))}
 .sumrow .sv{text-align:right;min-width:0;overflow-wrap:anywhere}
 .sumcard h3{margin-bottom:6px}
 .sumcard .gbar{margin:6px 0 4px}
+.cwk{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.cwk .btn[aria-pressed="true"]{border:2px solid var(--hud);background:rgba(var(--hud-rgb),.14);color:var(--text)}
+.cwprev{margin-top:10px}
+.cwprev textarea{width:100%;margin-top:8px;font-size:.8rem}
+.cwerr{color:var(--bad,#ff6b6b)}
+#cwMsg{margin:8px 0 0;min-height:1.2em}
 .sumscreen .fday{margin-top:6px}
 .sumscreen .titlerow h3{min-width:0}
 </style>
@@ -2832,6 +2838,7 @@ return out;
 function renderProgress(root){
 renderProgressMain(root);
 renderCardioProgress(root);
+renderCoachCopy(root);
 }
 function renderProgressMain(root){
 root.appendChild(h("h2",{style:"margin-top:0"},"Progress"));
@@ -3999,6 +4006,117 @@ root.appendChild(h("h2",{id:"cardioProg"},"Cardio"));
 var pg=cardioGoal();
 root.appendChild(h("p",{class:"note",style:"margin-top:-6px"},"Minutes per week (Monday to Sunday), last 6 weeks. The label is the Monday of each week."+(pg>0?" The dashed line is your goal ("+pg+" min).":"")));
 root.appendChild(barChart(vals,labs,"Cardio minutes per week, last 6 weeks: "+labs.map(function(l,i){ return l+" "+vals[i]; }).join(", ")+(pg>0?". Weekly goal "+pg+" minutes":""),5,pg));
+}
+
+/* ---------- copy for AI coach (text only: nothing is sent anywhere) ---------- */
+var CW_KEY="gymCoachWeeks_v1", cwMsg=null;
+function coachWeeks(){ try{ var v=+localStorage.getItem(CW_KEY); if(v===2||v===4||v===8) return v; }catch(e){} return 4; }
+function setCoachWeeks(n){ try{ localStorage.setItem(CW_KEY,String(n)); }catch(e){} cwMsg=null; render("cw"+n); }
+/* best set of one exercise in one session: heaviest weight (ties: most reps); bodyweight: most reps/seconds */
+function bestSetOf(a){
+var bs=null, bw=a.every(function(x){ return !(x.kg>0); });
+a.forEach(function(x){ var kg=+x.kg||0, rp=+x.reps||0; if(!(rp>0)) return;
+if(!bs||(bw?rp>bs.reps:(kg>bs.kg||(kg===bs.kg&&rp>bs.reps)))) bs={kg:kg,reps:rp,unit:x.unit}; });
+return bs;
+}
+function bsStr(b){ return b?setStr(b):"—"; }
+function coachText(n){
+var end=today(), ws0=addDays(weekStartIso(end),-7*(n-1)), L=[];
+function inR(d){ return d>=ws0&&d<=end; }
+L.push("You're my strength and nutrition coach. Use only the data below. Keep answers short (about 8 lines). Say clearly when you're unsure or the data isn't enough. Suggest halal food only. If I mention pain, dizziness, chest pain or an injury, tell me to stop and see a doctor or physiotherapist. Don't change my targets or plan on your own: suggest, and I decide.");
+L.push("");
+L.push("MY DATA: last "+n+" weeks ("+fmtDate(ws0)+" to "+fmtDate(end)+", the current week is still in progress), from my gym tracking app.");
+var gk=goalKey(), T=targetsFor(gk);
+L.push("Goal: "+GOALS[gk].name+(T?" · target ≈ "+kfmt(T.kcal)+" kcal, "+T.protein+" g protein (calculated from my InBody of "+fmtDate(T.ib.date)+", lean mass "+fmtKg(T.ib.lbm)+" kg)":" · no InBody entry yet, so no calorie/protein target"));
+L.push("Plan: 6-day rotation Push A → Pull A → Legs A → Push B → Pull B → Legs B → Rest. Next workout: "+dayShort(nextPlanKey())+".");
+/* workouts */
+var sess=state.sessions.filter(function(s){ return inR(s.date)&&s.planKey&&s.planKey!=="rest"; });
+var lifts=sess.filter(function(s){ return s.planKey!=="home"; }), homes=sess.length-lifts.length;
+L.push("");
+L.push("WORKOUTS: "+lifts.length+" lifting sessions (plan is 6 a week)"+(homes?", "+homes+" home/bodyweight sessions":"")+".");
+var wk=[];
+for(var i=0;i<n;i++){ var w=addDays(ws0,7*i), c=lifts.filter(function(s){ return inWk(s.date,w); }).length; wk.push("wk of "+shortDate(w)+": "+c); }
+L.push("Lifting sessions per week: "+wk.join(" · "));
+var part=lifts.filter(function(s){ return s.partial; }).length;
+if(part) L.push(part+" of them were partial (not all planned sets done).");
+var ex={}, order=[];
+sess.forEach(function(s){ for(var k in s.sets){ var a=s.sets[k]; if(!a||!a.length||!EX[k]) continue;
+var b=bestSetOf(a); if(!b) continue;
+if(!ex[k]){ ex[k]=[]; order.push(k); } ex[k].push({d:s.date,b:b}); } });
+if(order.length){
+L.push("Exercises, best set per session (kg×reps), oldest → newest:");
+order.forEach(function(k){
+var r=ex[k], seq=r.length>6?r.slice(0,2).concat([null],r.slice(-3)):r;
+L.push("- "+EX[k].name+": "+seq.map(function(x){ return x?bsStr(x.b)+" ("+shortDate(x.d)+")":"…"; }).join(", "));
+});
+}
+/* food */
+var fd={};
+state.foodlog.forEach(function(e){ if(inR(e.date)){ var o=fd[e.date]||(fd[e.date]={k:0,p:0}); o.k+=+e.kcal||0; o.p+=+e.p||0; } });
+var days=Object.keys(fd).sort(), total=Math.round((parseIso(end)-parseIso(ws0))/86400000)+1;
+L.push("");
+if(days.length){
+var ak=avgOf(days.map(function(d){ return fd[d].k; })), ap=avgOf(days.map(function(d){ return fd[d].p; }));
+L.push("FOOD: logged "+days.length+" of "+total+" days. Average on logged days: "+kfmt(Math.round(ak))+" kcal, "+Math.round(ap)+" g protein.");
+if(T){ var hit=days.filter(function(d){ return fd[d].p>=T.protein; }).length; L.push("Protein target reached on "+hit+" of "+days.length+" logged days."); }
+var fw=[];
+for(var j=0;j<n;j++){ var w2=addDays(ws0,7*j), dd=days.filter(function(d){ return inWk(d,w2); });
+fw.push("wk of "+shortDate(w2)+": "+(dd.length?kfmt(Math.round(avgOf(dd.map(function(d){ return fd[d].k; }))))+" kcal / "+Math.round(avgOf(dd.map(function(d){ return fd[d].p; })))+" g ("+dd.length+" d)":"not logged")); }
+L.push("Per week (avg kcal / protein): "+fw.join(" · "));
+var cnt={};
+state.foodlog.forEach(function(e){ if(inR(e.date)&&e.name){ cnt[e.name]=(cnt[e.name]||0)+1; } });
+var top=Object.keys(cnt).sort(function(a,b){ return cnt[b]-cnt[a]; }).slice(0,12);
+if(top.length) L.push("Foods I eat most: "+top.join(", ")+".");
+} else L.push("FOOD: nothing logged in this period.");
+/* body */
+L.push("");
+L.push("BODY:");
+var wa=[];
+for(var m=0;m<n;m++){ var w3=addDays(ws0,7*m), av=weekAvgFrom(w3); wa.push("wk of "+shortDate(w3)+": "+(av!=null?fmtKg(av)+" kg":"<2 weigh-ins")); }
+L.push("Weekly average weight: "+wa.join(" · "));
+var lw=lastWeighin(); if(lw) L.push("Last weigh-in: "+fmtKg(lw.kg)+" kg on "+fmtDate(lw.date)+".");
+var wr=state.waist.filter(function(x){ return inR(x.date); });
+if(wr.length) L.push("Waist: "+wr.map(function(x){ return fmtCm(x.cm)+" cm ("+shortDate(x.date)+")"; }).join(", "));
+else L.push("Waist: not measured in this period.");
+var ms=state.measurements.slice(-2);
+ms.forEach(function(x){ var p=[];
+if(num(x.weight)>0) p.push("weight "+fmtNum(num(x.weight))+" kg");
+if(num(x.fatPct)>0) p.push("body fat "+fmtNum(num(x.fatPct))+"%");
+if(num(x.fatKg)>0) p.push("fat mass "+fmtNum(num(x.fatKg))+" kg");
+if(num(x.muscle)>0) p.push("muscle "+fmtNum(num(x.muscle))+" kg");
+if(num(x.visceral)>0) p.push("visceral "+fmtNum(num(x.visceral)));
+if(p.length) L.push("InBody "+fmtDate(x.date)+": "+p.join(", ")+"."); });
+var adv=adviceWithWaist(calorieAdviceGoal(weeklyAverages(8),gk),waistWeekly(8));
+L.push("The app's calorie advice right now: "+adv.t);
+/* cardio + habits */
+var cmin=0, ct={};
+state.cardio.forEach(function(x){ if(inR(x.date)){ cmin+=+x.min||0; ct[x.type]=(ct[x.type]||0)+1; } });
+L.push("");
+L.push("CARDIO: "+cmin+" min in total"+(Object.keys(ct).length?" ("+Object.keys(ct).map(function(t){ return t+" ×"+ct[t]; }).join(", ")+")":"")+". Weekly goal "+cardioGoal()+" min.");
+var sl=[], sp=[], wt=[], cr=0;
+state.daily.forEach(function(e){ if(!inR(e.date)) return;
+if(e.sleepH!=null) sl.push(+e.sleepH); if(e.steps!=null) sp.push(+e.steps); if(e.water>0) wt.push(+e.water); if(e.creatine) cr++; });
+L.push("HABITS (days with data only): sleep "+(sl.length?(Math.round(avgOf(sl)*10)/10).toFixed(1)+" h avg ("+sl.length+" d)":"no data")+" · steps "+(sp.length?kfmt(Math.round(avgOf(sp)))+" avg ("+sp.length+" d)":"no data")+" · water "+(wt.length?(Math.round(avgOf(wt)*10)/10).toFixed(1)+" cups avg":"no data")+" · creatine on "+cr+" of "+total+" days.");
+L.push("");
+L.push("My question: ");
+return L.join("\n");
+}
+function renderCoachCopy(root){
+var n=coachWeeks(), text=coachText(n), cm=cwMsg; cwMsg=null;
+var ta=h("textarea",{id:"cwText",readonly:true,rows:"8","aria-label":"Text that will be copied"},text);
+var det=h("details",{class:"cwprev",id:"cwPrev"},h("summary",null,"Show what will be copied"),ta);
+var msg=h("p",{class:"small "+(cm&&cm.k==="err"?"cwerr":"muted"),id:"cwMsg",role:"status"},cm?cm.t:"");
+function fail(){ det.open=true; ta.focus(); try{ ta.select(); ta.setSelectionRange(0,text.length); }catch(e){} cwMsg={k:"err",t:"Couldn't copy automatically. The text is selected below: long-press it and tap Copy."}; msg.textContent=cwMsg.t; msg.className="small cwerr"; }
+function ok(){ cwMsg={k:"ok",t:"Copied ✓ Now open Claude, Gemini or ChatGPT, paste, and type your question at the end."}; msg.textContent=cwMsg.t; msg.className="small muted"; }
+root.appendChild(h("h2",{id:"coachCopy"},"Ask an AI coach"));
+root.appendChild(h("div",{class:"card",id:"cwCard"},
+h("p",{class:"note",style:"margin-top:0"},"Copies a short summary of your training, food, body and habits, plus coach instructions. Paste it into any AI chat app and add your question. This app sends nothing anywhere: you see and choose what you share."),
+h("div",{class:"cwk",role:"group","aria-label":"How many weeks to include"},
+[2,4,8].map(function(k){ return h("button",{class:"btn",type:"button",id:"cw"+k,"aria-pressed":k===n?"true":"false",onclick:function(){ setCoachWeeks(k); }},k+" weeks"); })),
+h("button",{class:"btn primary block",type:"button",id:"cwCopy",style:"margin-top:12px",onclick:function(){
+try{ if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(ok,fail); else fail(); }catch(e){ fail(); }
+}},"Copy for AI"),
+msg,det));
 }
 
 /* ---------- v13: waist, daily habits, sleep, steps, weekly summary ---------- */
