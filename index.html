@@ -767,6 +767,9 @@ body.hastimer-c .snack{bottom:calc(124px + env(safe-area-inset-bottom,0px))}
 .cwk{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
 .cwk .btn[aria-pressed="true"]{border:2px solid var(--hud);background:rgba(var(--hud-rgb),.14);color:var(--text)}
 .cwprev{margin-top:10px}
+.pdays{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.pdays .btn{min-height:44px}
+.pdays .btn[aria-pressed="true"]{border:2px solid var(--hud);background:rgba(var(--hud-rgb),.14);color:var(--text)}
 .cwprev textarea{width:100%;margin-top:8px;font-size:.8rem}
 .cwerr{color:var(--bad,#ff6b6b)}
 #cwMsg{margin:8px 0 0;min-height:1.2em}
@@ -2559,7 +2562,7 @@ if(pendingSwitch&&(!draft||pendingSwitch.key===draft.planKey||!draftHasWork(draf
 if(pendingSwitch) root.appendChild(switchPanel());
 if(staleBanner&&!(draft&&countSets(draft,false)>0&&draft.date<today())) staleBanner=false;
 if(staleBanner) root.appendChild(stalePanel());
-if(lastSaved) root.appendChild(savedCard());
+if(lastSaved&&savedFresh(lastSaved)) root.appendChild(savedCard());
 root.appendChild(heroEl());
 var cst=cardioStrip(); if(cst) root.appendChild(cst);
 var fst=foodStrip(); if(fst) root.appendChild(fst);
@@ -2710,6 +2713,8 @@ if(armed==="stalediscard"){ var snap=snapLift(); disarm(); clearDraftStore(); st
 else { arm("stalediscard"); render("staleDiscard"); }
 }},isArmed?"Tap again to discard":"Discard")));
 }
+/* the "Saved" card shows on the day it was saved, then hides itself */
+function savedFresh(ls){ return (ls.at?isoOf(new Date(+ls.at)):ls.date)===today(); }
 function savedCard(){
 var ls=lastSaved;
 return h("div",{class:"savedcard",id:"savedCard",role:"status"},
@@ -3041,7 +3046,7 @@ var nbf=nbFields(sess);
 state.sessions.push(sess);
 sortAll(state); persist();
 clearDraftStore(); stopRest(); staleBanner=false;
-lastSaved={id:sess.id,planKey:sess.planKey,name:sessShort(sess),date:sess.date,sets:cnt,first:Object.keys(sets)[0]||null};
+lastSaved={at:Date.now(),id:sess.id,planKey:sess.planKey,name:sessShort(sess),date:sess.date,sets:cnt,first:Object.keys(sets)[0]||null};
 if(nbf.nb) lastSaved.nb=nbf.nb; if(nbf.nbm) lastSaved.nbm=nbf.nbm;
 try{ localStorage.setItem(SKEY,JSON.stringify(lastSaved)); }catch(e){}
 return sess;
@@ -3282,7 +3287,7 @@ var nbf=nbFields(sess);
 state.sessions.push(sess);
 sortAll(state); persist();
 hClearStore(); hStale=false;
-lastSaved={id:sess.id,planKey:"home",name:homeName(),date:sess.date,sets:cnt,first:Object.keys(sets)[0]||null};
+lastSaved={at:Date.now(),id:sess.id,planKey:"home",name:homeName(),date:sess.date,sets:cnt,first:Object.keys(sets)[0]||null};
 if(nbf.nb) lastSaved.nb=nbf.nb; if(nbf.nbm) lastSaved.nbm=nbf.nbm;
 try{ localStorage.setItem(SKEY,JSON.stringify(lastSaved)); }catch(e){}
 return sess;
@@ -3312,7 +3317,7 @@ root.appendChild(modeSwitch()); todoRow(root);
 root.appendChild(lenSwitch());
 if(hStale&&!(hCount(hdraft,false)>0&&hdraft.date<today())) hStale=false;
 if(hStale) root.appendChild(hStalePanel());
-if(lastSaved) root.appendChild(savedCard());
+if(lastSaved&&savedFresh(lastSaved)) root.appendChild(savedCard());
 root.appendChild(hHero());
 var si=hStartInfo();
 var lbl=!si.any?"START":(si.idx>=0?"Continue: "+EX[HSLOTS[si.idx].key].name:"Review & finish");
@@ -3609,29 +3614,40 @@ h("p",{class:"muted"},"Start from the Today tab: enter your weights and reps and
 return;
 }
 if(!tabSel.progressKey||keys.indexOf(tabSel.progressKey)<0) tabSel.progressKey=keys[0];
-var sel=h("select",{id:"progSel","aria-label":"Choose exercise",onchange:function(e){tabSel.progressKey=e.target.value;render("progSel");}});
+var sel=h("select",{id:"progSel","aria-label":"Choose exercise",onchange:function(e){tabSel.progressKey=e.target.value;tabSel.progressDay=null;render("progSel");}});
 keys.forEach(function(k){sel.appendChild(h("option",{value:k},EX[k].name));});
 sel.value=tabSel.progressKey;
 root.appendChild(h("label",{class:"fld","for":"progSel"},"Choose exercise"));
 root.appendChild(sel);
-var k=tabSel.progressKey, rows=[], bw=true, secs=false;
+var k=tabSel.progressKey, rows=[], bw=true, secs=false, days=[], lastDay=null;
 state.sessions.forEach(function(s){
 var a=s.sets&&s.sets[k]; if(!a||!a.length) return;
 a.forEach(function(x){ if(x.kg>0) bw=false; if(x.unit==="s") secs=true; });
+var dn=sessShort(s); if(days.indexOf(dn)<0) days.push(dn); lastDay=dn;
 });
+/* the same machine on different days sits at a different point in the workout: compare like with like (default: the latest day) */
+if(days.length<2) tabSel.progressDay=null;
+else if(tabSel.progressDay===undefined||tabSel.progressDay===null||(tabSel.progressDay!=="all"&&days.indexOf(tabSel.progressDay)<0)) tabSel.progressDay=lastDay;
+var dsel=days.length>1?tabSel.progressDay:"all";
+function inDay(s){ return dsel==="all"||sessShort(s)===dsel; }
+if(days.length>1){
+root.appendChild(h("div",{class:"pdays",role:"group","aria-label":"Compare sessions from"},
+["all"].concat(days).map(function(dn){ return h("button",{class:"btn small",type:"button",id:"pday-"+dn.replace(/\W+/g,""),"aria-pressed":dsel===dn?"true":"false",onclick:function(){ tabSel.progressDay=dn; render("pday-"+dn.replace(/\W+/g,"")); }},dn==="all"?"All days":dn); })));
+root.appendChild(h("p",{class:"note",id:"pdayNote",style:"margin:6px 0 0"},dsel==="all"?"Mixed days: the same exercise is lighter later in a workout. Pick one day to compare like with like.":"Showing "+dsel+" only, so the chart compares like with like."));
+}
 state.sessions.forEach(function(s){
-var a=s.sets&&s.sets[k]; if(!a||!a.length) return;
+var a=s.sets&&s.sets[k]; if(!a||!a.length||!inDay(s)) return;
 var best=0, top=0, tot=0;
 a.forEach(function(x){ best=Math.max(best,e1rm(x.kg,x.reps)); top=Math.max(top,x.kg); tot+=(+x.reps||0); });
 var brep=0; a.forEach(function(x){ brep=Math.max(brep,+x.reps||0); });
-rows.push({d:s.date,top:top,sets:a.map(setStr).join(", "),e:best,b:brep,t:tot});
+rows.push({d:s.date,dn:sessShort(s),top:top,sets:a.map(setStr).join(", "),e:best,b:brep,t:tot});
 });
 var wrap=h("div",{style:"margin-top:16px"});
 var bu=secs?"s":"reps";
 /* actual best set: heaviest weight (ties: most reps); bodyweight: most reps/seconds */
 var bs=null;
 state.sessions.forEach(function(s){
-var a=s.sets&&s.sets[k]; if(!a||!a.length) return;
+var a=s.sets&&s.sets[k]; if(!a||!a.length||!inDay(s)) return;
 a.forEach(function(x){
 var kg=+x.kg||0, rp=+x.reps||0; if(!(rp>0)) return;
 if(!bs||(bw?rp>bs.reps:(kg>bs.kg||(kg===bs.kg&&rp>bs.reps)))) bs={kg:kg,reps:rp,date:s.date};
@@ -3659,7 +3675,7 @@ root.appendChild(wrap);
 root.appendChild(h("p",{class:"note",id:"bwNote"},"Bodyweight exercise: the chart shows your best "+(secs?"seconds":"reps")+" in a single set."));
 var tb2=h("tbody");
 rows.slice().reverse().forEach(function(r){
-tb2.appendChild(h("tr",null,h("td",{class:"num"},fmtDate(r.d)),h("td",{class:"num"},r.b+(secs?" s":"")),h("td",{class:"num wrapc"},r.sets),h("td",{class:"num"},r.t+(secs?" s":""))));
+tb2.appendChild(h("tr",null,h("td",{class:"num"},fmtDate(r.d),h("div",{class:"small muted"},r.dn)),h("td",{class:"num"},r.b+(secs?" s":"")),h("td",{class:"num wrapc"},r.sets),h("td",{class:"num"},r.t+(secs?" s":""))));
 });
 root.appendChild(h("div",{class:"tablewrap"},h("table",{class:"ptable"},
 h("thead",null,h("tr",null,h("th",null,"Date"),h("th",null,secs?"Best seconds":"Best reps"),h("th",null,"Sets"),h("th",null,"Total"))),tb2)));
@@ -3673,7 +3689,7 @@ root.appendChild(wrap);
 root.appendChild(h("p",{class:"note"},"Estimated max is calculated from your best set (Epley formula), not a weight you lifted. Use it to compare sessions."));
 var tb=h("tbody");
 rows.slice().reverse().forEach(function(r){
-tb.appendChild(h("tr",null,h("td",{class:"num"},fmtDate(r.d)),h("td",{class:"num"},fmtNum(r.top)),h("td",{class:"num wrapc"},r.sets),h("td",{class:"num"},fmtNum(r.e))));
+tb.appendChild(h("tr",null,h("td",{class:"num"},fmtDate(r.d),h("div",{class:"small muted"},r.dn)),h("td",{class:"num"},fmtNum(r.top)),h("td",{class:"num wrapc"},r.sets),h("td",{class:"num"},fmtNum(r.e))));
 });
 root.appendChild(h("div",{class:"tablewrap"},h("table",{class:"ptable"},
 h("thead",null,h("tr",null,h("th",null,"Date"),h("th",null,"Top weight"),h("th",null,"Sets"),h("th",null,"Est. max"))),tb)));
