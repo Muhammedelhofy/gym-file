@@ -334,6 +334,15 @@ details.corrow .cwrap{padding:0 16px 14px}
 .dbtn{width:52px;min-height:52px;padding:0;font-family:var(--display);font-size:1.5rem;font-weight:700;line-height:1;border:2px solid var(--fline);background:var(--field);color:var(--muted);cursor:pointer;border-radius:2px}
 .dbtn[aria-pressed="true"]{background:var(--good);border-color:var(--good);color:var(--rest-ink)}
 .setbtns{margin-top:12px}
+.xtra{margin-top:14px}
+.xtra .ex{margin-bottom:8px}
+.xtra .xctl{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 14px}
+.xtra .xctl .xmin{color:var(--muted);font-size:.9rem;margin-left:auto}
+.xtra .xsug{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 10px}
+.xtra .btn.block{margin-top:6px}
+.xtra .xwarn{margin:10px 0}
+.xtra .xnote{margin:10px 0}
+.xtra .xpick .xcat{font-family:var(--display);font-weight:600;font-size:.8rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:12px 0 6px}
 .setbtns .btn{flex:1}
 .xnav{display:grid;grid-template-columns:1fr 2fr;gap:12px;margin-top:24px}
 .xnav.one{grid-template-columns:1fr}
@@ -1334,6 +1343,30 @@ function adviceWithWaist(adv, waistWeeks){ // waistWeeks: weekly waist cm oldest
 }
 
 </script>
+<script>
+// ===== Extras (optional, lifting days only) =====
+// day type -> [category, [[exKey, sets, reps, rest], ...]]. Filtered per day at runtime (never a day's own items or their OPTIONS).
+const EXTRAS = {
+  push:[["Another angle",[["pecDeck",2,"10-15","60-90 s"],["lowCable",2,"10-15","60-90 s"],["cableLatRaise",2,"10-15","60-90 s"]]],
+        ["Arms",[["vbarPush",2,"10-15","60-90 s"],["dbTriExt",2,"10-15","60-90 s"]]],
+        ["Rear delts",[["cableRearFly",2,"10-15","60-90 s"]]],
+        ["Core",[["plank",2,"20-40 s","60 s"],["sidePlank",2,"20-30 s per side","60 s"],["deadBug",2,"8 per side","60 s"]]]],
+  pull:[["Another angle",[["straightArm",2,"10-15","60-90 s"],["vbarPulldown",2,"10-15","60-90 s"],["oneArmCableRow",2,"10-15","60-90 s"]]],
+        ["Arms",[["cableCurl",2,"10-15","60-90 s"],["preacherMach",2,"10-15","60-90 s"],["cableHammer",2,"10-15","60-90 s"]]],
+        ["Rear delts",[["cableRearFly",2,"10-15","60-90 s"],["dbRearDelt",2,"10-15","60-90 s"]]],
+        ["Core",[["plank",2,"20-40 s","60 s"],["sidePlank",2,"20-30 s per side","60 s"],["deadBug",2,"8 per side","60 s"]]]],
+  legs:[["Another angle",[["slLegExt",2,"10-15","60-90 s"],["standLegCurl",2,"10-15","60-90 s"],["pullThrough",2,"10-12","90 s"],["gobletSquat",2,"10-12","90 s"]]],
+        ["Calves",[["legPressCalf",2,"10-15","60-90 s"],["calfSeat",2,"10-15","60-90 s"],["calfStand",2,"10-15","60-90 s"]]],
+        ["Core",[["plank",2,"20-40 s","60 s"],["sidePlank",2,"20-30 s per side","60 s"],["deadBug",2,"8 per side","60 s"]]]]
+};
+const EXTRAS_MAX = 2, EXTRAS_SETS_WARN = 22;
+Object.assign(INFO, {
+  extras:{t:"About extras",b:[
+    "Extras are 1-2 optional exercises added at the end of a lifting day, picked from a short list for that day. The planned workout stays the same, and extras never make it count as partial.",
+    "Max 2 extras, 2 or 3 sets each: more volume than that slows recovery on a cut. Over about 22 sets in a day the app shows a warning.",
+    "⚠️ Assumption, verify: rule of thumb, not a personal prescription."]}
+});
+</script>
 <script>const SUPA_URL="https://sjomysminfzohkbauahw.supabase.co"; const SUPA_KEY="sb_publishable_X4_vBV9fue_i4cLPNGGcQQ_M6nVEI0q";</script>
 <script>
 (function(){
@@ -1602,7 +1635,7 @@ return {opt:toOpt("free"),reason:"Back to free weight after a machine block"};
 return {opt:toOpt("free"),reason:"Progressing on free weight \u2014 keep it"};
 }
 function newDraft(planKey){
-var d={planKey:planKey,date:today(),dateSet:false,countPf:false,prevN:0,n:{},sets:{},choice:{},corr:{},notes:"",cur:0,msg:null,msgKind:"ok",dirty:false,resumed:false};
+var d={planKey:planKey,date:today(),dateSet:false,countPf:false,prevN:0,n:{},sets:{},choice:{},corr:{},notes:"",cur:0,extras:[],msg:null,msgKind:"ok",dirty:false,resumed:false};
 var p=planKey==="rest"?null:planByKey(planKey);
 if(p) p.items.forEach(function(it){
 var k=it[0], lc=OPTIONS[k]?lastChoiceFor(planKey,k):null;
@@ -1645,7 +1678,7 @@ function ensureDraft(){ if(!draft) draft=newDraft(nextPlanKey()); else if(!draft
 function saveDraft(){
 if(!draft||!draft.dirty) return;
 try{
-localStorage.setItem(DKEY,JSON.stringify({planKey:draft.planKey,date:draft.date,dateSet:!!draft.dateSet,n:draft.n,sets:draft.sets,choice:draft.choice,corr:draft.corr,notes:draft.notes,cur:draft.cur||0}));
+localStorage.setItem(DKEY,JSON.stringify({planKey:draft.planKey,date:draft.date,dateSet:!!draft.dateSet,n:draft.n,sets:draft.sets,choice:draft.choice,corr:draft.corr,notes:draft.notes,cur:draft.cur||0,extras:draft.extras}));
 }catch(e){}
 }
 function clearDraftStore(){ try{ localStorage.removeItem(DKEY); }catch(e){} }
@@ -1680,6 +1713,15 @@ if(o.choice&&typeof o.choice==="object") for(var k4 in o.choice){ var nc=normCho
 if(o.corr&&typeof o.corr==="object") for(var k3 in o.corr) d.corr[k3]=!!o.corr[k3];
 var p=planByKey(o.planKey);
 d.cur=Math.max(0,Math.min(p?p.items.length-1:0,Math.floor(+o.cur)||0));
+if(Array.isArray(o.extras)){
+var okx=extraAllowedKeys(o.planKey);
+o.extras.forEach(function(e){
+if(!e||typeof e!=="object"||d.extras.length>=EXTRAS_MAX) return;
+var nx=Math.floor(+e.n);
+if(okx.indexOf(e.k)<0||(nx!==2&&nx!==3)||extraIdx(d,e.k)>=0) return;
+d.extras.push({k:e.k,n:nx});
+});
+}
 d.dirty=true; d.resumed=true;
 d.prevN=countSets(d,false);
 if(!d.dateSet&&d.prevN===0) d.date=today();
@@ -1717,6 +1759,33 @@ function plannedSets(){
 var plan=planByKey(draft.planKey), c=0; if(!plan) return 0;
 plan.items.forEach(function(it){ c+=nFor(it); });
 return c;
+}
+/* ---------- extras (optional, lifting days) ---------- */
+function extraIdx(d,k){ for(var i=0;i<d.extras.length;i++) if(d.extras[i].k===k) return i; return -1; }
+/* keys offered for a plan day: not in its items, not in any of its items' OPTIONS */
+function extraAllowedKeys(planKey){
+var plan=planByKey(planKey), out=[], skip={}; if(!plan||!EXTRAS[plan.type]) return out;
+plan.items.forEach(function(it){ skip[it[0]]=1; optKeys(it[0]).forEach(function(x){ skip[x]=1; }); });
+EXTRAS[plan.type].forEach(function(c){ c[1].forEach(function(x){ if(!skip[x[0]]&&EX[x[0]]&&out.indexOf(x[0])<0) out.push(x[0]); }); });
+return out;
+}
+function extraEntry(planKey,k){
+var plan=planByKey(planKey), r=null; if(!plan||!EXTRAS[plan.type]) return null;
+EXTRAS[plan.type].forEach(function(c){ c[1].forEach(function(x){ if(x[0]===k&&!r) r=x; }); });
+return r;
+}
+function extraSets(d){ var c=0; d.extras.forEach(function(e){ c+=e.n; }); return c; }
+/* equipment hint: the label the key has in any OPTIONS list */
+function extraHint(k){ for(var o in OPTIONS){ var l=optLabel(o,k); if(l) return l; } return ""; }
+/* "Suggest it, I tick": extras of the most recent saved session of this plan day */
+function extraSuggest(){
+for(var i=state.sessions.length-1;i>=0;i--){
+var s=state.sessions[i]; if(s.planKey!==draft.planKey) continue;
+if(!Array.isArray(s.extras)) return [];
+var ok=extraAllowedKeys(draft.planKey);
+return s.extras.filter(function(k){ return ok.indexOf(k)>=0&&extraIdx(draft,k)<0; }).slice(0,EXTRAS_MAX);
+}
+return [];
 }
 function corDone(){ var c=0; CORRECTIVE.forEach(function(x){ if(draft.corr[x[0]]) c++; }); return c; }
 /* ---------- body map (original artwork) ---------- */
@@ -2128,6 +2197,72 @@ var ul=h("ul",{class:"plain"});
 REST_DAY.forEach(function(t){ ul.appendChild(h("li",{class:hasWarn(t)?"warn":null},t)); });
 return ul;
 }
+function addExtra(k){
+var en=extraEntry(draft.planKey,k);
+if(!en||draft.extras.length>=EXTRAS_MAX||extraIdx(draft,k)>=0) return;
+draft.extras.push({k:k,n:en[1]}); draft.xpick=false; touch(); render("xr-"+k);
+}
+function removeExtra(k){
+var i=extraIdx(draft,k); if(i<0) return;
+var snap=snapLift(), had=(draft.sets[k]||[]).some(function(r){ return num(r.reps)>0; });
+draft.extras.splice(i,1); delete draft.sets[k]; touch(); render("addExtra");
+if(had){ var aft=draft; snack("Extra removed",function(){ undoLift(snap); render(); },function(){return draft===aft;}); }
+}
+function setExtraN(e,v){
+e.n=v; if(draft.sets[e.k]) draft.sets[e.k].length=Math.min(draft.sets[e.k].length,v);
+touch(); render("xs-"+e.k+"-"+v);
+}
+function extrasSection(plan){
+var sec=h("section",{class:"xtra t-"+plan.type,id:"extras","aria-label":"Extras (optional)"});
+sec.appendChild(h("h2",null,"Extras (optional)",infoBtn("extras","extras")));
+var full=draft.extras.length>=EXTRAS_MAX;
+if(!full){
+var sg=extraSuggest();
+if(sg.length){
+var sr=h("div",{class:"xsug",id:"xSug"});
+sg.forEach(function(k){ sr.appendChild(h("button",{class:"btn small",type:"button","data-key":k,onclick:function(){ addExtra(k); }},"Last time: + "+EX[k].name)); });
+sec.appendChild(sr);
+}
+}
+draft.extras.forEach(function(e){
+var k=e.k, en=extraEntry(draft.planKey,k)||[k,e.n,"10-15","60-90 s"];
+var card=exCard(k,targetText(e.n,en[2],en[3]),{id:"xr-"+k,body:setsBodyEl(en,k,k,e.n,false)});
+sec.appendChild(h("div",{class:"xextra"},card,
+h("div",{class:"xctl"},
+h("span",{class:"setslbl"},"Sets:"),
+h("div",{class:"setseg",role:"group","aria-label":"Sets for "+EX[k].name},[2,3].map(function(v){
+return h("button",{class:"setsb",type:"button",id:"xs-"+k+"-"+v,"aria-pressed":e.n===v?"true":"false","aria-label":v+" sets",onclick:function(){ setExtraN(e,v); }},String(v));
+})),
+h("span",{class:"xmin num"},"+"+(e.n*3)+" min"),
+h("button",{class:"btn small",type:"button",id:"xrm-"+k,"aria-label":"Remove "+EX[k].name,onclick:function(){ removeExtra(k); }},"\u00d7 Remove"))));
+});
+if(full){
+sec.appendChild(h("p",{class:"note xnote",id:"xMax"},"Max 2 extras \u2014 enough for recovery on a cut."));
+} else {
+sec.appendChild(h("button",{class:"btn block",type:"button",id:"addExtra","aria-expanded":draft.xpick?"true":"false",onclick:function(){ draft.xpick=!draft.xpick; render("addExtra"); }},draft.xpick?"Close":"+ Add extra"));
+if(draft.xpick){
+var pk=h("div",{class:"xpick",id:"xPick",role:"group","aria-label":"Choose an extra"}), ok=extraAllowedKeys(draft.planKey);
+EXTRAS[plan.type].forEach(function(c){
+var ks=c[1].filter(function(x){ return ok.indexOf(x[0])>=0&&extraIdx(draft,x[0])<0; });
+if(!ks.length) return;
+pk.appendChild(h("div",{class:"xcat"},c[0]));
+var ul=h("div",{class:"optlist"});
+ks.forEach(function(x){
+var hint=extraHint(x[0]);
+ul.appendChild(h("button",{class:"optrow",type:"button","data-key":x[0],onclick:function(){ addExtra(x[0]); }},thumbEl(x[0],true,true),
+h("span",{class:"optmain"},h("span",{class:"optname"},EX[x[0]].name),
+h("span",{class:"optbadges"},hint?eqTag(hint):null,h("span",{class:"num",style:"color:var(--muted);font-size:.85rem"},x[1]+" \u00d7 "+x[2])))));
+});
+pk.appendChild(ul);
+});
+sec.appendChild(pk);
+}
+}
+var tot=plannedSets()+extraSets(draft);
+if(draft.extras.length) sec.appendChild(h("p",{class:"note xnote num",id:"xTime"},"Extras: "+extraSets(draft)+" sets, +"+(extraSets(draft)*3)+" min"));
+if(draft.extras.length&&tot>EXTRAS_SETS_WARN) sec.appendChild(h("div",{class:"warnbox xwarn",id:"xWarn",role:"status"},"\u26a0\ufe0f About "+tot+" sets today \u2014 over ~22 can hurt recovery on a cut. Assumption, verify: rule of thumb."));
+return sec;
+}
 function renderTrainDay(root){
 var plan=planByKey(draft.planKey);
 /* exercise list */
@@ -2144,6 +2279,7 @@ chipsEl(muscles(ak),"span")),
 h("span",{class:"pill"+(complete?" done":"")},complete?n+"/"+n+" ✓":dc+"/"+n+" sets")));
 });
 root.appendChild(xl);
+root.appendChild(extrasSection(plan));
 /* notes + finish */
 root.appendChild(h("label",{class:"fld","for":"notes",style:"margin-top:24px"},"Notes (optional)"));
 root.appendChild(h("textarea",{id:"notes",oninput:function(e){draft.notes=e.target.value;touch();}},draft.notes||""));
@@ -2213,18 +2349,8 @@ wrap.appendChild(ul);
 }
 return wrap;
 }
-function renderExScreen(root,plan){
-var it=plan.items[exIdx], k=it[0], ak=activeKey(k), ex=EX[ak], n=nFor(it), rows=rowsFor(k,n), last=lastFor(ak), total=plan.items.length;
-var sc=h("section",{class:"xscreen t-"+plan.type,"aria-label":"Exercise"});
-sc.appendChild(backBtn());
-sc.appendChild(h("div",{class:"kicker"},"Exercise "+(exIdx+1)+" of "+total));
-sc.appendChild(h("h2",{class:"xtitle",id:"exTitle",tabindex:"-1"},ex.name));
-var cb=choiceBar(k); if(cb) sc.appendChild(cb);
-sc.appendChild(chipsEl(muscles(ak)));
-sc.appendChild(h("div",{class:"xtarget2 num"},n+" × "+it[2]+(it[3]?" · rest "+it[3]:"")));
-sc.appendChild(setsControl(it,k,n));
-sc.appendChild(h("div",{class:"ex-last num"},last?"Last time: "+fmtLast(last):"First time"));
-sc.appendChild(explainBody(ak));
+function setsBodyEl(it,k,ak,n,withCount){
+var ex=EX[ak], rows=rowsFor(k,n), last=lastFor(ak);
 var body=h("div",{class:"sets"});
 if(last) body.appendChild(h("button",{class:"btn small samebtn",type:"button",id:"sameLast",onclick:function(){
 for(var q=0;q<n;q++){ var lr=last[Math.min(q,last.length-1)], rr=rows[q]; rr.kg=lr.kg>0?fmtNum(lr.kg):""; rr.reps=String(lr.reps); rr.pf=!rr.done; }
@@ -2280,9 +2406,24 @@ h("div",{class:"stg"},sb("\u22121","reps minus 1 for","reps",-1,repsIn,"rpm-"+k+
 h("span",null)));
 })(i);
 }
-body.appendChild(h("div",{class:"setbtns"},
+if(withCount) body.appendChild(h("div",{class:"setbtns"},
 h("button",{class:"btn small",type:"button",id:"add-"+k,onclick:function(){draft.n[k]=n+1;touch();render("add-"+k);}},"+ Set"),
 h("button",{class:"btn small",type:"button",id:"rem-"+k,disabled:n<=1,onclick:function(){if(n>1){draft.n[k]=n-1;if(draft.sets[k]) draft.sets[k].length=Math.min(draft.sets[k].length,n-1);touch();render("rem-"+k);}}},"\u2212 Set")));
+return body;
+}
+function renderExScreen(root,plan){
+var it=plan.items[exIdx], k=it[0], ak=activeKey(k), ex=EX[ak], n=nFor(it), rows=rowsFor(k,n), last=lastFor(ak), total=plan.items.length;
+var sc=h("section",{class:"xscreen t-"+plan.type,"aria-label":"Exercise"});
+sc.appendChild(backBtn());
+sc.appendChild(h("div",{class:"kicker"},"Exercise "+(exIdx+1)+" of "+total));
+sc.appendChild(h("h2",{class:"xtitle",id:"exTitle",tabindex:"-1"},ex.name));
+var cb=choiceBar(k); if(cb) sc.appendChild(cb);
+sc.appendChild(chipsEl(muscles(ak)));
+sc.appendChild(h("div",{class:"xtarget2 num"},n+" × "+it[2]+(it[3]?" · rest "+it[3]:"")));
+sc.appendChild(setsControl(it,k,n));
+sc.appendChild(h("div",{class:"ex-last num"},last?"Last time: "+fmtLast(last):"First time"));
+sc.appendChild(explainBody(ak));
+var body=setsBodyEl(it,k,ak,n,true);
 sc.appendChild(body);
 var isLast=exIdx>=total-1;
 sc.appendChild(h("div",{class:"xnav"},
@@ -2311,8 +2452,19 @@ out.push({kg:isNaN(kg)?0:kg,reps:reps});
 if(out.length){ sets[ak]=(sets[ak]||[]).concat(out); any=true; }
 });
 if(!any) return null;
+var xk=[]; /* extras: own sets under their key, never counted in cnt/planned (no partial) */
+draft.extras.forEach(function(e){
+var out=[];
+(draft.sets[e.k]||[]).slice(0,e.n).forEach(function(r){
+var reps=num(r.reps), kg=num(r.kg);
+if(!(reps>0)||(r.pf&&!r.done&&!incPf)) return;
+out.push({kg:isNaN(kg)?0:kg,reps:reps});
+});
+if(out.length&&!sets[e.k]){ sets[e.k]=out; xk.push(e.k); }
+});
 var corr=CORRECTIVE.map(function(c){return c[0];}).filter(function(k){return draft.corr[k];});
 var sess={id:uid("s"),date:draft.date||today(),planKey:draft.planKey,sets:sets,corrective:corr,notes:(draft.notes||"").trim()};
+if(xk.length) sess.extras=xk;
 if(cnt<planned) sess.partial=true;
 state.sessions.push(sess);
 sortAll(state); persist();
