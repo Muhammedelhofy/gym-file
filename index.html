@@ -1360,10 +1360,13 @@ const EXTRAS = {
         ["Core",[["plank",2,"20-40 s","60 s"],["sidePlank",2,"20-30 s per side","60 s"],["deadBug",2,"8 per side","60 s"]]]]
 };
 const EXTRAS_MAX = 2, EXTRAS_SETS_WARN = 22;
+// lowest weekly volume in the plan (side delts 6, calves 6, lats 6 direct sets) → tagged "Recommended" in the picker
+const EXTRAS_REC = {cableLatRaise:1, straightArm:1, legPressCalf:1, calfSeat:1, calfStand:1};
 Object.assign(INFO, {
   extras:{t:"About extras",b:[
     "Extras are 1-2 optional exercises added at the end of a lifting day, picked from a short list for that day. The planned workout stays the same, and extras never make it count as partial.",
     "Max 2 extras, 2 or 3 sets each: more volume than that slows recovery on a cut. Over about 22 sets in a day the app shows a warning.",
+    "\"Recommended\" marks muscles your plan trains least (side delts, lats, calves: about 6 direct sets a week each). Chest and triceps already get 10-12.",
     "⚠️ Assumption, verify: rule of thumb, not a personal prescription."]}
 });
 </script>
@@ -2251,7 +2254,7 @@ ks.forEach(function(x){
 var hint=extraHint(x[0]);
 ul.appendChild(h("button",{class:"optrow",type:"button","data-key":x[0],onclick:function(){ addExtra(x[0]); }},thumbEl(x[0],true,true),
 h("span",{class:"optmain"},h("span",{class:"optname"},EX[x[0]].name),
-h("span",{class:"optbadges"},hint?eqTag(hint):null,h("span",{class:"num",style:"color:var(--muted);font-size:.85rem"},x[1]+" \u00d7 "+x[2])))));
+h("span",{class:"optbadges"},EXTRAS_REC[x[0]]?h("span",{class:"segrec"},"Recommended"):null,hint?eqTag(hint):null,h("span",{class:"num",style:"color:var(--muted);font-size:.85rem"},x[1]+" \u00d7 "+x[2])))));
 });
 pk.appendChild(ul);
 });
