@@ -2313,20 +2313,9 @@ function cueBlock(key){
 var ex=EX[key], wrap=h("div",{class:"cueblk"});
 wrap.appendChild(h("p",{class:"cue"},ex.cue));
 var fm=FORM[key];
-if(fm){
-var txt=h("p",{class:"fctext",id:"fctext-"+key,"aria-live":"polite"}); txt.hidden=true;
-var cur=-1, chips=h("div",{class:"fchips"});
-[[fm[0],fm[1]],["Back",fm[2]]].forEach(function(c,i){
-var b=h("button",{class:"fchip",type:"button","aria-expanded":"false","aria-controls":"fctext-"+key},c[0]);
-b.addEventListener("click",function(){
-var on=cur!==i; cur=on?i:-1;
-Array.prototype.forEach.call(chips.children,function(x,j){ x.setAttribute("aria-expanded",j===cur?"true":"false"); });
-txt.hidden=!on; if(on) txt.textContent=c[1];
-});
-chips.appendChild(b);
-});
-wrap.appendChild(chips); wrap.appendChild(txt);
-}
+if(fm) wrap.appendChild(h("div",{class:"formchk"},
+h("div",{class:"fc"},h("span",{class:"fl"},fm[0]),h("span",null,fm[1])),
+h("div",{class:"fc"},h("span",{class:"fl"},"Back"),h("span",null,fm[2]))));
 return wrap;
 }
 /* "How to do it" (first 2 steps + toggle) and "Common mistakes"; null when HOWTO has no entry for the key */
@@ -3780,8 +3769,8 @@ return h("div",{class:"rdetail",id:"rdetail",role:"region","aria-label":m+" deta
 h("h3",null,"Exercise history: "+m),hb,
 h("h3",null,"Your plan exercises: "+m),strip);
 }
-var REC_KEY="gymRecGrid_v1", recScroll=false;
-function recGridOpen(){ try{ return localStorage.getItem(REC_KEY)==="1"; }catch(e){ return false; } }
+var REC_KEY="gymRecGrid_v2", recScroll=false;
+function recGridOpen(){ try{ return localStorage.getItem(REC_KEY)!=="0"; }catch(e){ return true; } } /* open by default: the % per muscle is the point */
 function setRecGrid(v){ try{ localStorage.setItem(REC_KEY,v?"1":"0"); }catch(e){} }
 function renderRecovery(root){
 var n=RECOVERY_MUSCLES.length;
