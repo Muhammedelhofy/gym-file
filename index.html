@@ -4420,7 +4420,7 @@ function bsStr(b){ return b?setStr(b):"—"; }
 function coachText(n){
 var end=today(), ws0=addDays(weekStartIso(end),-7*(n-1)), L=[];
 function inR(d){ return d>=ws0&&d<=end; }
-L.push("You're my strength and nutrition coach. Use only the data below. Keep answers short (about 8 lines). Say clearly when you're unsure or the data isn't enough. "+(isOwner()?"Suggest halal food only. ":"")+"If I mention pain, dizziness, chest pain or an injury, tell me to stop and see a doctor or physiotherapist. Don't change my targets or plan on your own: suggest, and I decide.");
+L.push("You're my strength and nutrition coach. Use only the data below. Keep answers short (about 8 lines). Say clearly when you're unsure or the data isn't enough. "+"Suggest halal food only. "+"If I mention pain, dizziness, chest pain or an injury, tell me to stop and see a doctor or physiotherapist. Don't change my targets or plan on your own: suggest, and I decide.");
 L.push("");
 L.push("MY DATA: last "+n+" weeks ("+fmtDate(ws0)+" to "+fmtDate(end)+", the current week is still in progress), from my gym tracking app.");
 var gk=goalKey(), T=targetsFor(gk);
