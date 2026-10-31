@@ -1345,7 +1345,7 @@ function adviceWithWaist(adv, waistWeeks){ // waistWeeks: weekly waist cm oldest
 </script>
 <script>
 // ===== Extras (optional, lifting days only) =====
-// day type -> [category, [[exKey, sets, reps, rest], ...]]. Filtered per day at runtime (never a day's own items or their OPTIONS).
+// day type -> [category, [[exKey, sets, reps, rest], ...]]. Filtered per day at runtime (never a day's own items or today's chosen variant).
 const EXTRAS = {
   push:[["Another angle",[["pecDeck",2,"10-15","60-90 s"],["lowCable",2,"10-15","60-90 s"],["cableLatRaise",2,"10-15","60-90 s"]]],
         ["Arms",[["vbarPush",2,"10-15","60-90 s"],["dbTriExt",2,"10-15","60-90 s"]]],
@@ -1762,10 +1762,10 @@ return c;
 }
 /* ---------- extras (optional, lifting days) ---------- */
 function extraIdx(d,k){ for(var i=0;i<d.extras.length;i++) if(d.extras[i].k===k) return i; return -1; }
-/* keys offered for a plan day: not in its items, not in any of its items' OPTIONS */
-function extraAllowedKeys(planKey){
+/* keys offered for a plan day: not one of its items, and (with a draft) not the variant chosen for any slot today */
+function extraAllowedKeys(planKey,d){
 var plan=planByKey(planKey), out=[], skip={}; if(!plan||!EXTRAS[plan.type]) return out;
-plan.items.forEach(function(it){ skip[it[0]]=1; optKeys(it[0]).forEach(function(x){ skip[x]=1; }); });
+plan.items.forEach(function(it){ skip[it[0]]=1; if(d){ var c=normChoice(it[0],d.choice?d.choice[it[0]]:null)||recKey(it[0]); if(c) skip[c]=1; } });
 EXTRAS[plan.type].forEach(function(c){ c[1].forEach(function(x){ if(!skip[x[0]]&&EX[x[0]]&&out.indexOf(x[0])<0) out.push(x[0]); }); });
 return out;
 }
@@ -1782,7 +1782,7 @@ function extraSuggest(){
 for(var i=state.sessions.length-1;i>=0;i--){
 var s=state.sessions[i]; if(s.planKey!==draft.planKey) continue;
 if(!Array.isArray(s.extras)) return [];
-var ok=extraAllowedKeys(draft.planKey);
+var ok=extraAllowedKeys(draft.planKey,draft);
 return s.extras.filter(function(k){ return ok.indexOf(k)>=0&&extraIdx(draft,k)<0; }).slice(0,EXTRAS_MAX);
 }
 return [];
@@ -2199,7 +2199,7 @@ return ul;
 }
 function addExtra(k){
 var en=extraEntry(draft.planKey,k);
-if(!en||draft.extras.length>=EXTRAS_MAX||extraIdx(draft,k)>=0) return;
+if(!en||draft.extras.length>=EXTRAS_MAX||extraIdx(draft,k)>=0||extraAllowedKeys(draft.planKey,draft).indexOf(k)<0) return;
 draft.extras.push({k:k,n:en[1]}); draft.xpick=false; touch(); render("xr-"+k);
 }
 function removeExtra(k){
@@ -2241,7 +2241,7 @@ sec.appendChild(h("p",{class:"note xnote",id:"xMax"},"Max 2 extras \u2014 enough
 } else {
 sec.appendChild(h("button",{class:"btn block",type:"button",id:"addExtra","aria-expanded":draft.xpick?"true":"false",onclick:function(){ draft.xpick=!draft.xpick; render("addExtra"); }},draft.xpick?"Close":"+ Add extra"));
 if(draft.xpick){
-var pk=h("div",{class:"xpick",id:"xPick",role:"group","aria-label":"Choose an extra"}), ok=extraAllowedKeys(draft.planKey);
+var pk=h("div",{class:"xpick",id:"xPick",role:"group","aria-label":"Choose an extra"}), ok=extraAllowedKeys(draft.planKey,draft);
 EXTRAS[plan.type].forEach(function(c){
 var ks=c[1].filter(function(x){ return ok.indexOf(x[0])>=0&&extraIdx(draft,x[0])<0; });
 if(!ks.length) return;
@@ -2460,7 +2460,7 @@ var reps=num(r.reps), kg=num(r.kg);
 if(!(reps>0)||(r.pf&&!r.done&&!incPf)) return;
 out.push({kg:isNaN(kg)?0:kg,reps:reps});
 });
-if(out.length&&!sets[e.k]){ sets[e.k]=out; xk.push(e.k); }
+if(out.length){ sets[e.k]=sets[e.k]?sets[e.k].concat(out):out; xk.push(e.k); } /* same exercise also chosen for a main slot: one list */
 });
 var corr=CORRECTIVE.map(function(c){return c[0];}).filter(function(k){return draft.corr[k];});
 var sess={id:uid("s"),date:draft.date||today(),planKey:draft.planKey,sets:sets,corrective:corr,notes:(draft.notes||"").trim()};
