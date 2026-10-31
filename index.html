@@ -3780,7 +3780,7 @@ root.appendChild(card);
 /* ----- suggested day (the existing plan), collapsed under one row ----- */
 var sdOpen=sugOpen(), sd=h("div",{id:"sugBody"});
 if(isOwner()) root.appendChild(h("button",{class:"sugtog",type:"button",id:"sugToggle","aria-expanded":sdOpen?"true":"false","aria-controls":"sugBody",onclick:function(){ setSugOpen(!sdOpen); foodRerender("sugToggle"); }},
-h("span",{class:"sgt num"},"Suggested day \u00b7 \u2248 "+kfmt(PT.kcal)+" kcal \u00b7 "+PT.prot+" g protein"),
+h("span",{class:"sgt num"},"Suggested meal plan \u00b7 "+(PT.prot+SHAKE.protein)+" g protein incl. milk \u00b7 \u2248 "+kfmt(PT.kcal)+" kcal + milk"),
 h("span",{class:"sgx","aria-hidden":"true"},sdOpen?"\u25BE":"\u25B8")));
 var calMain=h("b",{class:"num",id:"calMain"}), calExtra=h("span",{class:"calx",id:"calExtra"}), calChip=h("span",{class:"chip inc",id:"calIncomplete"},"Incomplete");
 var planVs=h("p",{class:"small",id:"planVs",style:"margin:8px 0 0;font-weight:600"});
