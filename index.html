@@ -837,6 +837,12 @@ details.expl{margin:0}
 .fchip{min-height:44px;padding:8px 16px;border-radius:22px;background:var(--surface2);border:1px solid var(--line);color:var(--text);font-family:var(--display);font-weight:600;font-size:.85rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
 .fchip[aria-expanded="true"]{border-color:var(--hud);color:var(--hud-ink);box-shadow:inset 0 0 10px rgba(var(--hud-rgb),.25)}
 .fctext{margin:4px 0 6px;padding:10px 12px;background:var(--surface2);border:1px solid var(--line);border-radius:8px;line-height:1.45}
+.syncdot[hidden]{display:none!important}
+body.setupmode #tabbar,body.setupmode #backupBtn,body.setupmode .hdrR,body.setupmode .cbubble,body.setupmode .restbar{display:none!important}
+.setup .modesw{margin:0 0 10px}
+.setup .modesw.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.setup details.day>summary{cursor:pointer}
+.setup .row2>div{margin-top:12px}
 </style>
 </head><body>
 <header class="hdr"><div class="in">
@@ -1442,6 +1448,24 @@ Object.assign(INFO, {
     "⚠️ Assumption, verify: rule of thumb, not a personal prescription."]}
 });
 </script>
+<script>// ===== first-run setup additions (new consts; owner-authored blocks untouched) =====
+const PROT_PER_KG = {cut:2.0, recomp:1.8, bulk:1.6}; // g protein per kg body weight when there is no body-fat data
+const HOME_QUICK_N = [["pushups",2,"stop 2 reps short of failure"],["bwSquat",2,"15"],["revLunge",1,"10 per leg"],["sidePlank",1,"20-30 s per side"],["deadBug",1,"8 per side"]];
+const GOAL_LINE = {cut:"Lose fat while keeping muscle: eat a bit less than you burn.", recomp:"Slowly lose fat and build muscle: eat a little under what you burn.", bulk:"Build muscle with little fat: eat a small surplus, gain slowly."};
+Object.assign(INFO, {
+  goalCalcEst:{t:"How your targets are calculated",b:[
+    "No body-fat data: burn estimated from height, age and sex (Mifflin-St Jeor), protein from body weight. ⚠️ Assumption, verify: less accurate than InBody — add a measurement to switch to the lean-mass formula.",
+    "Resting burn = 10 × weight (kg) + 6.25 × height (cm) − 5 × age, plus 5 (male) or minus 161 (female). Daily burn = resting burn × 1.55.",
+    "Cut = 80% of daily burn, Recomp = 88%, Lean bulk = 107%.",
+    "Protein = 2.0 g per kg body weight (Cut), 1.8 (Recomp), 1.6 (Lean bulk). Fat ≈ 27% of calories; carbs fill the rest.",
+    "Targets follow your latest weigh-in. Your real burn shows in the weekly weigh-in trend; adjust from that."]},
+  goalWhyGen:{t:"What the goals mean",b:[
+    "Cut: eat about 20% below your estimated burn to lose fat while you lift. Keep protein high to protect muscle.",
+    "Recomp: eat about 12% below your burn. Slower fat loss, with muscle kept or slowly built. Works best for beginners.",
+    "Lean bulk: eat about 7% above your burn to build muscle with little fat. Expect slow weight gain.",
+    "⚠️ Assumption, verify: these are common coaching rules of thumb. Your weigh-in trend shows what really works for you."]}
+});
+</script>
 <script>const SUPA_URL="https://sjomysminfzohkbauahw.supabase.co"; const SUPA_KEY="sb_publishable_X4_vBV9fue_i4cLPNGGcQQ_M6nVEI0q";</script>
 <script>
 (function(){
@@ -1500,16 +1524,21 @@ return parseFloat(s);
 function uid(p){return p+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 function hasWarn(t){return String(t).indexOf("⚠️")>=0;}
 function planByKey(k){for(var i=0;i<PLAN.length;i++) if(PLAN[i].key===k) return PLAN[i]; return null;}
-function planName(k){if(k==="rest") return "Rest day";if(k==="home") return "Home + Pelvic";var p=planByKey(k);return p?p.name:k;}
+function planName(k){if(k==="rest") return "Rest day";if(k==="home") return homeName();var p=planByKey(k);return p?p.name:k;}
 function planType(k){if(k==="rest"||k==="home") return "rest";var p=planByKey(k);return p?p.type:"rest";}
 /* ---------- state / storage ---------- */
 var storageOk=true;
 var MEAL_IDS=["breakfast","lunch","post","dinner","snacks"];
 var DKINDS=["sessions","measurements","weighins","cardio","foodlog","customFoods","waist","daily"];
+var resetting=false;
+var su={step:1,goal:"cut",days:5,w:"",ib:false,bf:"",fk:"",mu:"",vi:"",sex:"",age:"",ht:"",err:{},top:""};
 var state=load();
+function isOwner(){ return !!(state.ui&&state.ui.profile&&state.ui.profile.owner===true); }
+function needSetup(){ return !(state.ui&&state.ui.profile); }
+function profDays(){ var p=state.ui&&state.ui.profile; return (p&&p.owner!==true&&(p.days===4||p.days===5||p.days===6))?p.days:6; }
+function homeName(){ return isOwner()?"Home + Pelvic":"Home"; }
 function defaultState(){
-var m=Object.assign({id:"m_seed",source:"inbody"},FIRST_MEASURE);
-return {version:1,sessions:[],measurements:[m],cardio:[],weighins:[],foodlog:[],customFoods:[],waist:[],daily:[],deleted:{sessions:[],measurements:[],weighins:[],cardio:[],foodlog:[],customFoods:[],waist:[],daily:[]},rev:0,ui:{tab:"today",mode:"lift",homeLen:"quick",cardioGoal:CARDIO_GOAL_DEFAULT,goal:"cut",stepGoal:STEP_GOAL_DEFAULT,stepsToCardio:false}};
+return {version:1,sessions:[],measurements:[],cardio:[],weighins:[],foodlog:[],customFoods:[],waist:[],daily:[],deleted:{sessions:[],measurements:[],weighins:[],cardio:[],foodlog:[],customFoods:[],waist:[],daily:[]},rev:0,ui:{tab:"today",mode:"lift",homeLen:"quick",cardioGoal:CARDIO_GOAL_DEFAULT,goal:"cut",stepGoal:STEP_GOAL_DEFAULT,stepsToCardio:false}};
 }
 function normalize(o){
 var s={version:1,sessions:[],measurements:[],cardio:[],weighins:[],foodlog:[],customFoods:[],waist:[],daily:[],deleted:{sessions:[],measurements:[],weighins:[],cardio:[],foodlog:[],customFoods:[],waist:[],daily:[]},rev:0,ui:{tab:"today",mode:"lift",homeLen:"quick",cardioGoal:CARDIO_GOAL_DEFAULT,goal:"cut",stepGoal:STEP_GOAL_DEFAULT,stepsToCardio:false}};
@@ -1544,6 +1573,20 @@ if(anyP) s.ui.setPref=sp;
 if(o.ui&&o.ui.cardioLast&&typeof o.ui.cardioLast==="object"&&cardioType(o.ui.cardioLast.type)&&+o.ui.cardioLast.min>0&&+o.ui.cardioLast.min<=600) s.ui.cardioLast={type:o.ui.cardioLast.type,min:Math.round(+o.ui.cardioLast.min)};
 if(o.ui&&o.ui.homeLen==="full") s.ui.homeLen="full";
 if(o.ui&&typeof o.ui.goal==="string"&&Object.prototype.hasOwnProperty.call(GOALS,o.ui.goal)) s.ui.goal=o.ui.goal;
+if(o.ui&&o.ui.profile&&typeof o.ui.profile==="object"&&!Array.isArray(o.ui.profile)){
+var pr=o.ui.profile, np=null;
+if(pr.owner===true) np={owner:true};
+else if(pr.owner===false){
+np={owner:false,goal:"cut",days:5};
+if(typeof pr.goal==="string"&&Object.prototype.hasOwnProperty.call(GOALS,pr.goal)) np.goal=pr.goal;
+if(pr.days===4||pr.days===5||pr.days===6) np.days=pr.days;
+if(pr.sex==="male"||pr.sex==="female") np.sex=pr.sex;
+var pa=+pr.age; if(pa>=14&&pa<=90) np.age=Math.round(pa);
+var ph=+pr.heightCm; if(ph>=120&&ph<=230) np.heightCm=Math.round(ph*10)/10;
+if(typeof pr.setupAt==="string"&&parseIso(pr.setupAt)) np.setupAt=pr.setupAt;
+}
+if(np) s.ui.profile=np;
+}
 if(Array.isArray(o.foodlog)){ var fseen={}; o.foodlog.forEach(function(x){
 if(!x||typeof x!=="object"||typeof x.date!=="string"||!parseIso(x.date)||MEAL_IDS.indexOf(x.meal)<0) return;
 var kc=+x.kcal, g=+x.g; if(!(kc>=0&&kc<=20000)) return; if(!(g>=0&&g<=20000)) g=0;
@@ -1599,7 +1642,7 @@ try{ raw=localStorage.getItem(KEY); }catch(e){ storageOk=false; }
 if(raw){
 try{
 var o=JSON.parse(raw);
-if(o&&Array.isArray(o.sessions)&&Array.isArray(o.measurements)) return normalize(o);
+if(o&&Array.isArray(o.sessions)&&Array.isArray(o.measurements)){ var ns=normalize(o); if(!ns.ui.profile) ns.ui.profile={owner:true}; return ns; }
 }catch(e2){}
 }
 return defaultState();
@@ -1624,6 +1667,8 @@ return canon({s:byKey(s.sessions,"id"),m:byKey(s.measurements,"id"),c:byKey(s.ca
 }
 var lastSig=sigOf(state);
 function persist(){
+if(resetting) return;
+if(!state.ui.profile){ renderBanner(); return; } /* first-run setup not finished: nothing is saved yet */
 var sg=sigOf(state), changed=(sg!==lastSig);
 if(changed){ lastSig=sg; state.rev=Math.max(Date.now(),(state.rev||0)+1); }
 try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){ storageOk=false; }
@@ -2622,12 +2667,17 @@ var PEL_KEYS={}; CORRECTIVE.forEach(function(it){ PEL_KEYS[it[0]]=1; });
 /* full: pelvic routine then home exercises (slot ids stay as before); quick: same ids, so logged rows carry over */
 var HS_FULL=mkSlots([[CORRECTIVE,"pel"],[HOME,"home"]]);
 var HS_QUICK=mkSlots([[HOME_QUICK,function(it){ return PEL_KEYS[it[0]]?"pel":"home"; }]]);
+/* everyone but the owner: same home exercises, no pelvic routine */
+var HS_FULL_N=mkSlots([[HOME,"home"]]);
+var HS_QUICK_N=mkSlots([[HOME_QUICK_N,"home"]]);
+function hsFull(){ return isOwner()?HS_FULL:HS_FULL_N; }
+function hsQuick(){ return isOwner()?HS_QUICK:HS_QUICK_N; }
 function hSetsOf(list){ var c=0; list.forEach(function(sl){ c+=sl.n; }); return c; }
-var HSLOTS=state.ui.homeLen==="full"?HS_FULL:HS_QUICK;
+var HSLOTS=state.ui.homeLen==="full"?hsFull():hsQuick();
 function setHomeLen(len){
 len=len==="full"?"full":"quick";
-if(state.ui.homeLen===len&&HSLOTS===(len==="full"?HS_FULL:HS_QUICK)) return;
-state.ui.homeLen=len; HSLOTS=len==="full"?HS_FULL:HS_QUICK;
+if(state.ui.homeLen===len&&HSLOTS===(len==="full"?hsFull():hsQuick())) return;
+state.ui.homeLen=len; HSLOTS=len==="full"?hsFull():hsQuick();
 hFinOpen=false; hIdx=Math.min(hIdx,HSLOTS.length-1); disarm();
 persist(); render("len-"+len);
 }
@@ -2637,7 +2687,7 @@ var on=state.ui.homeLen===len;
 return h("button",{class:"modeb lenb"+(on?" on":""),type:"button",id:"len-"+len,"aria-pressed":on?"true":"false",onclick:function(){setHomeLen(len);}},
 h("span",null,label+" ~"+hSetsOf(list)+" min"));
 }
-return h("div",{class:"modesw lensw",role:"group","aria-label":"Session length"},opt("quick","Quick",HS_QUICK),opt("full","Full",HS_FULL));
+return h("div",{class:"modesw lensw",role:"group","aria-label":"Session length"},opt("quick","Quick",hsQuick()),opt("full","Full",hsFull()));
 }
 var hdraft=null, hView="list", hIdx=0, hFinOpen=false, hStale=false;
 function hNew(){ return {date:today(),dateSet:false,countPf:false,prevN:0,n:{},sets:{},notes:"",cur:0,msg:null,msgKind:"ok",dirty:false,resumed:false}; }
@@ -2736,17 +2786,17 @@ h("span",null,label),(!on&&small)?h("small",{class:"num"},small):null);
 function sc(c){ return c>0?c+(c===1?" set":" sets"):""; }
 return h("div",{class:"modesw three",role:"group","aria-label":"Session type"},
 opt("modeLift","Lifting",null,md!=="home"&&md!=="cardio",sc(ln),"lift"),
-opt("modeHome","Home","Home + Pelvic",md==="home",sc(hn),"home"),
+opt("modeHome","Home",isOwner()?"Home + Pelvic":null,md==="home",sc(hn),"home"),
 opt("modeCardio","Cardio",null,md==="cardio",cn>0?cn+" min":"","cardio"));
 }
 function hHero(){
 function br(c){return h("span",{class:"br "+c,"aria-hidden":"true"});}
 var total=0, ms=[]; HSLOTS.forEach(function(sl){ total+=sl.n; ms=ms.concat(muscles(sl.key)); });
 var list=[]; ms.forEach(function(m){ if(list.indexOf(m)<0) list.push(m); });
-return h("section",{class:"hero hv t-rest","aria-label":"Home and pelvic session"},br("tl"),br("tr"),br("bl"),br("brr"),
+return h("section",{class:"hero hv t-rest","aria-label":isOwner()?"Home and pelvic session":"Home session"},br("tl"),br("tr"),br("bl"),br("brr"),
 h("div",{class:"k"},"Bodyweight session"),
-h("div",{class:"v"},"HOME + PELVIC"),
-h("div",{class:"s"},state.ui.homeLen==="full"?"Pelvic routine first, then home exercises":"Short version: the essentials in one pass"),
+h("div",{class:"v"},isOwner()?"HOME + PELVIC":"HOME"),
+h("div",{class:"s"},state.ui.homeLen==="full"?(isOwner()?"Pelvic routine first, then home exercises":"All the home exercises"):"Short version: the essentials in one pass"),
 chipsEl(list),
 h("div",{class:"stats"},stat("Exercises",HSLOTS.length),stat("Sets",total),statI("Time","≈ "+total+" min","time","workout time")));
 }
@@ -2776,7 +2826,7 @@ function hStalePanel(){
 var n=hCount(hdraft,false), isArmed=armed==="hstalediscard";
 return h("div",{class:"alertpanel",id:"stalePanel",role:"group","aria-label":"Unfinished home session"},
 h("div",{class:"kicker"},"Forgotten session?"),
-h("p",{class:"ap-t"},"Unfinished Home + Pelvic from "+fmtLong(hdraft.date)+" — "+n+(n===1?" set":" sets")),
+h("p",{class:"ap-t"},"Unfinished "+homeName()+" from "+fmtLong(hdraft.date)+" — "+n+(n===1?" set":" sets")),
 h("div",{class:"fp-btns"},
 h("button",{class:"btn primary",type:"button",id:"staleSave",onclick:function(){
 if(!hCommit()) return;
@@ -2809,7 +2859,7 @@ if(cnt<planned) sess.partial=true;
 state.sessions.push(sess);
 sortAll(state); persist();
 hClearStore(); hStale=false;
-lastSaved={id:sess.id,planKey:"home",name:"Home + Pelvic",date:sess.date,sets:cnt,first:Object.keys(sets)[0]||null};
+lastSaved={id:sess.id,planKey:"home",name:homeName(),date:sess.date,sets:cnt,first:Object.keys(sets)[0]||null};
 try{ localStorage.setItem(SKEY,JSON.stringify(lastSaved)); }catch(e){}
 return sess;
 }
@@ -2996,21 +3046,21 @@ li.appendChild(h("span",{class:"noteact"},tag,btn));
 return li;
 }
 function homeCard(){
-var qn=hSetsOf(HS_QUICK), fn=hSetsOf(HS_FULL);
-var strip=h("div",{class:"strip",role:"region","aria-label":"Home + Pelvic exercises",tabindex:"0"},
-HS_QUICK.map(function(sl){var t=thumbEl(sl.key,true);t.setAttribute("title",EX[sl.key].name);return t;}));
+var qn=hSetsOf(hsQuick()), fn=hSetsOf(hsFull()), own=isOwner();
+var strip=h("div",{class:"strip",role:"region","aria-label":homeName()+" exercises",tabindex:"0"},
+hsQuick().map(function(sl){var t=thumbEl(sl.key,true);t.setAttribute("title",EX[sl.key].name);return t;}));
 return h("section",{class:"daycard t-rest","data-sec":"1",id:"homeCard"},
 h("h3",{class:"dch3"},h("span",{class:"dchead"},h("span",{class:"dctxt"},
-h("span",{class:"dcname"},"Home + Pelvic session"),
-h("span",{class:"tag num"},"Quick "+HS_QUICK.length+" exercises · ≈ "+qn+" min"),
-h("span",{class:"tag num"},"Full "+HS_FULL.length+" exercises · ≈ "+fn+" min")))),
-h("p",{class:"note",style:"margin:4px 0 0"},"Bodyweight, logged separately from lifting: the pelvic routine first, then the home exercises."),
+h("span",{class:"dcname"},homeName()+" session"),
+h("span",{class:"tag num"},"Quick "+hsQuick().length+" exercises · ≈ "+qn+" min"),
+h("span",{class:"tag num"},"Full "+hsFull().length+" exercises · ≈ "+fn+" min")))),
+h("p",{class:"note",style:"margin:4px 0 0"},own?"Bodyweight, logged separately from lifting: the pelvic routine first, then the home exercises.":"Bodyweight, logged separately from lifting."),
 strip,
 h("button",{class:"btn primary block startbtn",type:"button",id:"homeStart",onclick:openHome},"START"),
 h("details",{class:"dfull"},h("summary",null,"Full exercise list"),
-h("h4",{class:"hgrp2"},"Quick · ≈ "+qn+" min"),listCards(HOME_QUICK,false),
-h("h4",{class:"hgrp2"},"Full · pelvic routine"),listCards(CORRECTIVE,false),
-h("h4",{class:"hgrp2"},"Full · home exercises"),listCards(HOME,false)));
+h("h4",{class:"hgrp2"},"Quick · ≈ "+qn+" min"),listCards(own?HOME_QUICK:HOME_QUICK_N,false),
+own?h("h4",{class:"hgrp2"},"Full · pelvic routine"):null,own?listCards(CORRECTIVE,false):null,
+h("h4",{class:"hgrp2"},own?"Full · home exercises":"Full · "+fn+" min"),listCards(HOME,false)));
 }
 function renderPlan(root){
 planSaved=null;
@@ -3026,9 +3076,10 @@ PLAN.forEach(function(p,i){ wk.appendChild(h("button",{class:"wd t-"+p.type,type
 wk.appendChild(h("button",{class:"wd t-rest",type:"button","data-day":"rest",onclick:function(){openDay("rest");}},h("b",{class:"num"},7),h("span",null,"Rest")));
 nx.appendChild(wk);
 nx.appendChild(h("p",{class:"note",style:"margin-top:12px"},ROTATION_NOTE));
-nx.appendChild(h("p",{class:"note",id:"homeWeekNote"},"Home + Pelvic: on rest days or any evening, 2-3× a week"));
+nx.appendChild(h("p",{class:"note",id:"homeWeekNote"},homeName()+": on rest days or any evening, 2-3× a week"));
+if(!isOwner()) nx.appendChild(h("p",{class:"note",id:"daysNote"},"You train "+profDays()+" days a week: just continue the rotation where you stopped."));
 var cl=h("ul",null);
-COACH_NOTES.forEach(function(t,i){ cl.appendChild(noteItem(t,"cn"+i)); });
+COACH_NOTES.forEach(function(t,i){ if(!isOwner()&&/train 5 days instead of 6|pelvic routine/.test(t)) return; cl.appendChild(noteItem(t,"cn"+i)); });
 cl.appendChild(noteItem(ALT_NOTE,"alt"));
 nx.appendChild(h("div",{class:"panel"},h("h3",null,"Coach notes"),cl));
 nx.appendChild(h("div",{class:"panel"},h("div",{class:"titlerow"},h("h3",null,"Progression"),infoBtn("progression","progression")),h("ul",{style:"margin-top:6px"},noteItem(PROGRESSION,"prog"))));
@@ -3051,7 +3102,7 @@ h("button",{class:"btn primary block startbtn",type:"button",onclick:function(){
 h("details",{class:"dfull"},h("summary",null,"Full exercise list"),listCards(p.items,true))));
 });
 root.appendChild(homeCard());
-root.appendChild(secBlock("Desk exercises (about every hour, 2-3 minutes)","The five exercises",DESK,false));
+if(isOwner()) root.appendChild(secBlock("Desk exercises (about every hour, 2-3 minutes)","The five exercises",DESK,false));
 var rd=h("div",{class:"nx"});
 rd.appendChild(h("h2",null,"Rest day"));
 rd.appendChild(restList());
@@ -3509,15 +3560,31 @@ if(lbm>0) return {date:m.date,weight:w,lbm:lbm};
 }
 return null;
 }
+function latestWeightKg(){
+var l=lastWeighin(); if(l&&l.kg>0) return {date:l.date,kg:l.kg};
+var ms=state.measurements;
+for(var i=ms.length-1;i>=0;i--){ var w=num(ms[i].weight); if(w>0) return {date:ms[i].date,kg:w}; }
+return null;
+}
 function targetsFor(gk){
-var ib=latestInbody(); if(!ib) return null;
-var G=GOALS[gk], tdee=(370+21.6*ib.lbm)*ACTIVITY;
-var kcal=Math.round(tdee*G.kcalF/10)*10, protein=Math.round(ib.lbm*G.protPerLbm/5)*5, fat=Math.round(kcal*FAT_SHARE/9);
+var ib=latestInbody(), G=GOALS[gk], kcal, protein;
+if(ib){
+var tdee=(370+21.6*ib.lbm)*ACTIVITY;
+kcal=Math.round(tdee*G.kcalF/10)*10; protein=Math.round(ib.lbm*G.protPerLbm/5)*5;
+} else {
+/* no body-fat data: Mifflin-St Jeor from the profile + latest weight; protein per kg body weight */
+var p=state.ui.profile, lw=latestWeightKg();
+if(!p||p.owner===true||!lw||!p.sex||!(p.age>0)||!(p.heightCm>0)) return null;
+var bmr=10*lw.kg+6.25*p.heightCm-5*p.age+(p.sex==="male"?5:-161);
+kcal=Math.round(bmr*ACTIVITY*G.kcalF/10)*10; protein=Math.round(lw.kg*PROT_PER_KG[gk]/5)*5;
+ib={date:lw.date,weight:lw.kg,lbm:null,est:true};
+}
+var fat=Math.round(kcal*FAT_SHARE/9);
 var carbs=Math.max(0,Math.round((kcal-protein*4-fat*9)/4));
 return {kcal:kcal,protein:protein,carbs:carbs,fat:fat,ib:ib};
 }
 function timelineFor(gk,T){
-if(!T||gk==="bulk") return null;
+if(!T||gk==="bulk"||!(T.ib.lbm>0)) return null;
 var G=GOALS[gk], tw=T.ib.lbm/(1-TARGET_BF/100), l=lastWeighin(), cur=l?l.kg:T.ib.weight;
 return {target:tw,weeks:Math.round(Math.max(0,(cur-tw)/G.lossKgWk))};
 }
@@ -3638,26 +3705,26 @@ function gopt(id,label){
 var on=gk===id;
 return h("button",{class:"modeb"+(on?" on":""),type:"button",id:"goal-"+id,"aria-pressed":on?"true":"false",onclick:function(){ if(state.ui.goal===id) return; state.ui.goal=id; persist(); foodRerender("goal-"+id); }},h("span",null,label));
 }
-root.appendChild(h("div",{class:"titlerow",style:"margin-bottom:8px"},h("span",{class:"callbl"},"Your goal"),infoBtn("goalWhy","why Cut first")));
+root.appendChild(h("div",{class:"titlerow",style:"margin-bottom:8px"},h("span",{class:"callbl"},"Your goal"),isOwner()?infoBtn("goalWhy","why Cut first"):infoBtn("goalWhyGen","what the goals mean")));
 root.appendChild(h("div",{class:"modesw three",role:"group","aria-label":"Goal",style:"margin-bottom:12px"},
 gopt("cut","Cut / define"),gopt("recomp","Recomp"),gopt("bulk","Lean bulk")));
 var tcard=h("div",{class:"card",id:"targetsCard"});
 if(T){
 tcard.appendChild(h("div",{class:"calbox"},
-h("div",{class:"titlerow"},h("span",{class:"callbl"},"Daily target · "+G.name),infoBtn("goalCalc","how targets are calculated")),
+h("div",{class:"titlerow"},h("span",{class:"callbl"},"Daily target · "+G.name),infoBtn(T.ib.est?"goalCalcEst":"goalCalc","how targets are calculated")),
 h("div",{class:"calrow"},h("b",{class:"num",id:"tgtKcal"},kfmt(T.kcal)+" kcal"))));
 tcard.appendChild(h("div",{class:"sum three"},
 h("div",null,"Protein",h("b",{class:"num",id:"tgtProt"},T.protein+" g")),
 h("div",null,"Carbs",h("b",{class:"num",id:"tgtCarb"},T.carbs+" g")),
 h("div",null,"Fat",h("b",{class:"num",id:"tgtFat"},T.fat+" g"))));
 tcard.appendChild(h("p",{class:"small",id:"tgtRate",style:"margin:12px 0 0"},"Pace: "+G.rate));
-tcard.appendChild(h("p",{class:"note",id:"tgtBasis",style:"margin:6px 0 0"},"Based on InBody of "+fmtDate(T.ib.date)+": lean mass "+fmtNum(T.ib.lbm)+" kg"));
+tcard.appendChild(h("p",{class:"note",id:"tgtBasis",style:"margin:6px 0 0"},T.ib.est?"Estimated from your weight ("+fmtKg(T.ib.weight)+" kg on "+fmtDate(T.ib.date)+"), height, age and sex. Add a body-fat measurement in the Body tab for a more accurate target.":"Based on InBody of "+fmtDate(T.ib.date)+": lean mass "+fmtNum(T.ib.lbm)+" kg"));
 if(tl) tcard.appendChild(h("div",{class:"titlerow",style:"margin-top:8px"},
 h("p",{class:"small",id:"tgtTimeline",style:"margin:0;font-weight:600"},tl.weeks>0?"Estimate: about "+tl.weeks+(tl.weeks===1?" week":" weeks")+" to ≈ "+fmtKg(tl.target)+" kg (≈"+TARGET_BF+"% body fat)":"Estimate: you are already at or below ≈ "+fmtKg(tl.target)+" kg (≈"+TARGET_BF+"% body fat)"),
 infoBtn("timeline","the timeline estimate")));
 } else {
 tcard.appendChild(h("div",{class:"titlerow"},h("span",{class:"callbl"},"Daily target"),infoBtn("goalCalc","how targets are calculated")));
-tcard.appendChild(h("p",{class:"small",id:"tgtNone",style:"margin:8px 0 0"},"Targets need an InBody entry with weight and fat. Add one in the Body tab."));
+tcard.appendChild(h("p",{class:"small",id:"tgtNone",style:"margin:8px 0 0"},isOwner()?"Targets need an InBody entry with weight and fat. Add one in the Body tab.":"Targets need a weigh-in. Log your weight, or add an InBody entry in the Body tab."));
 }
 tcard.appendChild(h("div",{class:"advrow"},adviceEl(true),h("button",{class:"lnkbtn",type:"button",id:"foodLogWeight",onclick:gotoWeighin},"Log weight")));
 root.appendChild(tcard);
@@ -3691,7 +3758,7 @@ var v=num(e.target.value);
 if(v>0) state.ui.milkKcal=Math.round(v*10)/10; else delete state.ui.milkKcal;
 persist(); paintCal();
 }});
-root.appendChild(h("div",{class:"card fmilk"},
+if(isOwner()) root.appendChild(h("div",{class:"card fmilk"},
 h("label",{class:"fld","for":"milkKcal"},"Protein milk calories (from label)"),
 h("div",{class:"small muted",style:"margin-bottom:6px"},SHAKE.protein+" g protein per milk. Used by the \"+ Protein milk\" buttons below."),
 milkIn));
@@ -3701,18 +3768,18 @@ var card=h("div",{class:"card fmeal",id:"fmeal-"+m.id,"data-meal":m.id});
 card.appendChild(h("div",{class:"titlerow"},h("h3",null,m.name),h("span",{class:"small muted num fsub",id:"fsub-"+m.id},list.length?Math.round(t.kcal)+" kcal · "+Math.round(t.p)+" g protein":"nothing yet")));
 list.forEach(function(e){ card.appendChild(itemRow(e)); });
 var acts=h("div",{class:"fact"});
-if(m.plan>=0){
+if(m.plan>=0&&isOwner()){
 var done=plannedLogged(m.id,m.plan);
 acts.appendChild(h("button",{class:"btn small",type:"button",id:"fplan-"+m.id,disabled:done,onclick:function(){ atePlanned(m.id,m.plan); }},done?"Logged ✓":"Ate as planned"));
 }
 acts.appendChild(h("button",{class:"btn small primary",type:"button",id:"fadd-"+m.id,"aria-label":"Add food to "+m.name,onclick:function(){ fsOpen(m.id,day); }},"+ Add food"));
-if(m.id==="post") acts.appendChild(h("button",{class:"btn small",type:"button",id:"fmilk-"+m.id,style:"grid-column:1/-1",onclick:function(){ addMilk(m.id,false); }},"+ Protein milk"));
+if(m.id==="post"&&isOwner()) acts.appendChild(h("button",{class:"btn small",type:"button",id:"fmilk-"+m.id,style:"grid-column:1/-1",onclick:function(){ addMilk(m.id,false); }},"+ Protein milk"));
 card.appendChild(acts);
 root.appendChild(card);
 });
 /* ----- suggested day (the existing plan), collapsed under one row ----- */
 var sdOpen=sugOpen(), sd=h("div",{id:"sugBody"});
-root.appendChild(h("button",{class:"sugtog",type:"button",id:"sugToggle","aria-expanded":sdOpen?"true":"false","aria-controls":"sugBody",onclick:function(){ setSugOpen(!sdOpen); foodRerender("sugToggle"); }},
+if(isOwner()) root.appendChild(h("button",{class:"sugtog",type:"button",id:"sugToggle","aria-expanded":sdOpen?"true":"false","aria-controls":"sugBody",onclick:function(){ setSugOpen(!sdOpen); foodRerender("sugToggle"); }},
 h("span",{class:"sgt num"},"Suggested day \u00b7 \u2248 "+kfmt(PT.kcal)+" kcal \u00b7 "+PT.prot+" g protein"),
 h("span",{class:"sgx","aria-hidden":"true"},sdOpen?"\u25BE":"\u25B8")));
 var calMain=h("b",{class:"num",id:"calMain"}), calExtra=h("span",{class:"calx",id:"calExtra"}), calChip=h("span",{class:"chip inc",id:"calIncomplete"},"Incomplete");
@@ -3748,20 +3815,21 @@ if(m.extra) sd.appendChild(h("p",{class:"small "+(hasWarn(m.extra)?"warn":""),st
 if(m.swap) sd.appendChild(h("p",{class:"small muted "+(hasWarn(m.swap)?"warn":""),style:"margin-top:6px"},"↺ "+m.swap));
 });
 /* ----- more (collapsed) ----- */
-var more=h("details",{class:"day fmore",id:"foodMore"},h("summary",null,"More: rules and numbers review"));
-more.appendChild(h("h2",null,"Rules"));
+var own=isOwner();
+var more=h("details",{class:"day fmore",id:"foodMore"},h("summary",null,own?"More: rules and numbers review":"More: notes"));
+more.appendChild(h("h2",null,own?"Rules":"Notes"));
 var ul=h("ul",{class:"plain"});
-NUTRITION_RULES.forEach(function(t){ ul.appendChild(h("li",{class:hasWarn(t)?"warn":null},t)); });
+NUTRITION_RULES.forEach(function(t,ri){ if(!own&&ri!==NUTRITION_RULES.length-1) return; ul.appendChild(h("li",{class:hasWarn(t)?"warn":null},t)); });
 more.appendChild(ul);
-more.appendChild(h("h2",null,"Numbers review"));
+if(own) more.appendChild(h("h2",null,"Numbers review"));
 var box=h("div",{class:"card"});
-REVIEW.forEach(function(r){
+if(own) REVIEW.forEach(function(r){
 box.appendChild(h("div",{class:"rev"+((hasWarn(r.t)||hasWarn(r.v)||hasWarn(r.d))?" warn":"")},
 h("div",{class:"rt"},r.t),h("div",{class:"rv num"},r.v),h("div",{class:"rd"},r.d)));
 });
-more.appendChild(box);
-sd.appendChild(h("div",{style:"margin-top:18px"},more));
-if(sdOpen) root.appendChild(sd);
+if(own) more.appendChild(box);
+if(own){ sd.appendChild(h("div",{style:"margin-top:18px"},more)); if(sdOpen) root.appendChild(sd); }
+else root.appendChild(h("div",{style:"margin-top:18px"},more));
 }
 /* ---------- v12: add-food bottom sheet ---------- */
 function fsBuild(){
@@ -3842,7 +3910,7 @@ var b=fs.body;
 b.appendChild(h("label",{class:"fld","for":"fsSearch"},"Search foods"));
 b.appendChild(h("input",{type:"text",id:"fsSearch",autocomplete:"off",placeholder:"e.g. rice, hummus","aria-label":"Search foods",value:fs.q,oninput:function(e){ fs.q=e.target.value; fsFill(); }}));
 b.appendChild(h("div",{class:"fact",style:"margin:10px 0"},
-h("button",{class:"btn small",type:"button",id:"fsMilk",onclick:function(){ addMilk(fs.meal,true); }},"+ Protein milk"),
+isOwner()?h("button",{class:"btn small",type:"button",id:"fsMilk",onclick:function(){ addMilk(fs.meal,true); }},"+ Protein milk"):null,
 h("button",{class:"btn small",type:"button",id:"fsLabelBtn",onclick:function(){ fs.view="label"; if(!fs.lf) fs.lf={name:"",mode:"100",serv:"",kcal:"",p:"",c:"",f:"",amt:""}; fs.msg=""; fsPaint("fsLName"); }},"Add from label")));
 b.appendChild(h("div",{id:"fsList"}));
 fsFill();
@@ -3913,7 +3981,7 @@ h("button",{class:"btn",type:"button",id:"fsLBack",onclick:function(){ fs.view="
 h("button",{class:"btn primary",type:"button",id:"fsLSave",onclick:save},"Save & add")));
 }
 /* ---------- backup ---------- */
-var bk={open:false,msg:null,kind:"ok",pending:null,armed:false,impText:"",expText:""};
+var bk={open:false,msg:null,kind:"ok",pending:null,armed:false,rst:false,rstT:null,impText:"",expText:""};
 function summarize(o){return {s:o.sessions.length,m:o.measurements.length,c:(o.cardio||[]).length,w:(o.weighins||[]).length,f:(o.foodlog||[]).length,cf:(o.customFoods||[]).length,wa:(o.waist||[]).length,dl:(o.daily||[]).length};}
 function parseImport(text){
 var o;
@@ -3938,7 +4006,7 @@ p.textContent="";
 if(!bk.open) return;
 var exp=h("textarea",{id:"expText",readonly:true,"aria-label":"Backup text",rows:"4"},bk.expText);
 p.appendChild(h("div",{class:"titlerow"},h("h3",null,"Backup"),infoBtn("backup","backup and restore")));
-if(SYNC_ON) p.appendChild(h("div",{id:"syncBox"}));
+if(SYNC_ON&&isOwner()) p.appendChild(h("div",{id:"syncBox"}));
 p.appendChild(h("p",{class:"note"},(SYNC_ON&&auth)?"Your data is saved in this browser and synced to your cloud account. You can still take a copy below.":"Your data is saved in this browser only. Take a copy now and then."));
 p.appendChild(exp);
 p.appendChild(h("div",{class:"row2",style:"margin-top:8px"},
@@ -3972,6 +4040,7 @@ p.appendChild(h("div",{class:"warnbox",style:"margin-top:10px"},"This will repla
 p.appendChild(h("button",{class:"btn block "+(bk.armed?"armed":"danger"),id:"impGo",type:"button",style:"margin-top:8px",onclick:function(){
 if(!bk.armed){ bk.armed=true; renderBackup("impGo"); return; }
 var prevSt=state; state=bk.pending; state.ui.tab=state.ui.tab||"today";
+if(!state.ui.profile) state.ui.profile=prevSt.ui.profile||{owner:true};
 [["sessions","id"],["measurements","id"],["cardio","id"],["weighins","date"],["foodlog","id"],["customFoods","id"],["waist","date"],["daily","date"]].forEach(function(kk){
 var have={}; (state[kk[0]]||[]).forEach(function(x){ have[x[kk[1]]]=1; });
 (prevSt[kk[0]]||[]).forEach(function(x){ if(!have[x[kk[1]]]) tomb(kk[0],x[kk[1]]); });
@@ -3981,11 +4050,25 @@ bk.pending=null; bk.armed=false; bk.impText=""; bk.msg="Data replaced ✓"; bk.k
 draft=null; cf=null; wfReset(); waReset(); cgOpen=false; snackHide(); clearDraftStore(); clearLastSaved(); pendingSwitch=null; staleBanner=false; stopRest(); todayView="list"; render(); renderBackup();
 }},bk.armed?"Tap again to confirm":"Replace data"));
 }
+p.appendChild(h("h3",{style:"margin-top:16px"},"New person / reset"));
+p.appendChild(h("p",{class:"note"},isOwner()?"Wipes this phone and returns to the first-run setup. Your cloud copy is not deleted, but anything not synced is lost. Download a backup first.":"Deletes everything on this phone. Download a backup first."));
+p.appendChild(h("button",{class:"btn block "+(bk.rst?"armed":"danger"),type:"button",id:"bkReset",onclick:function(){
+if(!bk.rst){ bk.rst=true; clearTimeout(bk.rstT); bk.rstT=setTimeout(function(){ bk.rst=false; renderBackup(); },4000); renderBackup("bkReset"); return; }
+clearTimeout(bk.rstT); bk.rst=false; resetAll();
+}},bk.rst?"Tap again to delete everything":"Reset for a new person"));
 p.appendChild(h("button",{class:"btn block",type:"button",style:"margin-top:14px",onclick:function(){bk.open=false;renderBackup();$("backupBtn").focus();navPush();}},"Close"));
-if(SYNC_ON) paintSync();
+if(SYNC_ON&&isOwner()) paintSync();
 if(focusId&&$(focusId)) $(focusId).focus();
 }
 /* remember when the user last took a backup (copy or download) */
+function resetAll(){
+resetting=true;
+var tok=auth&&auth.access_token;
+if(tok&&SYNC_ON){ try{ sbReq("/auth/v1/logout","POST",{},tok).then(function(){},function(){}); }catch(e){} }
+try{ var ks=[], i; for(i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(k&&/^gym/i.test(k)) ks.push(k); } ks.forEach(function(k2){ localStorage.removeItem(k2); }); }catch(e){}
+auth=null;
+setTimeout(function(){ location.reload(); },tok?250:0);
+}
 function markBackup(){
 state.ui.lastBackup=today(); persist();
 if(state.ui.tab==="today") render();
@@ -4092,7 +4175,12 @@ if(sh.body.parentNode!==sh.scroll){ sh.scroll.textContent=""; sh.scroll.appendCh
 sh.from=document.activeElement;
 sh.title.textContent=info.t;
 sh.body.textContent="";
-info.b.forEach(function(x){ sh.body.appendChild(h("li",{class:hasWarn(x)?"warn":null},x)); });
+var lines=info.b.slice();
+if(!isOwner()){
+lines=lines.filter(function(x){ return x.indexOf("Ate as planned")<0&&x.indexOf("pelvic routine")<0; }).map(function(x){ return x.split("Home + Pelvic").join("Home"); });
+if(key==="goalCalc"||key==="goalCalcEst") lines.push("Activity factor 1.55 assumes you train "+profDays()+" days a week. ⚠️ Assumption, verify: an estimate.");
+}
+lines.forEach(function(x){ sh.body.appendChild(h("li",{class:hasWarn(x)?"warn":null},x)); });
 sh.el.hidden=false; sh.open=true; sh.scroll.scrollTop=0;
 document.body.style.overflow="hidden";
 try{ history.pushState(Object.assign(navState(),{sh:1}),""); }catch(e){}
@@ -4332,17 +4420,17 @@ function bsStr(b){ return b?setStr(b):"—"; }
 function coachText(n){
 var end=today(), ws0=addDays(weekStartIso(end),-7*(n-1)), L=[];
 function inR(d){ return d>=ws0&&d<=end; }
-L.push("You're my strength and nutrition coach. Use only the data below. Keep answers short (about 8 lines). Say clearly when you're unsure or the data isn't enough. Suggest halal food only. If I mention pain, dizziness, chest pain or an injury, tell me to stop and see a doctor or physiotherapist. Don't change my targets or plan on your own: suggest, and I decide.");
+L.push("You're my strength and nutrition coach. Use only the data below. Keep answers short (about 8 lines). Say clearly when you're unsure or the data isn't enough. "+(isOwner()?"Suggest halal food only. ":"")+"If I mention pain, dizziness, chest pain or an injury, tell me to stop and see a doctor or physiotherapist. Don't change my targets or plan on your own: suggest, and I decide.");
 L.push("");
 L.push("MY DATA: last "+n+" weeks ("+fmtDate(ws0)+" to "+fmtDate(end)+", the current week is still in progress), from my gym tracking app.");
 var gk=goalKey(), T=targetsFor(gk);
-L.push("Goal: "+GOALS[gk].name+(T?" · target ≈ "+kfmt(T.kcal)+" kcal, "+T.protein+" g protein (calculated from my InBody of "+fmtDate(T.ib.date)+", lean mass "+fmtKg(T.ib.lbm)+" kg)":" · no InBody entry yet, so no calorie/protein target"));
-L.push("Plan: 6-day rotation Push A → Pull A → Legs A → Push B → Pull B → Legs B → Rest. Next workout: "+dayShort(nextPlanKey())+".");
+L.push("Goal: "+GOALS[gk].name+(T?" · target ≈ "+kfmt(T.kcal)+" kcal, "+T.protein+" g protein ("+(T.ib.est?"estimated from my weight "+fmtKg(T.ib.weight)+" kg, height, age and sex, no body-fat data":"calculated from my InBody of "+fmtDate(T.ib.date)+", lean mass "+fmtKg(T.ib.lbm)+" kg")+")":" · no body-fat or weight data yet, so no calorie/protein target"));
+L.push(isOwner()?"Plan: 6-day rotation Push A → Pull A → Legs A → Push B → Pull B → Legs B → Rest. Next workout: "+dayShort(nextPlanKey())+".":"Plan: rotation Push A → Pull A → Legs A → Push B → Pull B → Legs B → Rest. I train "+profDays()+" days a week and continue where I stopped. Next workout: "+dayShort(nextPlanKey())+".");
 /* workouts */
 var sess=state.sessions.filter(function(s){ return inR(s.date)&&s.planKey&&s.planKey!=="rest"; });
 var lifts=sess.filter(function(s){ return s.planKey!=="home"; }), homes=sess.length-lifts.length;
 L.push("");
-L.push("WORKOUTS: "+lifts.length+" lifting sessions (plan is 6 a week)"+(homes?", "+homes+" home/bodyweight sessions":"")+".");
+L.push("WORKOUTS: "+lifts.length+" lifting sessions (plan is "+profDays()+" a week)"+(homes?", "+homes+" home/bodyweight sessions":"")+".");
 var wk=[];
 for(var i=0;i<n;i++){ var w=addDays(ws0,7*i), c=lifts.filter(function(s){ return inWk(s.date,w); }).length; wk.push("wk of "+shortDate(w)+": "+c); }
 L.push("Lifting sessions per week: "+wk.join(" · "));
@@ -4751,7 +4839,7 @@ if(at&&at===ws) state.ui.summarySeen=isoWeekKey(ws);
 persist(); render(); window.scrollTo(0,0); navPush();
 }
 function maybeAutoSummary(){
-if(sumOpen) return;
+if(sumOpen||needSetup()) return;
 var at=autoSummaryTarget(); if(!at) return;
 if(state.ui.summarySeen===isoWeekKey(at)) return;
 if(todayView==="ex"||hView==="ex"||finOpen||hFinOpen) return;
@@ -4782,11 +4870,11 @@ function card(title,id,kids){ return h("div",{class:"card sumcard",id:id},h("h3"
 /* workouts */
 var sess=state.sessions.filter(function(x){ return inWk(x.date,ws)&&x.planKey&&x.planKey!=="rest"; });
 var lifts=sess.filter(function(x){ return x.planKey!=="home"; }), homes=sess.filter(function(x){ return x.planKey==="home"; });
-var wk=[sumRow("Lifting sessions",lifts.length+" / 6"),gbar(Math.min(lifts.length,6),6,false),sumRow("Home sessions",String(homes.length))];
+var wk=[sumRow("Lifting sessions",lifts.length+" / "+profDays()),gbar(Math.min(lifts.length,profDays()),profDays(),false),sumRow("Home sessions",String(homes.length))];
 if(sess.length){
 sess.slice().sort(function(p,q){ return p.date<q.date?-1:p.date>q.date?1:0; }).forEach(function(x){
 var dn=DAYN[(parseIso(x.date).getDay()+6)%7];
-wk.push(sumRow(dn+" "+shortDate(x.date),x.planKey==="home"?"Home + Pelvic":dayShort(x.planKey)));
+wk.push(sumRow(dn+" "+shortDate(x.date),x.planKey==="home"?homeName():dayShort(x.planKey)));
 });
 } else wk.push(h("p",{class:"muted small",style:"margin:6px 0 0"},"No sessions saved this week."));
 sc.appendChild(card("Workouts","sumWorkouts",wk));
@@ -4874,8 +4962,116 @@ if(tab==="today"||(tab!=="plan"&&tab!=="progress"&&tab!=="body"&&tab!=="food")){
 else pt=planType(nextPlanKey());
 document.documentElement.setAttribute("data-plate",pt);
 }
+/* ---------- first-run setup (shown until a profile exists) ---------- */
+function finishOwnerSetup(){
+if(!state.ui.profile) state.ui.profile={owner:true};
+su.step=1; persist(); render(); paintStatus(); window.scrollTo(0,0);
+}
+function suGo(step,focusId){ su.step=step; su.err={}; su.top=""; render(focusId); window.scrollTo(0,0); }
+function suFld(id,label,key,mode,ph,err,extra){
+return h("div",{style:"margin-top:12px"},h("label",{class:"fld","for":id},label),
+h("input",{type:"text",id:id,inputmode:mode,autocomplete:"off",placeholder:ph||"",value:su[key],"aria-invalid":err?"true":null,"aria-describedby":err?id+"Err":null,
+oninput:function(e){ su[key]=e.target.value; }}),
+extra||null,
+err?h("div",{class:"msg err",id:id+"Err",role:"alert",style:"margin:4px 0 0"},err):null);
+}
+function suSeg(id,items,cur,onpick,cls){
+return h("div",{class:"modesw"+(cls?" "+cls:""),role:"group","aria-label":id},items.map(function(it){
+var on=cur===it[0];
+return h("button",{class:"modeb"+(on?" on":""),type:"button",id:id+"-"+it[0],"aria-pressed":on?"true":"false",onclick:function(){ onpick(it[0],id+"-"+it[0]); }},h("span",null,it[1]));
+}));
+}
+function suStart(){
+var e={}, w=num(su.w), bf=NaN, fk=NaN, mu=NaN, vi=NaN, age=num(su.age), ht=num(su.ht);
+function has(v){ return String(v).trim()!==""; }
+if(!(w>=30&&w<=300)) e.w="Enter your weight in kg, between 30 and 300.";
+if(su.ib){
+if(has(su.bf)){ bf=num(su.bf); if(!(bf>=3&&bf<=70)){ e.bf="Body fat % should be between 3 and 70."; bf=NaN; } }
+if(has(su.fk)){ fk=num(su.fk); if(!(fk>0&&(!(w>0)||fk<w))){ e.fk="Fat mass should be above 0 and below your weight."; fk=NaN; } }
+if(has(su.mu)){ mu=num(su.mu); if(!(mu>=5&&mu<=100)){ e.mu="Skeletal muscle should be between 5 and 100 kg."; mu=NaN; } }
+if(has(su.vi)){ vi=num(su.vi); if(!(vi>=1&&vi<=30)){ e.vi="Visceral level should be between 1 and 30."; vi=NaN; } }
+}
+var hasFat=!isNaN(bf)||!isNaN(fk);
+if(!hasFat&&!e.bf&&!e.fk){
+if(!su.sex) e.sex="Choose male or female. It is needed when there is no body-fat number.";
+if(!(age>=14&&age<=90)) e.age="Enter your age, between 14 and 90.";
+if(!(ht>=120&&ht<=230)) e.ht="Enter your height in cm, between 120 and 230.";
+} else {
+if(has(su.age)&&!(age>=14&&age<=90)) e.age="Enter your age, between 14 and 90.";
+if(has(su.ht)&&!(ht>=120&&ht<=230)) e.ht="Enter your height in cm, between 120 and 230.";
+}
+su.err=e;
+var order=["w","bf","fk","mu","vi","sex","age","ht"], first=null;
+order.forEach(function(k){ if(!first&&e[k]) first=k; });
+if(first){
+su.top="Please check the highlighted fields.";
+render(first==="sex"?"suSex-male":"su"+first.charAt(0).toUpperCase()+first.slice(1)); return;
+}
+var d=today(), prof={owner:false,goal:su.goal,days:su.days,setupAt:d};
+if(su.sex) prof.sex=su.sex;
+if(age>=14&&age<=90) prof.age=Math.round(age);
+if(ht>=120&&ht<=230) prof.heightCm=Math.round(ht*10)/10;
+var kg=Math.round(w*100)/100;
+state.weighins.push({id:uid("w"),date:d,kg:kg});
+if(hasFat||!isNaN(mu)||!isNaN(vi)){
+var m={id:uid("m"),date:d,weight:kg};
+if(hasFat) m.source="inbody";
+if(!isNaN(bf)) m.fatPct=bf;
+if(!isNaN(fk)){ m.fatKg=fk; if(isNaN(bf)) m.fatPct=Math.round(fk/kg*1000)/10; }
+if(!isNaN(mu)) m.muscle=mu;
+if(!isNaN(vi)) m.visceral=vi;
+state.measurements.push(m);
+}
+state.ui.profile=prof; state.ui.goal=su.goal; state.ui.tab="today"; state.ui.mode="lift";
+sortAll(state); su.step=1; su.err={}; su.top="";
+persist(); render(); window.scrollTo(0,0);
+}
+function renderSetup(root){
+var box=h("section",{class:"card setup",id:"setup","aria-label":"First-run setup"});
+if(su.step===1){
+box.appendChild(h("h2",{style:"margin-top:0"},"Welcome to Gym File"));
+box.appendChild(h("p",null,"A lifting plan with food, weight and progress tracking. Setting up takes about a minute."));
+box.appendChild(h("button",{class:"btn primary block",type:"button",id:"suStart",style:"margin-top:14px",onclick:function(){ suGo(2,"suW"); }},"Set up for me"));
+if(SYNC_ON) box.appendChild(h("button",{class:"btn block",type:"button",id:"suOwner",style:"margin-top:12px",onclick:function(){ suGo("signin","syEmail"); }},"I'm the owner — sign in to sync"));
+} else if(su.step==="signin"){
+box.appendChild(h("h2",{style:"margin-top:0"},"Owner sign-in"));
+box.appendChild(h("p",{class:"note"},"Sign in to load your own data from the cloud."));
+box.appendChild(h("div",{id:"syncBox"}));
+box.appendChild(h("button",{class:"btn block",type:"button",id:"suBack",style:"margin-top:12px",onclick:function(){ suGo(1,"suStart"); }},"Back"));
+} else {
+var e=su.err||{};
+box.appendChild(h("h2",{style:"margin-top:0"},"Set up for you"));
+box.appendChild(h("label",{class:"fld",style:"margin-top:4px"},"Goal"));
+box.appendChild(suSeg("suGoal",[["cut","Cut"],["recomp","Recomp"],["bulk","Lean bulk"]],su.goal,function(v,fid){ su.goal=v; render(fid); },"three"));
+box.appendChild(h("p",{class:"note",id:"suGoalNote",style:"margin:0"},GOAL_LINE[su.goal]));
+box.appendChild(suFld("suW","Weight (kg)","w","decimal","e.g. 80",e.w));
+var det=h("details",{class:"day",id:"suIb"},h("summary",{style:"min-height:48px;display:flex;align-items:center"},"I have InBody / body-fat numbers"));
+det.open=!!su.ib;
+det.addEventListener("toggle",function(){ su.ib=det.open; });
+det.appendChild(h("p",{class:"note",style:"margin:8px 0 0"},"Body fat % or fat mass kg is enough. Muscle and visceral are optional."));
+det.appendChild(h("div",{class:"row2"},suFld("suBf","Body fat %","bf","decimal","e.g. 25",e.bf),suFld("suFk","Fat mass (kg)","fk","decimal","e.g. 22",e.fk)));
+det.appendChild(h("div",{class:"row2"},suFld("suMu","Skeletal muscle (kg)","mu","decimal","optional",e.mu),suFld("suVi","Visceral level","vi","decimal","optional",e.vi)));
+box.appendChild(h("div",{style:"margin-top:12px"},det));
+box.appendChild(h("label",{class:"fld",style:"margin-top:14px"},"Sex (needed if you skip body fat)"));
+box.appendChild(suSeg("suSex",[["male","Male"],["female","Female"]],su.sex,function(v,fid){ su.sex=v; render(fid); }));
+if(e.sex) box.appendChild(h("div",{class:"msg err",id:"suSexErr",role:"alert",style:"margin:-8px 0 0"},e.sex));
+box.appendChild(h("div",{class:"row2"},suFld("suAge","Age","age","numeric","e.g. 30",e.age),suFld("suHt","Height (cm)","ht","decimal","e.g. 175",e.ht)));
+box.appendChild(h("label",{class:"fld",style:"margin-top:14px"},"Training days per week"));
+box.appendChild(suSeg("suDays",[[4,"4"],[5,"5"],[6,"6"]],su.days,function(v,fid){ su.days=v; render(fid); },"three"));
+box.appendChild(h("p",{class:"note",style:"margin:0"},"Saved only on this phone. Use Backup to keep a copy."));
+if(su.top) box.appendChild(h("div",{class:"msg err",id:"suTop",role:"alert"},su.top));
+box.appendChild(h("button",{class:"btn primary block",type:"button",id:"suGo",style:"margin-top:12px",onclick:suStart},"Start"));
+box.appendChild(h("button",{class:"btn block",type:"button",id:"suBack2",style:"margin-top:10px",onclick:function(){ suGo(1,"suStart"); }},"Back"));
+}
+root.appendChild(box);
+if(su.step==="signin") paintSync();
+}
 function render(focusId){
 var view=$("view"); view.textContent="";
+HSLOTS=state.ui.homeLen==="full"?hsFull():hsQuick();
+var setupOn=needSetup();
+document.body.classList.toggle("setupmode",setupOn);
+if(setupOn){ renderSetup(view); renderBanner(); if(focusId&&$(focusId)) $(focusId).focus(); return; }
 var tab=state.ui.tab;
 if(tab!=="today") sumOpen=false;
 setPlate();
@@ -4888,7 +5084,7 @@ if(tab==="plan"||tab==="progress"||tab==="body"||tab==="food"){
 var hwn=hdraft?hCount(hdraft,false):0;
 if(hwn>0){
 view.insertBefore(h("div",{class:"wipstrip",id:"wipStripHome",role:"status"},
-h("span",{class:"num wiptxt"},"Home + Pelvic in progress \u00b7 "+hwn+(hwn===1?" set":" sets")+" logged"),
+h("span",{class:"num wiptxt"},homeName()+" in progress \u00b7 "+hwn+(hwn===1?" set":" sets")+" logged"),
 h("span",{class:"wipbtns"},
 h("button",{class:"btn small primary",type:"button",id:"wipContinueHome",onclick:gotoHContinue},"Continue"),
 h("button",{class:"txtbtn",type:"button",id:"wipFinishHome",onclick:gotoHFinish},"Finish"))),view.firstChild);
@@ -5080,6 +5276,7 @@ return order.map(function(k){ return map[k]; });
 var ms=uni("measurements",function(x){return x.id;}), mseen=Object.create(null);
 ms=ms.filter(function(x){ var c=Object.assign({},x); delete c.id; var ck=canon(c); if(mseen[ck]) return false; mseen[ck]=1; return true; });
 var ui=Object.assign({},newer.ui);
+if(!ui.profile&&older.ui&&older.ui.profile) ui.profile=older.ui.profile;
 LOCAL_UI.forEach(function(k){ if(L.ui&&L.ui[k]!==undefined) ui[k]=L.ui[k]; else delete ui[k]; });
 return normalize({version:1,
 sessions:uni("sessions",function(x){return x.id;}),
@@ -5137,6 +5334,7 @@ else { sy.status="error"; sy.pending=true; sy.err=(e&&e.msg)?String(e.msg):(e&&e
 sy.running=false; paintStatus();
 try{ var d=backupDue(); if(d!==sy.lastDue){ sy.lastDue=d; softRender(); } }catch(e){}
 if(!auth&&bk.open) renderBackup();
+if(su.step==="signin"&&needSetup()){ if(auth&&sy.status==="ok") finishOwnerSetup(); else paintSync(); }
 if(sy.again){ sy.again=false; return syncNow(); }
 });
 return sy.promise;
@@ -5170,6 +5368,7 @@ return (sy.status==="ok"&&!sy.pending)?"ok":"wait";
 }
 function paintStatus(){
 var dot=$("syncDot");
+if(dot) dot.hidden=!isOwner();
 if(dot){
 var ds=dotState();
 dot.className="syncdot"+(ds?" "+ds:"");
@@ -5194,6 +5393,7 @@ if(r.ok&&r.json&&r.json.access_token&&r.json.user&&r.json.user.id){
 setSession(r.json,em);
 sy.pw=""; sy.showPw=false; sy.msg=""; sy.status="idle"; sy.pending=false; sy.last=0; sy.out=false;
 renderBackup("syNow"); paintStatus(); syncNow();
+if(needSetup()) paintSync();
 } else {
 sy.pw="";
 sy.msg=(r.status===429)?"Too many tries — wait a minute.":((r.status===400||r.status===401||r.status===422)?"Wrong email or password.":"Something went wrong (error "+r.status+"). Please try again in a moment.");
