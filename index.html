@@ -2798,10 +2798,8 @@ function renderHomeToday(root){
 ensureHDraft();
 if(hView==="ex"&&hIdx>=0&&hIdx<HSLOTS.length){ renderHEx(root); return; }
 hView="list";
-root.appendChild(modeSwitch()); habitsTop(root);
-var wch2=weighChip(); if(wch2) root.appendChild(wch2);
+root.appendChild(modeSwitch()); todoRow(root);
 root.appendChild(lenSwitch());
-if(backupDue()) root.appendChild(backupCard());
 if(hStale&&!(hCount(hdraft,false)>0&&hdraft.date<today())) hStale=false;
 if(hStale) root.appendChild(hStalePanel());
 if(lastSaved) root.appendChild(savedCard());
@@ -4019,7 +4017,8 @@ cbEl=h("button",{class:"cbubble",type:"button",id:"coachBubble","aria-label":"As
 cbEl.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>';
 document.body.appendChild(cbEl);
 }
-var td=state.ui.tab==="today", hid=td&&(sumOpen||finOpen||hFinOpen||onExScreen())||(sh.el&&sh.open);
+var td=state.ui.tab==="today", busy=(draft&&countSets(draft,false)>0)||(hdraft&&hCount(hdraft,false)>0); /* mid-workout: keep set pills clear */
+var hid=td&&(sumOpen||finOpen||hFinOpen||onExScreen()||busy)||(sh.el&&sh.open);
 cbEl.hidden=!!hid;
 }
 function openSheet(key){
@@ -4139,9 +4138,7 @@ cf={type:(l&&cardioType(l.type))?l.type:CARDIO_TYPES[0][0],date:today(),min:Stri
 }
 function renderCardioToday(root){
 if(!cf) cfReset();
-root.appendChild(modeSwitch()); habitsTop(root);
-var wch3=weighChip(); if(wch3) root.appendChild(wch3);
-if(backupDue()) root.appendChild(backupCard());
+root.appendChild(modeSwitch()); todoRow(root);
 var wm=weekMinutes(weekStartIso(today())), tot=weekTotal(weekStartIso(today())), ti=(parseIso(today()).getDay()+6)%7;
 var aria="Cardio minutes per day this week: "+DAYN.map(function(d,i){ return d+" "+wm[i]; }).join(", ");
 var gtitle=h("h3",{id:"cardioTitle"},"This week: "+tot+" min"), gwrap=h("div",{class:"gwrap",id:"goalWrap"});
