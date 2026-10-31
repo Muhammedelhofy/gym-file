@@ -4479,7 +4479,7 @@ p.textContent="";
 if(!bk.open) return;
 var exp=h("textarea",{id:"expText",readonly:true,"aria-label":"Backup text",rows:"4"},bk.expText);
 p.appendChild(h("div",{class:"titlerow"},h("h3",null,"Backup"),infoBtn("backup","backup and restore")));
-if(SYNC_ON&&isOwner()) p.appendChild(h("div",{id:"syncBox"}));
+if(SYNC_ON) p.appendChild(h("div",{id:"syncBox"}));
 p.appendChild(h("p",{class:"note"},(SYNC_ON&&auth)?"Your data is saved in this browser and synced to your cloud account. You can still take a copy below.":"Your data is saved in this browser only. Take a copy now and then."));
 p.appendChild(exp);
 p.appendChild(h("div",{class:"row2",style:"margin-top:8px"},
@@ -4530,7 +4530,7 @@ if(!bk.rst){ bk.rst=true; clearTimeout(bk.rstT); bk.rstT=setTimeout(function(){ 
 clearTimeout(bk.rstT); bk.rst=false; resetAll();
 }},bk.rst?"Tap again to delete everything":"Reset for a new person"));
 p.appendChild(h("button",{class:"btn block",type:"button",style:"margin-top:14px",onclick:function(){bk.open=false;renderBackup();$("backupBtn").focus();navPush();}},"Close"));
-if(SYNC_ON&&isOwner()) paintSync();
+if(SYNC_ON) paintSync();
 if(focusId&&$(focusId)) $(focusId).focus();
 }
 /* remember when the user last took a backup (copy or download) */
@@ -4552,8 +4552,17 @@ var fname="gym-backup-"+today()+".json", data=JSON.stringify(state,null,1);
 var dlP=(window.claude&&window.claude.use)?window.claude.use("downloads"):Promise.resolve(null);
 dlP.then(function(dl){
 if(dl){ return dl.save({filename:fname,data:data}).then(function(){markBackup();done(true,"File saved.");},function(){done(false,"Save cancelled. Use “Copy data”.");}); }
+shareOrDl();
+},shareOrDl);
+/* iPhone home-screen apps can't download: hand the file to the share sheet (Save to Files, Notes, WhatsApp…) */
+function shareOrDl(){
+var f=null; try{ f=new File([data],fname,{type:"application/json"}); }catch(e){}
+if(f&&navigator.canShare&&navigator.share&&/iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent)&&("ontouchend" in document)&&navigator.canShare({files:[f]})){
+navigator.share({files:[f],title:"Gym backup"}).then(function(){ markBackup(); done(true,"Shared — pick “Save to Files” to keep it."); },function(e){ if(e&&e.name==="AbortError") done(false,"Cancelled. Use “Copy data” if sharing doesn't work."); else legacyDl(); });
+return;
+}
 legacyDl();
-},legacyDl);
+}
 function legacyDl(){
 try{
 var blob=new Blob([data],{type:"application/json"});
@@ -5445,7 +5454,7 @@ var hs=$("hdrSub"); if(hs) hs.textContent=hdrText();
 }
 /* ---------- first-run setup (shown until a profile exists) ---------- */
 function finishOwnerSetup(){
-if(!state.ui.profile) state.ui.profile={owner:true};
+if(!state.ui.profile){ suGo(2,"suW"); return; } /* signed in but no profile in the cloud yet: fill in the setup form */
 su.step=1; persist(); render(); paintStatus(); window.scrollTo(0,0);
 }
 function suGo(step,focusId){ su.step=step; su.err={}; su.top=""; render(focusId); window.scrollTo(0,0); }
@@ -5513,7 +5522,7 @@ if(su.step===1){
 box.appendChild(h("h2",{style:"margin-top:0"},"Welcome to Gym File"));
 box.appendChild(h("p",null,"A lifting plan with food, weight and progress tracking. Setting up takes about a minute."));
 box.appendChild(h("button",{class:"btn primary block",type:"button",id:"suStart",style:"margin-top:14px",onclick:function(){ suGo(2,"suW"); }},"Set up for me"));
-if(SYNC_ON) box.appendChild(h("button",{class:"btn block",type:"button",id:"suOwner",style:"margin-top:12px",onclick:function(){ suGo("signin","syEmail"); }},"I'm the owner — sign in to sync"));
+if(SYNC_ON) box.appendChild(h("button",{class:"btn block",type:"button",id:"suOwner",style:"margin-top:12px",onclick:function(){ suGo("signin","syEmail"); }},"I have an account — sign in"));
 } else if(su.step==="signin"){
 box.appendChild(h("h2",{style:"margin-top:0"},"Owner sign-in"));
 box.appendChild(h("p",{class:"note"},"Sign in to load your own data from the cloud."));
@@ -5858,7 +5867,7 @@ return (sy.status==="ok"&&!sy.pending)?"ok":"wait";
 }
 function paintStatus(){
 var dot=$("syncDot");
-if(dot) dot.hidden=!isOwner();
+if(dot) dot.hidden=false;
 if(dot){
 var ds=dotState();
 dot.className="syncdot"+(ds?" "+ds:"");
@@ -5917,7 +5926,7 @@ h("button",{class:"btn",type:"button",id:"syNow",onclick:function(){ syncNow(); 
 h("button",{class:"btn "+(sy.out?"armed":"danger"),type:"button",id:"syOut",onclick:signOutTap},sy.out?"Tap again to sign out":"Sign out")));
 box.appendChild(h("p",{class:"note",style:"margin:10px 0 0"},"Signing out keeps your data on this device."));
 } else {
-box.appendChild(h("p",{class:"note"},"Sign in to keep your workouts in sync across your devices. Use the same email and password as your Family Wallet app."));
+box.appendChild(h("p",{class:"note"},isOwner()?"Sign in to keep your workouts in sync across your devices. Use the same email and password as your Family Wallet app.":"Sign in to keep your workouts safe in the cloud and on all your devices. Use the email and password you were given for this app."));
 box.appendChild(h("label",{class:"fld","for":"syEmail"},"Email"));
 box.appendChild(h("input",{type:"email",id:"syEmail",inputmode:"email",autocomplete:"username",autocapitalize:"off",value:sy.email,
 oninput:function(e){ sy.email=e.target.value; },
