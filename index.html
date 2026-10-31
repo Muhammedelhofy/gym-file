@@ -801,7 +801,7 @@ const FOODS = {
 };
 const MEALS = [
  {name:"Breakfast", time:"Morning", items:[["dates",40],["egg",150],["bread",90],["veg",100]]},
- {name:"Lunch", time:"Midday", items:[["rice",300],["chicken",140],["veg",150],["oil",20]], swap:"Swap the chicken for 140 g lean beef (a bit less protein, more fat)."},
+ {name:"Lunch", time:"Midday", items:[["rice",250],["chicken",140],["veg",150],["oil",10]], swap:"Swap the chicken for 140 g lean beef (a bit less protein, more fat)."},
  {name:"Post-workout", time:"After training", items:[["banana",120]], extra:"+ 1 protein milk (30 g protein). Take the calories from the label.", swap:"Tuna day: one 120 g drained can of tuna instead of the protein milk."},
  {name:"Dinner", time:"Evening", items:[["foul",200],["bread",60],["yogurt",170]], swap:"Swap the foul for 200 g cooked lentils."}
 ];
@@ -820,8 +820,8 @@ const REVIEW = [
  {t:"Lean body mass", v:"57.3 kg", d:"79.3 − 22.0 kg fat (from your InBody). Calculated, not assumed."},
  {t:"Resting burn (BMR)", v:"≈ 1,600–1,730 kcal", d:"Katch-McArdle (from lean mass) = 1,608; Mifflin-St Jeor = 1,726. Both are estimating equations."},
  {t:"Total daily burn", v:"≈ 2,490–2,680 kcal", d:"⚠️ Assumption, verify: multiplied by an activity factor of 1.55 (training 5-6 days with a desk job). The factor is an estimate; your real number shows in your weight over 2-3 weeks."},
- {t:"Calorie target", v:"≈ 2,100–2,150 kcal", d:"Plan ≈ 1,980 kcal + protein milk, a deficit of roughly 350-550 kcal from the estimate. ⚠️ Assumption, verify: if your weekly-average weight drops more than 0.7 kg a week, add 150-200 kcal of rice or bread; if it is flat for 3 weeks and body fat isn't dropping, cut 150."},
- {t:"Protein", v:"130–140 g ≈ 1.7 g per kg", d:"Your number is sound. Within the ISSN range (1.4–2.0 g/kg) and close to Morton et al. 2018, which found benefits level off around 1.6 g/kg. The plan reaches about 148 g with the protein milk (breakfast now has 3 eggs)."},
+ {t:"Calorie target (Cut)", v:"≈ 2,000–2,100 kcal", d:"Cut goal = about 80% of your estimated burn. Plan ≈ 1,830 kcal + protein milk (lunch: rice 250 g, oil 10 g). ⚠️ Assumption, verify: aim to lose about 0.4-0.8 kg a week (weekly average). Faster than 1 kg a week → add 150-200 kcal; under 0.25 kg a week for 2 weeks → cut about 150 kcal."},
+ {t:"Protein", v:"≈ 140-150 g ≈ 2.5 g per kg lean mass", d:"Higher on a cut to protect muscle; the app calculates it from your latest InBody lean mass. Your original 130-140 g was also sound. Within the ISSN range (1.4–2.0 g/kg) and close to Morton et al. 2018, which found benefits level off around 1.6 g/kg. The plan reaches about 148 g with the protein milk (breakfast now has 3 eggs)."},
  {t:"Visceral fat level 9", v:"Edge of normal", d:"⚠️ Assumption, verify: as far as I know, InBody reports treat below 10 as normal. Losing overall fat brings it down."},
  {t:"InBody accuracy", v:"Track the trend, not the number", d:"BIA devices are affected by water and food. Measure at the same time (morning, fasted, after the bathroom) every 3-4 weeks and compare the trend."},
  {t:"Anterior pelvic tilt", v:"Exercises help; evidence for posture change is limited", d:"Strengthening glutes and core and stretching the hip flexors is safe and good for strength and comfort, but research disagrees on how much it changes pelvic angle itself. If lower-back pain spreads down the leg or you get numbness, see a physiotherapist."}
