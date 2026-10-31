@@ -1572,6 +1572,26 @@ const HOWTO = {
   m:[["Torso twisting toward the cable","step closer or use a lighter weight."],["Leaning away","stand tall, hips square."]]}
 };
 </script>
+<script>// ===== Recovery links (secondary muscles of compound lifts; Core tracked) =====
+// A secondary muscle counts toward fatigue one step lighter (30→60, 60→85, 85→100 %).
+const SECONDARY = (function(){
+var o={}, g=[
+ [["bench","dbBench","incDb","chestPressMach","incPressMach","smithBench","smithIncline","incBarbell","pushups"],["Triceps","Shoulders"]],
+ [["dbOhp","machOhp","smithOhp","cableShPress"],["Triceps"]],
+ [["dipMach","parDips","benchDips"],["Chest","Shoulders"]],
+ [["cgBench"],["Shoulders"]],
+ [["pulldown","assistPull","vbarPulldown"],["Biceps","Mid back"]],
+ [["cableRow","dbRow","isoRow","dbRow2","oneArmCableRow"],["Biceps","Rear delts"]],
+ [["squat","hackSquat","legPress","smithSquat","gobletSquat"],["Glutes"]],
+ [["splitSquat","smithSplit","dbLunge","revLunge"],["Hamstrings"]],
+ [["rdl","dbRdl","pullThrough"],["Lower back"]],
+ [["hipThrust","gluteBridgeBB"],["Hamstrings"]]];
+g.forEach(function(x){ x[0].forEach(function(k){ o[k]=x[1]; }); });
+return o;
+})();
+if(RECOVERY_MUSCLES.indexOf("Core")<0) RECOVERY_MUSCLES.push("Core");
+if(INFO.recovery&&INFO.recovery.b) INFO.recovery.b.splice(1,0,"Big lifts also tire helper muscles (e.g. bench press → triceps and shoulders, rows → biceps, squats → glutes). Those count one step lighter. Extras and Focus exercises count too.");
+</script>
 <script>// ===== first-run setup additions (new consts; owner-authored blocks untouched) =====
 const PROT_PER_KG = {cut:2.0, recomp:1.8, bulk:1.6}; // g protein per kg body weight when there is no body-fat data
 const HOME_QUICK_N = [["pushups",2,"stop 2 reps short of failure"],["bwSquat",2,"15"],["revLunge",1,"10 per leg"],["sidePlank",1,"20-30 s per side"],["deadBug",1,"8 per side"]];
@@ -2572,7 +2592,9 @@ return sec;
 /* horizontally scrolling tiles: one per muscle trained today, with the estimated recovery */
 function workingMuscles(plan){
 var row=h("div",{class:"wmrow",id:"wmRow",role:"group","aria-label":"Working muscles today"});
-uniqMuscles(plan.items).forEach(function(m){
+var wk=plan.items.map(function(it){ return [activeKey(it[0])]; });
+if(draft&&draft.extras) draft.extras.forEach(function(e){ wk.push([e.k]); });
+uniqMuscles(wk).forEach(function(m){
 var r=recAdj(recoveryFor(m)), lv=r.pct>=100?"g":r.pct>=85?"a":"r";
 row.appendChild(h("button",{class:"wmt lv-"+lv,type:"button","data-m":m,"aria-label":m+", estimated recovery "+r.pct+" percent. Open details",onclick:function(){ recOpen=m; recScroll=true; setTab("body"); }},
 h("span",{class:"wn"},m),h("span",{class:"wp num"},r.pct+"%")));
@@ -3400,23 +3422,27 @@ var out=[]; if(!s.sets) return out;
 for(var k in s.sets){ if(s.sets[k]&&s.sets[k].length&&EX[k]&&muscles(k).indexOf(m)>=0) out.push(k); }
 return out;
 }
+function secondaryKeys(s,m){
+var out=[]; if(!s.sets) return out;
+for(var k in s.sets){ if(s.sets[k]&&s.sets[k].length&&EX[k]&&SECONDARY[k]&&SECONDARY[k].indexOf(m)>=0&&muscles(k).indexOf(m)<0) out.push(k); }
+return out;
+}
+/* lowest recovery over recent sessions: a main muscle by the hours rule, a secondary one a step lighter, bodyweight capped at 85% */
 function recoveryFor(m){
-var lift=null, home=null;
+var best=null;
 for(var i=state.sessions.length-1;i>=0;i--){
 var s=state.sessions[i];
 if(!s.planKey||s.planKey==="rest") continue;
-var isH=s.planKey==="home";
-if(isH?home:lift) continue;
-if(!trainedKeys(s,m).length) continue;
+var prim=trainedKeys(s,m).length>0, sec=!prim&&secondaryKeys(s,m).length>0;
+if(!prim&&!sec) continue;
 var d=sessAt18(s); if(!d) continue;
 var hrs=(Date.now()-d.getTime())/3600000, pct=hrs<24?30:hrs<48?60:hrs<72?85:100;
-if(isH) pct=Math.max(pct,85); /* bodyweight: effect capped at 85% */
-var rec={never:false,date:s.date,pct:pct};
-if(isH) home=rec; else lift=rec;
-if(lift&&home) break;
+if(sec) pct=pct<=30?60:pct<=60?85:100;
+if(s.planKey==="home") pct=Math.max(pct,85);
+if(!best||pct<best.pct) best={never:false,date:s.date,pct:pct,sec:sec};
+if(hrs>=72) break; /* sessions are date-sorted: older ones are fully recovered */
 }
-if(lift&&home) return home.pct<lift.pct?home:lift;
-return lift||home||{never:true,pct:100};
+return best||{never:true,pct:100};
 }
 function daysAgoText(iso){
 var a=parseIso(iso), b=parseIso(today());
@@ -4721,7 +4747,7 @@ return h("p",{class:"small muted num",id:"stepsIncl",style:"margin:6px 0 0"},"in
 function shortSleep(){ var e=dailyFor(today()); return (e&&e.sleepH!=null&&e.sleepH<6)?e.sleepH:null; }
 function recAdj(r){
 if(shortSleep()==null) return r;
-return {never:r.never,date:r.date,pct:Math.max(10,r.pct-10)};
+return {never:r.never,date:r.date,pct:Math.max(10,r.pct-10),sec:r.sec};
 }
 function proteinOn(date){ return sumE(dayEntries(date)).p; }
 function protTarget(){ var T=targetsFor(goalKey()); return T?T.protein:0; }
