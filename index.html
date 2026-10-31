@@ -827,6 +827,16 @@ details.expl{margin:0}
 .cbubble:focus-visible{outline:3px solid var(--hud-ink);outline-offset:3px}
 .cbubble[hidden],body[style*="overflow: hidden"] .cbubble{display:none!important}
 #cwWrap #cwCard{margin:0}
+/* r2: collapsed recovery / suggested day, form-guide chips */
+.rectog{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:44px;margin-top:6px;padding:8px 0 0;background:none;border:0;border-top:1px solid var(--line);color:var(--hud-ink);font-family:var(--display);font-weight:600;font-size:.9rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;text-align:left}
+.recline{margin:8px 0 0;font-weight:600;line-height:1.4}
+.sugtog{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:44px;margin:18px 0 10px;padding:10px 12px;background:var(--surface);border:1px solid #243a62;border-left:4px solid rgba(var(--hud-rgb),.6);color:var(--text);font:inherit;font-weight:600;text-align:left;cursor:pointer}
+.sugtog .sgt{font-family:var(--display);text-transform:uppercase;letter-spacing:.06em;font-size:.9rem;min-width:0}
+.sugtog .sgx{color:var(--hud-ink);flex:none}
+.fchips{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 4px}
+.fchip{min-height:44px;padding:8px 16px;border-radius:22px;background:var(--surface2);border:1px solid var(--line);color:var(--text);font-family:var(--display);font-weight:600;font-size:.85rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+.fchip[aria-expanded="true"]{border-color:var(--hud);color:var(--hud-ink);box-shadow:inset 0 0 10px rgba(var(--hud-rgb),.25)}
+.fctext{margin:4px 0 6px;padding:10px 12px;background:var(--surface2);border:1px solid var(--line);border-radius:8px;line-height:1.45}
 </style>
 </head><body>
 <header class="hdr"><div class="in">
@@ -1947,19 +1957,44 @@ if(ex.img) w.appendChild(imgEl(ex.img,0,ex.name,"Start",true,decor));
 else w.appendChild(phGlyph());
 return w;
 }
-function explainBody(key){
+function imgsBlock(key){
 var ex=EX[key];
-var wrap=h("div",{class:"explain"});
-if(ex.img){
-wrap.appendChild(h("div",{class:"imgs"},
+if(ex.img) return h("div",{class:"imgs"},
 h("figure",null,imgEl(ex.img,0,ex.name,"Start"),h("figcaption",null,"Start")),
-h("figure",null,imgEl(ex.img,1,ex.name,"Finish"),h("figcaption",null,"Finish"))));
-} else {
-wrap.appendChild(h("div",{class:"noimg"},"No verified image for this one — follow the checkpoints below."));
+h("figure",null,imgEl(ex.img,1,ex.name,"Finish"),h("figcaption",null,"Finish")));
+return h("div",{class:"noimg"},"No verified image for this one — follow the checkpoints below.");
 }
+/* cue line + FORM checkpoints as chips (short label; tap shows the full text) */
+function cueBlock(key){
+var ex=EX[key], wrap=h("div",{class:"cueblk"});
 wrap.appendChild(h("p",{class:"cue"},ex.cue));
-var fm=FORM[key]; if(fm){ wrap.appendChild(h("div",{class:"formchk"},h("div",{class:"fc"},h("span",{class:"fl"},fm[0]),h("span",null,fm[1])),h("div",{class:"fc"},h("span",{class:"fl"},"Back"),h("span",null,fm[2])))); }
+var fm=FORM[key];
+if(fm){
+var txt=h("p",{class:"fctext",id:"fctext-"+key,"aria-live":"polite"}); txt.hidden=true;
+var cur=-1, chips=h("div",{class:"fchips"});
+[[fm[0],fm[1]],["Back",fm[2]]].forEach(function(c,i){
+var b=h("button",{class:"fchip",type:"button","aria-expanded":"false","aria-controls":"fctext-"+key},c[0]);
+b.addEventListener("click",function(){
+var on=cur!==i; cur=on?i:-1;
+Array.prototype.forEach.call(chips.children,function(x,j){ x.setAttribute("aria-expanded",j===cur?"true":"false"); });
+txt.hidden=!on; if(on) txt.textContent=c[1];
+});
+chips.appendChild(b);
+});
+wrap.appendChild(chips); wrap.appendChild(txt);
+}
 return wrap;
+}
+function explainBody(key){
+var wrap=h("div",{class:"explain"});
+wrap.appendChild(imgsBlock(key));
+wrap.appendChild(cueBlock(key));
+return wrap;
+}
+/* exercise screen: cue + chips stay above the sets, images go in a collapsed guide below them */
+function guideBelow(key){
+if(!EX[key].img) return null;
+return h("details",{class:"expl xguide"},h("summary",null,"Form guide"),h("div",{class:"explain"},imgsBlock(key)));
 }
 function explainToggle(key){
 return h("details",{class:"expl"},h("summary",null,"Form guide"),explainBody(key));
@@ -2327,7 +2362,7 @@ function workingMuscles(plan){
 var row=h("div",{class:"wmrow",id:"wmRow",role:"group","aria-label":"Working muscles today"});
 uniqMuscles(plan.items).forEach(function(m){
 var r=recAdj(recoveryFor(m)), lv=r.pct>=100?"g":r.pct>=85?"a":"r";
-row.appendChild(h("button",{class:"wmt lv-"+lv,type:"button","data-m":m,"aria-label":m+", estimated recovery "+r.pct+" percent. Open details",onclick:function(){ recOpen=m; setTab("body"); }},
+row.appendChild(h("button",{class:"wmt lv-"+lv,type:"button","data-m":m,"aria-label":m+", estimated recovery "+r.pct+" percent. Open details",onclick:function(){ recOpen=m; recScroll=true; setTab("body"); }},
 h("span",{class:"wn"},m),h("span",{class:"wp num"},r.pct+"%")));
 });
 return h("div",{class:"wmwrap"},h("div",{class:"wmlbl"},"Working muscles · recovery"),row);
@@ -2492,9 +2527,10 @@ sc.appendChild(chipsEl(muscles(ak)));
 sc.appendChild(h("div",{class:"xtarget2 num"},n+" × "+it[2]+(it[3]?" · rest "+it[3]:"")));
 sc.appendChild(setsControl(it,k,n));
 sc.appendChild(h("div",{class:"ex-last num"},last?"Last time: "+fmtLast(last):"First time"));
-sc.appendChild(explainBody(ak));
+sc.appendChild(cueBlock(ak));
 var body=setsBodyEl(it,k,ak,n,true);
 sc.appendChild(body);
+var gb=guideBelow(ak); if(gb) sc.appendChild(gb);
 var isLast=exIdx>=total-1;
 sc.appendChild(h("div",{class:"xnav"},
 h("button",{class:"btn",type:"button",id:"xPrev",disabled:exIdx<=0,onclick:function(){openEx(exIdx-1);}},"‹ Prev"),
@@ -2848,7 +2884,7 @@ sc.appendChild(h("h2",{class:"xtitle",id:"exTitle",tabindex:"-1"},ex.name));
 sc.appendChild(chipsEl(muscles(k)));
 sc.appendChild(h("div",{class:"xtarget2 num"},hTargetText(sl,n)));
 sc.appendChild(h("div",{class:"ex-last num"},last?"Last time: "+fmtLast(last):"First time"));
-sc.appendChild(explainBody(k));
+sc.appendChild(cueBlock(k));
 var body=h("div",{class:"sets"});
 if(last) body.appendChild(h("button",{class:"btn small samebtn",type:"button",id:"sameLast",onclick:function(){
 for(var q=0;q<n;q++){ var lr=last[Math.min(q,last.length-1)], rr=rows[q]; rr.reps=String(lr.reps); rr.pf=!rr.done; }
@@ -2898,6 +2934,7 @@ body.appendChild(h("div",{class:"setbtns"},
 h("button",{class:"btn small",type:"button",id:"add-"+sl.id,onclick:function(){hdraft.n[sl.id]=n+1;hTouch();render("add-"+sl.id);}},"+ Set"),
 h("button",{class:"btn small",type:"button",id:"rem-"+sl.id,disabled:n<=1,onclick:function(){if(n>1){hdraft.n[sl.id]=n-1;if(hdraft.sets[sl.id]) hdraft.sets[sl.id].length=Math.min(hdraft.sets[sl.id].length,n-1);hTouch();render("rem-"+sl.id);}}},"− Set")));
 sc.appendChild(body);
+var gb=guideBelow(k); if(gb) sc.appendChild(gb);
 var isLast=hIdx>=total-1;
 sc.appendChild(h("div",{class:"xnav"},
 h("button",{class:"btn",type:"button",id:"xPrev",disabled:hIdx<=0,onclick:function(){hOpenEx(hIdx-1);}},"‹ Prev"),
@@ -3196,15 +3233,31 @@ return h("div",{class:"rdetail",id:"rdetail",role:"region","aria-label":m+" deta
 h("h3",null,"Exercise history: "+m),hb,
 h("h3",null,"Your plan exercises: "+m),strip);
 }
+var REC_KEY="gymRecGrid_v1", recScroll=false;
+function recGridOpen(){ try{ return localStorage.getItem(REC_KEY)==="1"; }catch(e){ return false; } }
+function setRecGrid(v){ try{ localStorage.setItem(REC_KEY,v?"1":"0"); }catch(e){} }
 function renderRecovery(root){
-root.appendChild(h("h2",null,"Estimated recovery",infoBtn("recovery","estimated recovery")));
-root.appendChild(h("p",{class:"note",id:"recSub",style:"margin-top:-6px"},"Estimated from time since you trained each muscle \u2014 not a measurement."));
-var ssl=shortSleep();
-if(ssl!=null) root.appendChild(h("p",{class:"note warn",id:"recShort",style:"margin:0 0 10px;padding:8px 12px"},"Short sleep last night ("+fmtNum(ssl)+" h): recovery estimates lowered"));
-var grid=h("div",{class:"rgrid"});
 var n=RECOVERY_MUSCLES.length;
+var all=RECOVERY_MUSCLES.map(function(m,i){ return {m:m,i:i,r:recAdj(recoveryFor(m))}; });
+var low=all.filter(function(x){ return x.r.pct<85; }).sort(function(a,b){ return a.r.pct-b.r.pct||a.i-b.i; });
+var open=recGridOpen()||!!recOpen;
+var line=low.length?"Recovering: "+low.slice(0,4).map(function(x){ return x.m+" "+x.r.pct+"%"; }).join(" \u00b7 ")+(low.length>4?" +"+(low.length-4):""):"All muscles fresh";
+var card=h("div",{class:"card",id:"recCard"});
+card.appendChild(h("div",{class:"titlerow"},h("h3",null,"Recovery"),infoBtn("recovery","estimated recovery")));
+card.appendChild(h("p",{class:"recline num",id:"recSummary"},line));
+var ssl=shortSleep();
+if(ssl!=null) card.appendChild(h("p",{class:"note warn",id:"recShort",style:"margin:8px 0 0;padding:8px 12px"},"Short sleep last night ("+fmtNum(ssl)+" h): recovery estimates lowered"));
+card.appendChild(h("button",{class:"rectog",type:"button",id:"recToggle","aria-expanded":open?"true":"false","aria-controls":"recGrid",onclick:function(){
+if(open&&recOpen) recOpen=null;
+setRecGrid(!open); render("recToggle");
+}},h("span",null,open?"Hide":"Show all"),h("span",{"aria-hidden":"true"},open?"\u25B4":"\u25BE")));
+root.appendChild(card);
+if(!open) return;
+var wrapG=h("div",{id:"recGrid",style:"margin-top:12px"});
+wrapG.appendChild(h("p",{class:"note",id:"recSub",style:"margin:0 0 10px"},"Estimated from time since you trained each muscle \u2014 not a measurement."));
+var grid=h("div",{class:"rgrid"});
 RECOVERY_MUSCLES.forEach(function(m,i){
-var r=recAdj(recoveryFor(m));
+var r=all[i].r;
 var lv=r.pct>=100?"g":r.pct>=85?"a":"r";
 var col=lv==="g"?"#38e8a0":lv==="a"?"#ffc24d":"#ff7a85";
 var isOpen=recOpen===m;
@@ -3222,8 +3275,10 @@ h("span",{class:"rsub"},r.never?"never":daysAgoText(r.date))));
 var oi=recOpen?RECOVERY_MUSCLES.indexOf(recOpen):-1;
 if(oi>=0&&Math.floor(oi/2)===Math.floor(i/2)&&(i%2===1||i===n-1)) grid.appendChild(recoveryDetail(recOpen));
 });
-root.appendChild(grid);
-root.appendChild(h("p",{class:"note warn",style:"margin-top:14px;padding:10px 12px"},RECOVERY_NOTE));
+wrapG.appendChild(grid);
+wrapG.appendChild(h("p",{class:"note warn",style:"margin-top:14px;padding:10px 12px"},RECOVERY_NOTE));
+root.appendChild(wrapG);
+if(recScroll&&recOpen){ recScroll=false; setTimeout(function(){ var d=$("rdetail"); if(d&&d.scrollIntoView) d.scrollIntoView({block:"center"}); },0); }
 }
 /* ---------- tab: body ---------- */
 var bodyMsg=null;
@@ -3570,6 +3625,9 @@ h("span",{class:"small muted"},"g")));
 row2.appendChild(h("span",{class:"fstat num"},e.kcal+" kcal · "+fmtNum(e.p)+" g protein"));
 return h("div",{class:"fitem"+(hasWarn(nm)?" warn":""),"data-food":e.food},row1,row2);
 }
+var SUG_KEY="gymSugDay_v1";
+function sugOpen(){ try{ return localStorage.getItem(SUG_KEY)==="1"; }catch(e){ return false; } }
+function setSugOpen(v){ try{ localStorage.setItem(SUG_KEY,v?"1":"0"); }catch(e){} }
 function renderFood(root){
 var gk=goalKey(), G=GOALS[gk], T=targetsFor(gk), tl=timelineFor(gk,T);
 var calc=MEALS.map(calcMeal), PT={kcal:0,prot:0,carb:0,fat:0};
@@ -3652,8 +3710,11 @@ if(m.id==="post") acts.appendChild(h("button",{class:"btn small",type:"button",i
 card.appendChild(acts);
 root.appendChild(card);
 });
-/* ----- suggested day (the existing plan) ----- */
-root.appendChild(h("h2",null,"Suggested day"));
+/* ----- suggested day (the existing plan), collapsed under one row ----- */
+var sdOpen=sugOpen(), sd=h("div",{id:"sugBody"});
+root.appendChild(h("button",{class:"sugtog",type:"button",id:"sugToggle","aria-expanded":sdOpen?"true":"false","aria-controls":"sugBody",onclick:function(){ setSugOpen(!sdOpen); foodRerender("sugToggle"); }},
+h("span",{class:"sgt num"},"Suggested day \u00b7 \u2248 "+kfmt(PT.kcal)+" kcal \u00b7 "+PT.prot+" g protein"),
+h("span",{class:"sgx","aria-hidden":"true"},sdOpen?"\u25BE":"\u25B8")));
 var calMain=h("b",{class:"num",id:"calMain"}), calExtra=h("span",{class:"calx",id:"calExtra"}), calChip=h("span",{class:"chip inc",id:"calIncomplete"},"Incomplete");
 var planVs=h("p",{class:"small",id:"planVs",style:"margin:8px 0 0;font-weight:600"});
 function paintCal(){
@@ -3664,7 +3725,7 @@ calChip.hidden=!!mk;
 planVs.textContent="Plan ≈ "+kfmt(PT.kcal)+" kcal "+(mk?"+ "+kfmt(mk)+" kcal milk":"+ milk")+(T?" vs target "+kfmt(T.kcal):"");
 }
 paintCal();
-root.appendChild(h("div",{class:"card"},
+sd.appendChild(h("div",{class:"card"},
 h("div",{class:"calbox"},
 h("div",{class:"titlerow"},h("span",{class:"callbl"},"Plan total"),infoBtn("food","the food total")),
 h("div",{class:"calrow"},calMain,calExtra,calChip),planVs),
@@ -3677,14 +3738,14 @@ h("p",{style:"font-weight:700;margin:0"},"Total protein: ",h("span",{class:"num"
 h("p",{class:"note",style:"margin:8px 0 0"},SHAKE.note)));
 MEALS.forEach(function(m,i){
 var c=calc[i];
-root.appendChild(h("h2",null,m.name,h("span",{class:"tag"},m.time)));
+sd.appendChild(h("h2",null,m.name,h("span",{class:"tag"},m.time)));
 var tb=h("tbody");
 c.rows.forEach(function(r){ tb.appendChild(h("tr",null,h("td",{class:"wrapc"},r.name),h("td",{class:"num"},r.g),h("td",{class:"num"},r.kcal),h("td",{class:"num"},r.prot))); });
 tb.appendChild(h("tr",{class:"sub"},h("td",null,"Total"),h("td",null,""),h("td",{class:"num"},c.kcal),h("td",{class:"num"},c.prot)));
-root.appendChild(h("div",{class:"tablewrap"},h("table",null,
+sd.appendChild(h("div",{class:"tablewrap"},h("table",null,
 h("thead",null,h("tr",null,h("th",null,"Item"),h("th",null,"Grams"),h("th",null,"kcal"),h("th",null,"Protein"))),tb)));
-if(m.extra) root.appendChild(h("p",{class:"small "+(hasWarn(m.extra)?"warn":""),style:"margin-top:10px"},m.extra));
-if(m.swap) root.appendChild(h("p",{class:"small muted "+(hasWarn(m.swap)?"warn":""),style:"margin-top:6px"},"↺ "+m.swap));
+if(m.extra) sd.appendChild(h("p",{class:"small "+(hasWarn(m.extra)?"warn":""),style:"margin-top:10px"},m.extra));
+if(m.swap) sd.appendChild(h("p",{class:"small muted "+(hasWarn(m.swap)?"warn":""),style:"margin-top:6px"},"↺ "+m.swap));
 });
 /* ----- more (collapsed) ----- */
 var more=h("details",{class:"day fmore",id:"foodMore"},h("summary",null,"More: rules and numbers review"));
@@ -3699,7 +3760,8 @@ box.appendChild(h("div",{class:"rev"+((hasWarn(r.t)||hasWarn(r.v)||hasWarn(r.d))
 h("div",{class:"rt"},r.t),h("div",{class:"rv num"},r.v),h("div",{class:"rd"},r.d)));
 });
 more.appendChild(box);
-root.appendChild(h("div",{style:"margin-top:18px"},more));
+sd.appendChild(h("div",{style:"margin-top:18px"},more));
+if(sdOpen) root.appendChild(sd);
 }
 /* ---------- v12: add-food bottom sheet ---------- */
 function fsBuild(){
