@@ -140,6 +140,10 @@ details.day .ex,.dfull .ex{margin-top:2px;background:var(--surface2)}
 .imgs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:6px 0}
 .imgs figure{margin:0;min-width:0}
 .imgs img{display:block;width:100%;max-width:100%;aspect-ratio:4/3;object-fit:cover;background:var(--surface2);border:1px solid rgba(var(--hud-rgb),.3)}
+.xphotos{margin:10px 0 4px}
+.xphotos .imgs img{aspect-ratio:3/2;object-fit:contain;background:#fff;cursor:zoom-in}
+.xph-act{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:6px}
+.xph-act .btn{min-height:44px;display:inline-flex;align-items:center;text-decoration:none}
 .imgs figcaption{font-family:var(--display);font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-size:.8rem;color:var(--muted);margin-top:2px}
 .imgmiss{aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;text-align:center;font-size:.85rem;color:var(--muted);background:var(--surface2);padding:6px}
 .howto{margin:10px 0 4px}
@@ -2269,9 +2273,10 @@ if(!list.length) return null;
 tag=tag||"div";
 return h(tag,{class:"chips"},list.map(function(m){return h("span",{class:"mchip"},m);}));
 }
-function imgEl(id,idx,label,cap,thumb,decor){
+function imgEl(id,idx,label,cap,thumb,decor,full){
 var im=document.createElement("img");
 var urls=[];
+if(full) urls.push("img/full/"+id+"_"+idx+".jpg"); /* exercise screen: the sharp 850 px photo first */
 if(IMG_DATA[id+"_"+idx]) urls.push(IMG_DATA[id+"_"+idx]);
 urls.push("img/"+id+"_"+idx+".jpg");
 urls.push(IMG_REMOTE+id+"/"+idx+".jpg");
@@ -2358,9 +2363,25 @@ return wrap;
 }
 /* exercise screen: cue + chips stay above the sets, images go in a collapsed guide below them */
 function guideBelow(key){
-var hb=howtoBlock(key); if(!EX[key].img&&!hb) return null;
-var bx=h("div",{class:"explain"}); if(EX[key].img) bx.appendChild(imgsBlock(key)); if(hb) bx.appendChild(hb);
-return h("details",{class:"expl xguide"},h("summary",null,"Form guide"),bx);
+var hb=howtoBlock(key); if(!hb) return null;
+return h("details",{class:"expl xguide"},h("summary",null,"Form guide · how to do it"),h("div",{class:"explain"},hb));
+}
+/* exercise screen: Start / Finish photos always visible (sharp), tap to enlarge, ▶ play the movement, video link */
+function photoBlock(key){
+var ex=EX[key], wrap=h("div",{class:"xphotos"});
+if(ex.img){
+wrap.appendChild(h("div",{class:"imgs"},
+h("figure",null,imgEl(ex.img,0,ex.name,"Start",false,false,true),h("figcaption",null,"Start")),
+h("figure",null,imgEl(ex.img,1,ex.name,"Finish",false,false,true),h("figcaption",null,"Finish"))));
+wrap.appendChild(h("div",{class:"xph-act"},
+h("button",{class:"btn small",type:"button",onclick:function(){ lbOpen(ex.img,0,ex.name,true); }},"\u25b6 Play motion"),
+ex.q?h("a",{class:"btn small",href:yt(ex.q),target:"_blank",rel:"noopener"},"Watch a video"):null,
+h("span",{class:"small muted"},"Tap a photo to enlarge")));
+} else {
+wrap.appendChild(h("div",{class:"noimg"},"No verified photo for this one — follow the cue and the how-to below."));
+if(ex.q) wrap.appendChild(h("div",{class:"xph-act"},h("a",{class:"btn small",href:yt(ex.q),target:"_blank",rel:"noopener"},"Watch a video")));
+}
+return wrap;
 }
 function explainToggle(key){
 return h("details",{class:"expl"},h("summary",null,"Form guide"),explainBody(key));
@@ -2993,6 +3014,7 @@ sc.appendChild(h("div",{class:"kicker"},"Exercise "+(exIdx+1)+" of "+total));
 sc.appendChild(h("h2",{class:"xtitle",id:"exTitle",tabindex:"-1"},ex.name));
 var cb=choiceBar(k); if(cb) sc.appendChild(cb);
 sc.appendChild(chipsEl(muscles(ak)));
+sc.appendChild(photoBlock(ak));
 sc.appendChild(h("div",{class:"xtarget2 num"},n+" × "+it[2]+(it[3]?" · rest "+it[3]:"")));
 sc.appendChild(setsControl(it,k,n));
 sc.appendChild(h("div",{class:"ex-last num"},last?"Last time: "+fmtLast(last):"First time"));
@@ -3361,6 +3383,7 @@ sc.appendChild(h("button",{class:"xback",type:"button",id:"xBack",onclick:hOpenL
 sc.appendChild(h("div",{class:"kicker"},(sl.grp==="pel"?"Pelvic routine":"Home exercise")+" · "+(hIdx+1)+" of "+total));
 sc.appendChild(h("h2",{class:"xtitle",id:"exTitle",tabindex:"-1"},ex.name));
 sc.appendChild(chipsEl(muscles(k)));
+sc.appendChild(photoBlock(k));
 sc.appendChild(h("div",{class:"xtarget2 num"},hTargetText(sl,n)));
 sc.appendChild(h("div",{class:"ex-last num"},last?"Last time: "+fmtLast(last):"First time"));
 sc.appendChild(cueBlock(k));
@@ -5599,13 +5622,14 @@ renderBackup(bk.open?"bkCopy":null);
 navPush();
 });
 /* ---------- photo lightbox ---------- */
-var lb={el:null,list:[],i:0,name:""};
+var lb={el:null,list:[],i:0,name:"",t:null,play:null};
 function lbBuild(){
 if(lb.el) return;
 var img=h("img",{alt:""}), cap=h("div",{class:"lbcap"}), prev=h("button",{type:"button",onclick:function(){lbShow(lb.i-1);}},"‹ Start"), next=h("button",{type:"button",onclick:function(){lbShow(lb.i+1);}},"Finish ›");
 var x=h("button",{class:"lbx",type:"button","aria-label":"Close photo",onclick:function(){lbClose(true);}},"✕");
-lb.el=h("div",{class:"lb",role:"dialog","aria-modal":"true","aria-label":"Photo"},x,img,cap,h("div",{class:"lbbar"},prev,next));
-lb.el.hidden=true; lb.img=img; lb.cap=cap; lb.prev=prev; lb.next=next;
+var play=h("button",{type:"button","aria-pressed":"false",onclick:function(){ lbPlay(!lb.t); }},"\u25b6 Play motion");
+lb.el=h("div",{class:"lb",role:"dialog","aria-modal":"true","aria-label":"Photo"},x,img,cap,h("div",{class:"lbbar"},prev,play,next));
+lb.el.hidden=true; lb.img=img; lb.cap=cap; lb.prev=prev; lb.next=next; lb.play=play;
 lb.el.addEventListener("click",function(e){ if(e.target===lb.el) lbClose(true); });
 var sx=null; lb.el.addEventListener("touchstart",function(e){ if(e.touches.length===1) sx=e.touches[0].clientX; },{passive:true});
 lb.el.addEventListener("touchend",function(e){ if(sx===null) return; var dx=e.changedTouches[0].clientX-sx; sx=null; if(Math.abs(dx)>50) lbShow(lb.i+(dx<0?1:-1)); },{passive:true});
@@ -5621,15 +5645,20 @@ im.src=it.full; im.alt=lb.name+" — "+(i===0?"start":"finish")+" position";
 lb.cap.textContent=lb.name+" · "+(i===0?"Start":"Finish");
 lb.prev.disabled=(i===0); lb.next.disabled=(i===lb.list.length-1);
 }
-function lbOpen(id,n,name){
+function lbPlay(on){
+clearInterval(lb.t); lb.t=null;
+if(on) lb.t=setInterval(function(){ lbShow(lb.i===0?1:0); },1100);
+lb.play.textContent=on?"\u275a\u275a Pause":"\u25b6 Play motion"; lb.play.setAttribute("aria-pressed",on?"true":"false");
+}
+function lbOpen(id,n,name,play){
 lbBuild(); lb.name=name||""; lb.list=[lbSrc(id,0),lbSrc(id,1)];
-lb.el.hidden=false; document.body.style.overflow="hidden"; lbShow(n);
+lb.el.hidden=false; document.body.style.overflow="hidden"; lbShow(n); lbPlay(!!play);
 try{ history.pushState(Object.assign(navState(),{lb:1}),""); }catch(e){}
 lb.el.querySelector(".lbx").focus();
 }
 function lbClose(viaUi){
 if(!lb.el||lb.el.hidden) return false;
-lb.el.hidden=true; document.body.style.overflow=""; lb.img.removeAttribute("src");
+lbPlay(false); lb.el.hidden=true; document.body.style.overflow=""; lb.img.removeAttribute("src");
 if(viaUi){ try{ if(history.state&&history.state.lb) history.back(); }catch(e){} }
 return true;
 }
