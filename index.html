@@ -2073,12 +2073,41 @@ var a=ALTS[k]; if(!a) return false;
 var alt=activeKey(k)!==k;
 return a.kind==="free"?alt:!alt;
 }
+/* an unfinished workout from an earlier day that nobody has touched for hours is saved as partial (so a Discard,
+a new day, or an app that stayed open in the background can't lose it). A workout still going keeps its draft. */
+var STALE_MS=5*3600*1000;
+function draftIdle(d){ return !d.t||(Date.now()-d.t)>STALE_MS; }
+function rescueStale(ids){
+var out=[];
+if(draft&&countSets(draft,false)>0&&draft.date<today()&&draftIdle(draft)){
+var a=commitDraft(); if(a){ ids.push(a.id); out.push(sessShort(a)+" "+shortDate(a.date)); draft=newDraft(nextPlanKey()); staleBanner=false; }
+}
+return out;
+}
+function rescueStaleHome(ids){
+var out=[];
+if(hdraft&&hCount(hdraft,false)>0&&hdraft.date<today()&&draftIdle(hdraft)){
+var a=hCommit(); if(a){ ids.push(a.id); out.push(homeName()+" "+shortDate(a.date)); hdraft=hNew(); hStale=false; }
+}
+return out;
+}
+function notifyRescued(names,ids){
+if(!names.length) return;
+snack("Saved unfinished workout"+(names.length>1?"s":"")+" as partial: "+names.join(", "),function(){
+state.sessions=state.sessions.filter(function(x){ return ids.indexOf(x.id)<0; }); ids.forEach(function(id){ tomb("sessions",id); }); persist(); render();
+});
+}
+/* back in the app after a while (or on a new day): rescue before anything else */
+function rescueOnResume(){
+var ids=[], names=rescueStale(ids).concat(rescueStaleHome(ids));
+if(names.length){ persist(); render(); notifyRescued(names,ids); }
+}
 function ensureDraft(){ if(!draft) draft=newDraft(nextPlanKey()); else if(!draft.dateSet&&countSets(draft,false)===0&&draft.date!==today()) draft.date=today(); }
 /* ---------- persistent draft (gymDraft_v1) ---------- */
 function saveDraft(){
 if(!draft||!draft.dirty) return;
 try{
-localStorage.setItem(DKEY,JSON.stringify({planKey:draft.planKey,date:draft.date,dateSet:!!draft.dateSet,n:draft.n,sets:draft.sets,choice:draft.choice,corr:draft.corr,notes:draft.notes,cur:draft.cur||0,extras:draft.extras,custom:draft.planKey==="custom"?draft.custom:undefined}));
+localStorage.setItem(DKEY,JSON.stringify({planKey:draft.planKey,date:draft.date,dateSet:!!draft.dateSet,n:draft.n,sets:draft.sets,choice:draft.choice,corr:draft.corr,notes:draft.notes,cur:draft.cur||0,t:draft.t||0,extras:draft.extras,custom:draft.planKey==="custom"?draft.custom:undefined}));
 }catch(e){}
 }
 function clearDraftStore(){ try{ localStorage.removeItem(DKEY); }catch(e){} }
@@ -2088,7 +2117,7 @@ var nowN=countSets(draft,false);
 if(!draft.dateSet&&draft.prevN===0&&nowN>0) draft.date=today();
 draft.prevN=nowN;
 if(nowN>0&&lastSaved) clearLastSaved();
-draft.dirty=true; draft.resumed=false; saveDraft();
+draft.dirty=true; draft.resumed=false; draft.t=Date.now(); saveDraft();
 }
 /* custom day from storage: title string <= 80, type push/pull/legs, <= 12 items [EX key, sets 1-6, reps, rest] */
 function cleanCustom(c){
@@ -2115,7 +2144,7 @@ if(o.planKey==="custom"){ cu=cleanCustom(o.custom); if(!cu) return null; }
 else if(o.planKey!=="rest"&&!planByKey(o.planKey)) return null;
 var d=newDraft(o.planKey,cu);
 if(typeof o.date==="string"&&parseIso(o.date)) d.date=o.date;
-d.dateSet=!!o.dateSet;
+d.dateSet=!!o.dateSet; d.t=+o.t>0?+o.t:0;
 if(typeof o.notes==="string") d.notes=o.notes;
 if(o.n&&typeof o.n==="object") for(var k in o.n){ var nn=+o.n[k]; if(nn>=1&&nn<=20) d.n[k]=Math.floor(nn); }
 if(o.sets&&typeof o.sets==="object") for(var k2 in o.sets){
@@ -2534,8 +2563,8 @@ if(finOpen) return finPanel();
 var lg=loggedSets();
 if(lg<1) return null;
 return h("div",{class:"finbar"},
-h("span",{class:"num"},lg+(lg===1?" set":" sets")+" logged"),
-h("button",{class:"btn small primary",type:"button",id:"finOpenBtn",onclick:openFinish},"Finish workout"));
+h("span",{class:"num"},lg+(lg===1?" set":" sets")+" ticked · not saved yet"),
+h("button",{class:"btn small primary",type:"button",id:"finOpenBtn",onclick:openFinish},"Finish & save"));
 }
 function stat(k,v){return h("div",{class:"stat"},h("span",null,k),h("b",{class:"num"},v));}
 function statI(k,v,info,lab){return h("div",{class:"stat"},h("span",{class:"statk"},k,infoBtn(info,lab)),h("b",{class:"num"},v));}
@@ -2977,7 +3006,7 @@ touch();
 startRest(restSecs(it[3]));
 render("done-"+k+"-"+i);
 var aft=draft;
-snack("Set "+(i+1)+" logged",function(){ undoLift(snap,true); render("done-"+k+"-"+i); },function(){return draft===aft;});
+snack("Set "+(i+1)+" ticked"+(loggedSets()===1?" · tap Finish → Save at the end to keep this day":""),function(){ undoLift(snap,true); render("done-"+k+"-"+i); },function(){return draft===aft;});
 }},"\u2713"));
 body.appendChild(rowEl);
 capEl=h("div",{class:"pfcap"},ph?"Last time \u2014 tap \u2713 when done":(i>0&&rows[i-1].done?"Same as set above \u2014 tap \u2713 when done":"Target \u2014 tap \u2713 when done"));
@@ -3072,9 +3101,11 @@ render();
 window.scrollTo(0,0);
 }
 function setCount(s){var c=0;if(s.sets)for(var k in s.sets)c+=s.sets[k].length;return c;}
+var recentAll=false;
 function renderRecent(root){
-root.appendChild(h("h2",null,"Last 5 workouts"));
-var list=state.sessions.slice(-5).reverse();
+var total=state.sessions.length;
+root.appendChild(h("h2",null,recentAll?"All workouts ("+total+")":"Last 5 workouts"));
+var list=(recentAll?state.sessions.slice():state.sessions.slice(-5)).reverse();
 if(!list.length){ root.appendChild(h("p",{class:"muted"},"No workouts logged yet.")); return; }
 var card=h("div",{class:"card"});
 list.forEach(function(s){
@@ -3089,6 +3120,7 @@ else { arm(id); render(id); }
 }},isArmed?"Tap again to confirm":"Delete")));
 });
 root.appendChild(card);
+if(total>5) root.appendChild(h("button",{class:"btn block",type:"button",id:"recentToggle",style:"margin-top:8px",onclick:function(){ recentAll=!recentAll; render("recentToggle"); }},recentAll?"Show last 5 only":"Show all "+total+" workouts"));
 }
 /* ---------- Home + Pelvic session (separate draft: gymHomeDraft_v1, planKey "home") ---------- */
 function mkSlots(lists){
@@ -3162,7 +3194,7 @@ else if(!hdraft.dateSet&&hCount(hdraft,false)===0&&hdraft.date!==today()) hdraft
 }
 function hSaveDraft(){
 if(!hdraft||!hdraft.dirty) return;
-try{ localStorage.setItem(HKEY,JSON.stringify({planKey:"home",date:hdraft.date,dateSet:!!hdraft.dateSet,n:hdraft.n,sets:hdraft.sets,notes:hdraft.notes,cur:hdraft.cur||0})); }catch(e){}
+try{ localStorage.setItem(HKEY,JSON.stringify({planKey:"home",date:hdraft.date,dateSet:!!hdraft.dateSet,n:hdraft.n,sets:hdraft.sets,notes:hdraft.notes,cur:hdraft.cur||0,t:hdraft.t||0})); }catch(e){}
 }
 function hClearStore(){ try{ localStorage.removeItem(HKEY); }catch(e){} }
 function hTouch(){
@@ -3171,7 +3203,7 @@ var nowN=hCount(hdraft,false);
 if(!hdraft.dateSet&&hdraft.prevN===0&&nowN>0) hdraft.date=today();
 hdraft.prevN=nowN;
 if(nowN>0&&lastSaved) clearLastSaved();
-hdraft.dirty=true; hdraft.resumed=false; hSaveDraft();
+hdraft.dirty=true; hdraft.resumed=false; hdraft.t=Date.now(); hSaveDraft();
 }
 function hLoadDraft(){
 var raw=null, o;
@@ -3181,7 +3213,7 @@ try{ o=JSON.parse(raw); }catch(e2){ return null; }
 if(!o||typeof o!=="object") return null;
 var d=hNew();
 if(typeof o.date==="string"&&parseIso(o.date)) d.date=o.date;
-d.dateSet=!!o.dateSet;
+d.dateSet=!!o.dateSet; d.t=+o.t>0?+o.t:0;
 if(typeof o.notes==="string") d.notes=o.notes;
 if(o.n&&typeof o.n==="object") for(var k in o.n){ var nn=+o.n[k]; if(nn>=1&&nn<=20) d.n[k]=Math.floor(nn); }
 if(o.sets&&typeof o.sets==="object") for(var k2 in o.sets){
@@ -5699,22 +5731,19 @@ persist(); render(); window.scrollTo(0,0);
 } finally { navRestoring=false; }
 });
 draft=loadDraft();
-/* an unfinished workout from an earlier day is saved as partial on open, so it can't be lost by Discard or a new day */
-var autoSaved=[], autoIds=[];
-if(draft&&countSets(draft,false)>0&&draft.date<today()){ var as1=commitDraft(); if(as1){ autoIds.push(as1.id); autoSaved.push(sessShort(as1)+" "+shortDate(as1.date)); draft=newDraft(nextPlanKey()); } }
+var autoIds=[], autoSaved=rescueStale(autoIds);
 staleBanner=!!(draft&&countSets(draft,false)>0&&draft.date<today());
 hdraft=hLoadDraft();
-if(hdraft&&hCount(hdraft,false)>0&&hdraft.date<today()){ var as2=hCommit(); if(as2){ autoIds.push(as2.id); autoSaved.push(homeName()+" "+shortDate(as2.date)); hdraft=hNew(); } }
+autoSaved=autoSaved.concat(rescueStaleHome(autoIds));
 hStale=!!(hdraft&&hCount(hdraft,false)>0&&hdraft.date<today());
 buildRestBar();
 persist();
 render();
-if(autoSaved.length) snack("Saved unfinished workout"+(autoSaved.length>1?"s":"")+" as partial: "+autoSaved.join(", "),function(){
-state.sessions=state.sessions.filter(function(x){ return autoIds.indexOf(x.id)<0; }); autoIds.forEach(function(id){ tomb("sessions",id); }); persist(); render();
-});
+notifyRescued(autoSaved,autoIds);
 try{ history.replaceState({root:1},""); history.pushState(navState(),""); }catch(e){}
 maybeAutoSummary();
-document.addEventListener("visibilitychange",function(){ if(!document.hidden) maybeAutoSummary(); });
+document.addEventListener("visibilitychange",function(){ if(!document.hidden){ rescueOnResume(); maybeAutoSummary(); } });
+window.addEventListener("pageshow",function(){ rescueOnResume(); });
 initSync();
 /* ---------- v11: cloud sync (plain fetch, no library) ---------- */
 function readAuth(){
