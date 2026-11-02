@@ -952,23 +952,42 @@ const EX = {
 // planKeys must stay pushA..legsB (saved sessions use them). sets, reps, rest
 const PLAN = [
  {key:"pushA", name:"Push A — Chest", short:"Push A", type:"push", items:[
-   ["bench",3,"6-8","2-3 min"],["incDb",3,"8-12","2 min"],["dbOhp",3,"8-12","2 min"],
-   ["latRaise",3,"12-15","60-90 s"],["pushdown",3,"10-15","60-90 s"],["ohExt",2,"10-15","60-90 s"]]},
+   ["bench",3,"6-8","2-3 min"],
+   ["incDb",3,"8-12","2 min"],
+   ["dbOhp",3,"8-12","2 min"],
+   ["latRaise",3,"12-15","60-90 s"],
+   ["pushdown",3,"10-15","60-90 s"],
+   ["cableCrunch",2,"10-15","60 s"]]},
  {key:"pullA", name:"Pull A — Back Width", short:"Pull A", type:"pull", items:[
-   ["pulldown",3,"8-12","2 min"],["cableRow",3,"8-12","2 min"],["facePull",3,"12-15","60-90 s"],
-   ["bbCurl",3,"8-12","60-90 s"],["hammer",2,"10-12","60-90 s"]]},
+   ["pulldown",3,"8-12","2 min"],
+   ["cableRow",3,"8-12","2 min"],
+   ["facePull",3,"12-15","60-90 s"],
+   ["bbCurl",3,"8-12","60-90 s"],
+   ["hammer",2,"10-12","60-90 s"],
+   ["pallof",2,"8-10 per side","60 s"]]},
  {key:"legsA", name:"Legs A — Squat", short:"Legs A", type:"legs", items:[
    ["squat",3,"6-8","2-3 min"],["rdl",3,"8-10","2-3 min"],["hipThrust",3,"8-12","2 min"],
    ["lyingCurl",3,"10-12","90 s"],["legExt",2,"12-15","60-90 s"],["calfStand",3,"10-15","60 s"]]},
  {key:"pushB", name:"Push B — Shoulders", short:"Push B", type:"push", items:[
-   ["machOhp",3,"8-12","2 min"],["dbBench",3,"8-12","2 min"],["crossover",3,"12-15","60-90 s"],
-   ["latRaise",3,"12-15","60-90 s"],["dipMach",3,"8-12","90 s"],["skull",2,"10-12","60-90 s"]]},
+   ["machOhp",3,"8-12","2 min"],
+   ["dbBench",3,"8-12","2 min"],
+   ["crossover",3,"12-15","60-90 s"],
+   ["cableLatRaise",4,"12-15","60-90 s"],
+   ["dipMach",3,"8-12","90 s"],
+   ["skull",2,"10-12","60-90 s"]]},
  {key:"pullB", name:"Pull B — Back Thickness", short:"Pull B", type:"pull", items:[
-   ["assistPull",3,"6-10","2 min"],["dbRow",3,"8-12 per arm","2 min"],["revFly",3,"12-15","60-90 s"],
-   ["incCurl",3,"10-12","60-90 s"],["facePull",2,"12-15","60 s"]]},
+   ["assistPull",3,"6-10","2 min"],
+   ["dbRow",3,"8-12 per arm","2 min"],
+   ["revFly",3,"12-15","60-90 s"],
+   ["incCurl",3,"10-12","60-90 s"],
+   ["straightArm",2,"12-15","60-90 s"]]},
  {key:"legsB", name:"Legs B — Glutes", short:"Legs B", type:"legs", items:[
-   ["legPress",3,"10-12","2 min"],["splitSquat",3,"8-10 per leg","2 min"],["hipThrust",3,"10-12","2 min"],
-   ["seatedCurl",3,"10-12","90 s"],["calfSeat",3,"12-15","60 s"]]}
+   ["legPress",3,"10-12","2 min"],
+   ["splitSquat",3,"8-10 per leg","2 min"],
+   ["pullThrough",3,"10-12","90 s"],
+   ["seatedCurl",2,"10-12","90 s"],
+   ["calfSeat",3,"12-15","60 s"],
+   ["hangKnee",2,"8-12","60 s"]]}
 ];
 
 // Done before every gym session (~10 min)
@@ -1063,25 +1082,54 @@ const PLAN_UL4 = [
    ["bench",3,"6-8","2-3 min"],["pulldown",3,"8-12","2 min"],["dbOhp",3,"8-12","2 min"],
    ["cableRow",3,"8-12","2 min"],["latRaise",2,"12-15","60-90 s"],["pushdown",2,"10-15","60-90 s"],["bbCurl",2,"8-12","60-90 s"]]},
  {key:"loA", name:"Lower A — Squat", short:"Lower A", type:"legs", xt:"legs", items:[
-   ["squat",3,"6-8","2-3 min"],["rdl",3,"8-10","2-3 min"],["hipThrust",2,"8-12","2 min"],
-   ["legExt",2,"12-15","60-90 s"],["lyingCurl",2,"10-12","90 s"],["calfStand",3,"10-15","60 s"]]},
+   ["squat",3,"6-8","2-3 min"],
+   ["rdl",3,"8-10","2-3 min"],
+   ["hipThrust",2,"8-12","2 min"],
+   ["legExt",2,"12-15","60-90 s"],
+   ["lyingCurl",2,"10-12","90 s"],
+   ["calfStand",3,"10-15","60 s"],
+   ["cableCrunch",2,"10-15","60 s"]]},
  {key:"upB", name:"Upper B — Shoulders & Arms", short:"Upper B", type:"pull", xt:"upper", items:[
-   ["incDb",3,"8-12","2 min"],["assistPull",3,"6-10","2 min"],["machOhp",3,"8-12","2 min"],
-   ["dbRow",3,"8-12 per arm","2 min"],["facePull",2,"12-15","60-90 s"],["ohExt",2,"10-15","60-90 s"],["hammer",2,"10-12","60-90 s"]]},
+   ["incDb",3,"8-12","2 min"],
+   ["assistPull",3,"6-10","2 min"],
+   ["machOhp",3,"8-12","2 min"],
+   ["dbRow",3,"8-12 per arm","2 min"],
+   ["facePull",2,"12-15","60-90 s"],
+   ["cableLatRaise",2,"12-15","60-90 s"],
+   ["hammer",2,"10-12","60-90 s"]]},
  {key:"loB", name:"Lower B — Glutes", short:"Lower B", type:"legs", xt:"legs", items:[
-   ["legPress",3,"10-12","2 min"],["splitSquat",3,"8-10 per leg","2 min"],["hipThrust",3,"10-12","2 min"],
-   ["seatedCurl",3,"10-12","90 s"],["calfSeat",3,"12-15","60 s"]]}
+   ["legPress",3,"10-12","2 min"],
+   ["splitSquat",3,"8-10 per leg","2 min"],
+   ["pullThrough",3,"10-12","90 s"],
+   ["seatedCurl",2,"10-12","90 s"],
+   ["calfSeat",3,"12-15","60 s"],
+   ["hangKnee",2,"8-12","60 s"]]}
 ];
 const PLAN_FB3 = [
  {key:"fbA", name:"Full Body A", short:"Full A", type:"push", xt:"full", items:[
-   ["squat",3,"6-8","2-3 min"],["bench",3,"6-8","2-3 min"],["pulldown",3,"8-12","2 min"],
-   ["rdl",2,"8-10","2-3 min"],["latRaise",2,"12-15","60-90 s"],["pushdown",2,"10-15","60-90 s"]]},
+   ["squat",3,"6-8","2-3 min"],
+   ["bench",3,"6-8","2-3 min"],
+   ["pulldown",3,"8-12","2 min"],
+   ["rdl",2,"8-10","2-3 min"],
+   ["latRaise",2,"12-15","60-90 s"],
+   ["pushdown",2,"10-15","60-90 s"],
+   ["cableCrunch",2,"10-15","60 s"]]},
  {key:"fbB", name:"Full Body B", short:"Full B", type:"pull", xt:"full", items:[
-   ["legPress",3,"10-12","2 min"],["dbOhp",3,"8-12","2 min"],["cableRow",3,"8-12","2 min"],
-   ["incDb",2,"8-12","2 min"],["lyingCurl",2,"10-12","90 s"],["bbCurl",2,"8-12","60-90 s"]]},
+   ["legPress",3,"10-12","2 min"],
+   ["dbOhp",3,"8-12","2 min"],
+   ["cableRow",3,"8-12","2 min"],
+   ["incDb",2,"8-12","2 min"],
+   ["lyingCurl",2,"10-12","90 s"],
+   ["bbCurl",2,"8-12","60-90 s"],
+   ["pallof",2,"8-10 per side","60 s"]]},
  {key:"fbC", name:"Full Body C", short:"Full C", type:"legs", xt:"full", items:[
-   ["hipThrust",3,"8-12","2 min"],["dbBench",3,"8-12","2 min"],["assistPull",3,"6-10","2 min"],
-   ["splitSquat",2,"8-10 per leg","2 min"],["facePull",2,"12-15","60-90 s"],["calfStand",3,"10-15","60 s"]]}
+   ["hipThrust",3,"8-12","2 min"],
+   ["dbBench",3,"8-12","2 min"],
+   ["assistPull",3,"6-10","2 min"],
+   ["splitSquat",2,"8-10 per leg","2 min"],
+   ["facePull",2,"12-15","60-90 s"],
+   ["calfStand",3,"10-15","60 s"],
+   ["hangKnee",2,"8-12","60 s"]]}
 ];
 const PROGRAMS = {
  ppl6:{name:"6-day Push / Pull / Legs", short:"Push / Pull / Legs ×2", days:6, note:"Fixed order: Push A → Pull A → Legs A → Push B → Pull B → Legs B. Every muscle twice a week. Best if you can train 5-6 days."},
@@ -1666,6 +1714,15 @@ const HOWTO = {
  pallof:{s:["Set a cable at chest height, stand side-on to it.","Hold the handle at the chest with both hands, feet shoulder-width.","Press the arms straight out without letting the body rotate.","Hold 2 seconds, bring back to the chest."],
   m:[["Torso twisting toward the cable","step closer or use a lighter weight."],["Leaning away","stand tall, hips square."]]}
 };
+</script>
+<script>// ===== Plan v2 helpers (angles): cable lateral raise slot, how-to for straight-arm pulldown and cable lateral raise =====
+Object.assign(OPTIONS,{cableLatRaise:[["cableLatRaise","Cable station (low pulley)"],["latRaise","Dumbbells"]]});
+Object.assign(HOWTO,{
+ straightArm:{s:["Set a high pulley with a straight bar or rope, step back and hinge slightly forward.","Arms almost straight, hands about shoulder-width.","Sweep the bar down in an arc to the thighs, squeezing the lats.","Return slowly until you feel a lat stretch with the arms in front of you."],
+  m:[["Bending the elbows into a pushdown","keep the arms nearly straight: it is a lat exercise, not a triceps one."],["Swinging the torso","hinge once and hold still; use a lighter weight."]]},
+ cableLatRaise:{s:["Set the cable at the lowest pulley and stand side-on, holding the handle with the far hand.","Slight bend in the elbow, shoulder down, core braced.","Raise the arm out to the side up to shoulder height.","Lower slowly so the cable keeps tension the whole way."],
+  m:[["Shrugging the shoulder up","keep the shoulder down and away from the ear."],["Swinging the body to lift","use a lighter weight and keep the torso still."]]}
+});
 </script>
 <script>// ===== Recovery links (secondary muscles of compound lifts; Core tracked) =====
 // A secondary muscle counts toward fatigue one step lighter (30→60, 60→85, 85→100 %).
@@ -3076,6 +3133,13 @@ if(!(reps>0)||(r.pf&&!r.done&&!incPf)) return;
 out.push({kg:isNaN(kg)?0:kg,reps:reps});
 });
 if(out.length){ sets[e.k]=sets[e.k]?sets[e.k].concat(out):out; xk.push(e.k); } /* same exercise also chosen for a main slot: one list */
+});
+/* sets on an exercise that is no longer part of this day (plan changed mid-workout) are kept, not dropped */
+var known={}; plan.items.forEach(function(it){ known[it[0]]=1; }); draft.extras.forEach(function(e){ known[e.k]=1; });
+Object.keys(draft.sets).forEach(function(k){
+if(known[k]||!EX[k]) return;
+var out=[]; (draft.sets[k]||[]).forEach(function(r){ var reps=num(r.reps), kg=num(r.kg); if(!(reps>0)||(r.pf&&!r.done&&!incPf)) return; out.push({kg:isNaN(kg)?0:kg,reps:reps}); });
+if(out.length&&!sets[k]){ sets[k]=out; any=true; }
 });
 var corr=CORRECTIVE.map(function(c){return c[0];}).filter(function(k){return draft.corr[k];});
 var sess={id:uid("s"),date:draft.date||today(),planKey:draft.planKey,sets:sets,corrective:corr,notes:(draft.notes||"").trim()};
