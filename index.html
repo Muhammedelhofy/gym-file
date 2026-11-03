@@ -141,7 +141,7 @@ details.day .ex,.dfull .ex{margin-top:2px;background:var(--surface2)}
 .imgs figure{margin:0;min-width:0}
 .imgs img{display:block;width:100%;max-width:100%;aspect-ratio:4/3;object-fit:cover;background:var(--surface2);border:1px solid rgba(var(--hud-rgb),.3)}
 .xphotos{margin:10px 0 4px}
-.xphotos .imgs img{aspect-ratio:3/2;object-fit:contain;background:#fff;cursor:zoom-in}
+.xphotos .imgs img{aspect-ratio:auto;height:auto;min-height:90px;object-fit:contain;background:var(--surface2);cursor:zoom-in}
 .xph-act{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:6px}
 .xph-act .btn{min-height:44px;display:inline-flex;align-items:center;text-decoration:none}
 .imgs figcaption{font-family:var(--display);font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-size:.8rem;color:var(--muted);margin-top:2px}
@@ -1730,7 +1730,12 @@ Object.assign(INFO,{treats:{t:"Treat meals",b:[
  "Counts meals that include pizza, burger, fries, shawarma or kabsa. Pizza and fries in the same meal count as one.",
  "On Cut the suggestion is at most 2 a week. When you have one, let it replace a planned meal instead of adding it on top.",
  "⚠️ Assumption, verify: a rule of thumb for a fat-loss phase, not a measured limit. Nothing is forbidden; the weekly average is what counts."]}});
-Object.assign(OPTIONS,{cableLatRaise:[["cableLatRaise","Cable station (low pulley)"],["latRaise","Dumbbells"]]});
+Object.assign(OPTIONS,{cableLatRaise:[["cableLatRaise","Cable station (low pulley)"],["latRaise","Dumbbells"]],
+ cableCrunch:[["cableCrunch","Cable station + rope (high pulley)"],["abMach","Ab crunch machine"],["hangKnee","Captain's chair or pull-up bar"],["deadBug","Bodyweight (floor)"]],
+ hangKnee:[["hangKnee","Captain's chair or pull-up bar"],["cableCrunch","Cable station + rope (high pulley)"],["abMach","Ab crunch machine"],["deadBug","Bodyweight (floor)"]],
+ pallof:[["pallof","Cable station (anti-rotation)"],["deadBug","Bodyweight (floor)"],["cableCrunch","Cable station + rope (high pulley)"],["abMach","Ab crunch machine"]],
+ straightArm:[["straightArm","Cable station (high pulley)"],["vbarPulldown","Lat pulldown machine + V-bar"],["pulldown","Lat pulldown machine (wide bar)"]],
+ pullThrough:[["pullThrough","Cable station + rope (low pulley)"],["dbRdl","Dumbbells"],["gluteBridgeBB","Barbell (floor)"],["hipThrust","Barbell + bench (or hip thrust machine)"]]});
 Object.assign(HOWTO,{
  straightArm:{s:["Set a high pulley with a straight bar or rope, step back and hinge slightly forward.","Arms almost straight, hands about shoulder-width.","Sweep the bar down in an arc to the thighs, squeezing the lats.","Return slowly until you feel a lat stretch with the arms in front of you."],
   m:[["Bending the elbows into a pushdown","keep the arms nearly straight: it is a lat exercise, not a triceps one."],["Swinging the torso","hinge once and hold still; use a lighter weight."]]},
@@ -2465,11 +2470,9 @@ h("figure",null,imgEl(ex.img,0,ex.name,"Start",false,false,true),h("figcaption",
 h("figure",null,imgEl(ex.img,1,ex.name,"Finish",false,false,true),h("figcaption",null,"Finish"))));
 wrap.appendChild(h("div",{class:"xph-act"},
 h("button",{class:"btn small",type:"button",onclick:function(){ lbOpen(ex.img,0,ex.name,true); }},"\u25b6 Play motion"),
-ex.q?h("a",{class:"btn small",href:yt(ex.q),target:"_blank",rel:"noopener"},"Watch a video"):null,
 h("span",{class:"small muted"},"Tap a photo to enlarge")));
 } else {
 wrap.appendChild(h("div",{class:"noimg"},"No verified photo for this one — follow the cue and the how-to below."));
-if(ex.q) wrap.appendChild(h("div",{class:"xph-act"},h("a",{class:"btn small",href:yt(ex.q),target:"_blank",rel:"noopener"},"Watch a video")));
 }
 return wrap;
 }
