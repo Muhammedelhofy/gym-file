@@ -877,6 +877,7 @@ body.setupmode #tabbar,body.setupmode #backupBtn,body.setupmode .hdrR,body.setup
 .progopt .pn{display:block;font-family:var(--display);font-weight:700;font-size:1.05rem;letter-spacing:.03em}
 .progopt .pt{display:block;margin-top:2px;font-size:.88rem;color:var(--muted);line-height:1.35}
 .progopt:focus-visible{outline:3px solid var(--hud-ink);outline-offset:2px}
+.savedcard .sc-tip{margin-top:6px;color:var(--muted)}
 .savedcard .sc-nb{margin-top:6px;font-weight:600;overflow-wrap:anywhere}
 .setup details.day>summary{cursor:pointer}
 .setup .row2>div{margin-top:12px}
@@ -1014,10 +1015,12 @@ const HOME_QUICK = [["hipFlexStr",1,"30 s per side"],["quadStr",1,"30 s per leg"
 
 const REST_DAY = [
  "Easy swim, 20-30 minutes at a relaxed pace (not a hard workout).",
+ "Sauna: 2 rounds of about 10 minutes with a short break between. Drink water before and after, and stop if you feel dizzy. ⚠️ Assumption, verify: a common safe range, not a personal prescription.",
  "Hot jacuzzi, 10-15 minutes. ⚠️ Assumption, verify: a common safe limit, not from a verified official source. Drink water before and after.",
- "Cold water / cold plunge, 1-3 minutes if you like. ⚠️ Assumption, verify.",
+ "Cold water, cold plunge or a cold shower: 1-3 minutes at the end, on rest days only. ⚠️ Assumption, verify.",
  "Keep the cold for rest days, not right after lifting: Roberts et al. 2015 (Journal of Physiology) found regular cold-water immersion after strength training reduced long-term muscle gains.",
- "If you have any blood-pressure or heart condition, ask a doctor before hot and cold tubs."
+ "Heat and cold don't burn meaningful fat: the drop on the scale after a sauna is water. Weigh yourself in the morning, not after the sauna.",
+ "Heat 2-4 times a week and cold 1-2 times a week is plenty. No alcohol around them. If you have any blood-pressure or heart condition, ask a doctor before hot and cold tubs."
 ];
 
 const ROTATION_NOTE = "Fixed order: Push A → Pull A → Legs A → Push B → Pull B → Legs B → Rest. If you only train 5 days in a week, continue from where you stopped instead of restarting, so legs never get skipped.";
@@ -2828,6 +2831,7 @@ var ls=lastSaved;
 return h("div",{class:"savedcard",id:"savedCard",role:"status"},
 h("div",{class:"sc-t"},"Saved: "+ls.name+" \u00b7 "+fmtDate(ls.date)+" \u00b7 "+ls.sets+(ls.sets===1?" set":" sets")),
 Array.isArray(ls.nb)&&ls.nb.length?h("div",{class:"sc-nb",id:"savedNb"},"\ud83c\udfc6 New best: "+ls.nb.filter(function(t){ return typeof t==="string"; }).slice(0,3).join(", ")+(ls.nbm>0?" +"+Math.floor(ls.nbm)+" more":"")):null,
+(ls.planKey!=="home"&&ls.planKey!=="rest")?h("div",{class:"sc-tip small",id:"savedTip"},"Optional: sauna or jacuzzi 10-15 min, drink water. Cold water: rest days only."):null,
 h("div",{class:"sc-b"},
 h("button",{class:"btn small",type:"button",id:"savedView",onclick:function(){
 if(ls.first&&EX[ls.first]) tabSel.progressKey=ls.first;
