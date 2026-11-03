@@ -957,7 +957,7 @@ const PLAN = [
    ["dbOhp",3,"8-12","2 min"],
    ["latRaise",3,"12-15","60-90 s"],
    ["pushdown",3,"10-15","60-90 s"],
-   ["cableCrunch",2,"10-15","60 s"]]},
+   ["cableCrunch",3,"10-15","60 s"]]},
  {key:"pullA", name:"Pull A — Back Width", short:"Pull A", type:"pull", items:[
    ["pulldown",3,"8-12","2 min"],
    ["cableRow",3,"8-12","2 min"],
@@ -987,7 +987,7 @@ const PLAN = [
    ["pullThrough",3,"10-12","90 s"],
    ["seatedCurl",2,"10-12","90 s"],
    ["calfSeat",3,"12-15","60 s"],
-   ["hangKnee",2,"8-12","60 s"]]}
+   ["hangKnee",3,"8-12","60 s"]]}
 ];
 
 // Done before every gym session (~10 min)
@@ -1088,7 +1088,7 @@ const PLAN_UL4 = [
    ["legExt",2,"12-15","60-90 s"],
    ["lyingCurl",2,"10-12","90 s"],
    ["calfStand",3,"10-15","60 s"],
-   ["cableCrunch",2,"10-15","60 s"]]},
+   ["cableCrunch",3,"10-15","60 s"]]},
  {key:"upB", name:"Upper B — Shoulders & Arms", short:"Upper B", type:"pull", xt:"upper", items:[
    ["incDb",3,"8-12","2 min"],
    ["assistPull",3,"6-10","2 min"],
@@ -1103,7 +1103,7 @@ const PLAN_UL4 = [
    ["pullThrough",3,"10-12","90 s"],
    ["seatedCurl",2,"10-12","90 s"],
    ["calfSeat",3,"12-15","60 s"],
-   ["hangKnee",2,"8-12","60 s"]]}
+   ["hangKnee",3,"8-12","60 s"]]}
 ];
 const PLAN_FB3 = [
  {key:"fbA", name:"Full Body A", short:"Full A", type:"push", xt:"full", items:[
@@ -1113,7 +1113,7 @@ const PLAN_FB3 = [
    ["rdl",2,"8-10","2-3 min"],
    ["latRaise",2,"12-15","60-90 s"],
    ["pushdown",2,"10-15","60-90 s"],
-   ["cableCrunch",2,"10-15","60 s"]]},
+   ["cableCrunch",3,"10-15","60 s"]]},
  {key:"fbB", name:"Full Body B", short:"Full B", type:"pull", xt:"full", items:[
    ["legPress",3,"10-12","2 min"],
    ["dbOhp",3,"8-12","2 min"],
@@ -1129,7 +1129,7 @@ const PLAN_FB3 = [
    ["splitSquat",2,"8-10 per leg","2 min"],
    ["facePull",2,"12-15","60-90 s"],
    ["calfStand",3,"10-15","60 s"],
-   ["hangKnee",2,"8-12","60 s"]]}
+   ["hangKnee",3,"8-12","60 s"]]}
 ];
 const PROGRAMS = {
  ppl6:{name:"6-day Push / Pull / Legs", short:"Push / Pull / Legs ×2", days:6, note:"Fixed order: Push A → Pull A → Legs A → Push B → Pull B → Legs B. Every muscle twice a week. Best if you can train 5-6 days."},
@@ -1414,8 +1414,9 @@ const CARDIO_TYPES = [
 </script>
 <script>// ===== v10 content (authored by Opus — keep text and numbers) =====
 const CARDIO_GOAL_DEFAULT = 90; // minutes per week, user-adjustable
+const CARDIO_GOAL_CUT = 120;    // ⚠️ assumption: a wider deficit on Cut, still easy-to-moderate cardio
 Object.assign(INFO, {
-  cardioGoal:{t:"Weekly cardio goal",b:["Default 90 minutes a week of easy-to-moderate cardio (effort 3-6), e.g. 3 × 30 min.","It supports fat loss and recovery without hurting your lifting. Daily walking counts too.","⚠️ Assumption, verify: a general starting point for recomposition, not a personal prescription. Change the goal any time."]},
+  cardioGoal:{t:"Weekly cardio goal",b:["Default 120 minutes a week on Cut (90 on other goals) of easy-to-moderate cardio (effort 3-6), e.g. 4 × 30 min.","It supports fat loss and recovery without hurting your lifting. Daily walking counts too.","⚠️ Assumption, verify: a general starting point for recomposition, not a personal prescription. Change the goal any time."]},
   weigh:{t:"Why weigh in 2-3 times a week",b:["Your weight moves up and down daily with water, salt and food. One reading means little.","The app compares this week's average with last week's average to see the real trend.","Weigh in the morning, after the bathroom, before eating or drinking, on the same scale."]},
   calAdvice:{t:"How the calorie advice works",b:["It compares your 7-day average weight with the previous 7 days (needs at least 2 weigh-ins in each week).","Losing more than 0.7 kg a week → add 150-200 kcal (rice or bread). You risk losing muscle.","Losing 0.2-0.7 kg a week → keep calories as they are.","Flat or up for 3 weeks in a row → cut about 150 kcal, only if your waist or InBody fat isn't dropping either (recomposition can keep weight flat while fat goes down).","⚠️ Assumption, verify: coaching rules of thumb, not a medical prescription. Your targets never change automatically."]}
 });
@@ -1522,6 +1523,7 @@ const HABITS = [
   {key:"sleep7", name:"Slept 7+ hours", goal:1, unit:"", hint:"Auto-ticks from the sleep entry."}
 ];
 const STEP_GOAL_DEFAULT = 8000;      // ⚠️ assumption: common daily target, adjustable
+const STEP_GOAL_CUT = 10000;        // ⚠️ assumption: more walking widens the deficit on Cut
 const STEP_BASELINE = 5000;          // steps above this can count as easy cardio
 const STEPS_PER_MIN = 100;           // ⚠️ assumption: ≈100 steps per minute of brisk walking
 const SLEEP_GOAL = 7;                // hours
@@ -1544,7 +1546,7 @@ Object.assign(INFO, {
     "Log the hours you actually slept, not the hours in bed."]},
   steps:{t:"Steps",b:[
     "Copy today's steps from your phone's health app (e.g. Samsung Health or Google Fit). The app can't read them automatically.",
-    "Default goal 8,000 a day. ⚠️ Assumption, verify: a common target; change it any time.",
+    "Default goal 10,000 a day on Cut (8,000 on other goals). ⚠️ Assumption, verify: a common target; change it any time.",
     "Optional: steps above 5,000 count toward the weekly cardio goal at about 100 steps per minute (e.g. 9,000 steps → 40 min). ⚠️ Assumption, verify. Don't also log the same walk as cardio."]}
 });
 // Waist-aware tweak for the advice: if the "cut" advice fires but the waist is clearly dropping, keep calories instead.
@@ -1856,10 +1858,10 @@ function needSetup(){ return !(state.ui&&state.ui.profile); }
 function profDays(){ var p=state.ui&&state.ui.profile; return (p&&p.owner!==true&&(p.days===3||p.days===4||p.days===5||p.days===6))?p.days:6; }
 function homeName(){ return isOwner()?"Home + Pelvic":"Home"; }
 function defaultState(){
-return {version:1,sessions:[],measurements:[],cardio:[],weighins:[],foodlog:[],customFoods:[],waist:[],daily:[],deleted:{sessions:[],measurements:[],weighins:[],cardio:[],foodlog:[],customFoods:[],waist:[],daily:[]},rev:0,ui:{tab:"today",mode:"lift",homeLen:"quick",cardioGoal:CARDIO_GOAL_DEFAULT,goal:"cut",stepGoal:STEP_GOAL_DEFAULT,stepsToCardio:false}};
+return {version:1,sessions:[],measurements:[],cardio:[],weighins:[],foodlog:[],customFoods:[],waist:[],daily:[],deleted:{sessions:[],measurements:[],weighins:[],cardio:[],foodlog:[],customFoods:[],waist:[],daily:[]},rev:0,ui:{tab:"today",mode:"lift",homeLen:"quick",cardioGoal:CARDIO_GOAL_CUT,goal:"cut",stepGoal:STEP_GOAL_CUT,goalsV2:true,stepsToCardio:false}};
 }
 function normalize(o){
-var s={version:1,sessions:[],measurements:[],cardio:[],weighins:[],foodlog:[],customFoods:[],waist:[],daily:[],deleted:{sessions:[],measurements:[],weighins:[],cardio:[],foodlog:[],customFoods:[],waist:[],daily:[]},rev:0,ui:{tab:"today",mode:"lift",homeLen:"quick",cardioGoal:CARDIO_GOAL_DEFAULT,goal:"cut",stepGoal:STEP_GOAL_DEFAULT,stepsToCardio:false}};
+var s={version:1,sessions:[],measurements:[],cardio:[],weighins:[],foodlog:[],customFoods:[],waist:[],daily:[],deleted:{sessions:[],measurements:[],weighins:[],cardio:[],foodlog:[],customFoods:[],waist:[],daily:[]},rev:0,ui:{tab:"today",mode:"lift",homeLen:"quick",cardioGoal:CARDIO_GOAL_CUT,goal:"cut",stepGoal:STEP_GOAL_CUT,goalsV2:true,stepsToCardio:false}};
 (o.sessions||[]).forEach(function(x){ if(x&&typeof x==="object"&&typeof x.date==="string"){ if(!x.id) x.id=uid("s"); s.sessions.push(x);} });
 (o.measurements||[]).forEach(function(x){ if(x&&typeof x==="object"&&typeof x.date==="string"){ if(!x.id) x.id=uid("m"); s.measurements.push(x);} });
 if(o.ui&&typeof o.ui.tab==="string") s.ui.tab=o.ui.tab;
@@ -1944,6 +1946,7 @@ if(o.ui&&o.ui.stepsToCardio===true) s.ui.stepsToCardio=true;
 if(o.ui&&typeof o.ui.summarySeen==="string"&&/^\d{4}-W\d{2}$/.test(o.ui.summarySeen)) s.ui.summarySeen=o.ui.summarySeen;
 if(o.ui&&o.ui.habitsOpen===true) s.ui.habitsOpen=true;
 if(o.ui&&typeof o.ui.waistSnooze==="string"&&parseIso(o.ui.waistSnooze)) s.ui.waistSnooze=o.ui.waistSnooze;
+if(o.ui&&o.ui.goalsV2===true) s.ui.goalsV2=true; else { s.ui.goalsV2=true; if(s.ui.goal==="cut"){ if(s.ui.cardioGoal===CARDIO_GOAL_DEFAULT) s.ui.cardioGoal=CARDIO_GOAL_CUT; if(s.ui.stepGoal===STEP_GOAL_DEFAULT) s.ui.stepGoal=STEP_GOAL_CUT; } } /* one time: Cut = 10,000 steps and 120 min cardio; goals you changed yourself stay */
 sortAll(s);
 return s;
 }
@@ -5620,7 +5623,7 @@ if(!isNaN(mu)) m.muscle=mu;
 if(!isNaN(vi)) m.visceral=vi;
 state.measurements.push(m);
 }
-state.ui.profile=prof; state.ui.program=progForDays(su.days); state.ui.goal=su.goal; state.ui.tab="today"; state.ui.mode="lift";
+state.ui.profile=prof; state.ui.program=progForDays(su.days); state.ui.goal=su.goal; state.ui.cardioGoal=su.goal==="cut"?CARDIO_GOAL_CUT:CARDIO_GOAL_DEFAULT; state.ui.stepGoal=su.goal==="cut"?STEP_GOAL_CUT:STEP_GOAL_DEFAULT; state.ui.goalsV2=true; state.ui.tab="today"; state.ui.mode="lift";
 sortAll(state); su.step=1; su.err={}; su.top="";
 persist(); render(); window.scrollTo(0,0);
 }
