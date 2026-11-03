@@ -771,6 +771,11 @@ body.hastimer-c .snack{bottom:calc(124px + env(safe-area-inset-bottom,0px))}
 .cwk{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
 .cwk .btn[aria-pressed="true"]{border:2px solid var(--hud);background:rgba(var(--hud-rgb),.14);color:var(--text)}
 .cwprev{margin-top:10px}
+.ftreat{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;margin:8px 0 12px;padding:6px 6px 6px 12px;border:1px solid var(--line);background:var(--surface);min-height:44px}
+.ftreat.at{border-color:var(--warn);background:var(--warn-soft)}
+.ftreat.over{border-color:var(--bad);background:var(--bad-soft)}
+.ftreat .tn{flex:1 1 100%;color:var(--muted);padding-right:8px}
+.ftreat.over .tn,.ftreat.at .tn{color:var(--text)}
 .pdays{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 .pdays .btn{min-height:44px}
 .pdays .btn[aria-pressed="true"]{border:2px solid var(--hud);background:rgba(var(--hud-rgb),.14);color:var(--text)}
@@ -1718,6 +1723,10 @@ const HOWTO = {
 };
 </script>
 <script>// ===== Plan v2 helpers (angles): cable lateral raise slot, how-to for straight-arm pulldown and cable lateral raise =====
+Object.assign(INFO,{treats:{t:"Treat meals",b:[
+ "Counts meals that include pizza, burger, fries, shawarma or kabsa. Pizza and fries in the same meal count as one.",
+ "On Cut the suggestion is at most 2 a week. When you have one, let it replace a planned meal instead of adding it on top.",
+ "⚠️ Assumption, verify: a rule of thumb for a fat-loss phase, not a measured limit. Nothing is forbidden; the weekly average is what counts."]}});
 Object.assign(OPTIONS,{cableLatRaise:[["cableLatRaise","Cable station (low pulley)"],["latRaise","Dumbbells"]]});
 Object.assign(HOWTO,{
  straightArm:{s:["Set a high pulley with a straight bar or rope, step back and hinge slightly forward.","Arms almost straight, hands about shoulder-width.","Sweep the bar down in an arc to the thighs, squeezing the lats.","Return slowly until you feel a lat stretch with the arms in front of you."],
@@ -4192,6 +4201,32 @@ return {id:uid("f"),date:date,meal:meal,food:food.key,name:food.name,g:g,kcal:Ma
 function milkKcalNow(){ return +state.ui.milkKcal>0?Math.round(+state.ui.milkKcal):0; }
 function mkMilk(date,meal){ return {id:uid("f"),date:date,meal:meal,food:"milk",name:"Protein milk",g:0,kcal:milkKcalNow(),p:SHAKE.protein,c:0,f:0}; }
 function dayEntries(d){ return state.foodlog.filter(function(e){ return e.date===d; }); }
+/* treat meals: pizza, burger, fries, shawarma, kabsa (by food key or name). Several in one meal count once. */
+var TREAT_KEYS={pizza:1,burger:1,fries:1,shawarma:1,kabsaChicken:1}, TREAT_RE=/pizza|burger|fries|shawarma|kabsa/i, TREAT_LIMIT=2;
+function isTreat(e){ return !!TREAT_KEYS[e.food]||TREAT_RE.test(String(e.name||"")); }
+function treatName(e){ return String(e.name||"").replace(/\s*\(.*$/,"").replace(/\s*\u26a0.*$/,"").trim()||"Treat"; }
+function treatMeals(ws){
+var we=addDays(ws,6), by={}, out=[];
+state.foodlog.forEach(function(e){
+if(e.date<ws||e.date>we||!isTreat(e)) return;
+var k=e.date+"|"+e.meal; if(!by[k]){ by[k]={date:e.date,names:[]}; out.push(by[k]); }
+var nm=treatName(e); if(by[k].names.indexOf(nm)<0) by[k].names.push(nm);
+});
+out.sort(function(a,b){ return a.date<b.date?-1:a.date>b.date?1:0; });
+return out;
+}
+function treatLine(day){
+var ws=weekStartIso(day), list=treatMeals(ws), n=list.length, cut=goalKey()==="cut";
+var thisWeek=(ws===weekStartIso(today())), lbl=thisWeek?"Treat meals this week":"Treat meals, week of "+shortDate(ws);
+var cls="ftreat"+(cut&&n>TREAT_LIMIT?" over":(cut&&n===TREAT_LIMIT?" at":""));
+var note=!n?"":list.map(function(m){ var d=parseIso(m.date); return m.names.join(" + ")+" ("+DAYN[(d.getDay()+6)%7]+")"; }).join(" · ");
+if(cut&&n>TREAT_LIMIT) note+=(note?" — ":"")+"over the usual limit: back to the plan for the rest of the week.";
+else if(cut&&n===TREAT_LIMIT) note+=(note?" — ":"")+"at your limit for the week.";
+return h("div",{class:cls,id:"treatLine",role:"status"},
+h("span",{class:"num"},lbl+": ",h("b",null,cut?n+" / "+TREAT_LIMIT:String(n))),
+infoBtn("treats","treat meals"),
+note?h("span",{class:"tn small"},note):null);
+}
 function sumE(es){ var t={kcal:0,p:0,c:0,f:0}; es.forEach(function(e){ t.kcal+=e.kcal; t.p+=e.p; t.c+=e.c; t.f+=e.f; }); return t; }
 function mealName(id){ for(var i=0;i<FMEALS.length;i++) if(FMEALS[i].id===id) return FMEALS[i].name; return id; }
 function foodRerender(focusId){ var y=window.scrollY||0; render(focusId); try{ window.scrollTo(0,y); }catch(e){} }
@@ -4335,6 +4370,7 @@ rem.appendChild(h("div",{class:"fremain num",id:"fRemain"},"Eaten: "+kfmt(kE)+" 
 rem.appendChild(h("div",{class:"fsmall num",id:"fCF"},"Carbs "+Math.round(eaten.c)+" g · Fat "+Math.round(eaten.f)+" g"));
 }
 root.appendChild(rem);
+root.appendChild(treatLine(day));
 /* protein milk calories (one input in the page; used by the milk button and the suggested day) */
 var mkBtnTxt=h("span",null);
 var milkIn=h("input",{type:"number",inputmode:"numeric",min:"0",step:"any",id:"milkKcal",placeholder:"e.g. 200","aria-label":"Protein milk calories from the label",value:+state.ui.milkKcal>0?String(state.ui.milkKcal):"",oninput:function(e){
