@@ -960,37 +960,37 @@ const EX = {
 const PLAN = [
  {key:"pushA", name:"Push A — Chest", short:"Push A", type:"push", items:[
    ["bench",3,"6-8","2-3 min"],
-   ["incDb",3,"8-12","2 min"],
-   ["dbOhp",3,"8-12","2 min"],
+   ["smithIncline",3,"8-12","2 min"],
+   ["plateOhp",3,"8-12","2 min"],
    ["latRaise",3,"12-15","60-90 s"],
    ["pushdown",3,"10-15","60-90 s"],
    ["abMach",3,"10-15","60 s"]]},
  {key:"pullA", name:"Pull A — Back Width", short:"Pull A", type:"pull", items:[
    ["pulldown",3,"8-12","2 min"],
    ["cableRow",3,"8-12","2 min"],
-   ["facePull",3,"12-15","60-90 s"],
-   ["bbCurl",3,"8-12","60-90 s"],
+   ["upperBack",3,"12-15","60-90 s"],
+   ["machCurl",3,"8-12","60-90 s"],
    ["hammer",2,"10-12","60-90 s"],
    ["rotaryTorso",2,"10-12 per side","60 s"]]},
  {key:"legsA", name:"Legs A — Squat", short:"Legs A", type:"legs", items:[
-   ["squat",3,"6-8","2-3 min"],["rdl",3,"8-10","2-3 min"],["hipThrust",3,"8-12","2 min"],
+   ["squat",3,"6-8","2-3 min"],["rdl",3,"8-10","2-3 min"],["hipThrustMach",3,"8-12","2 min"],
    ["lyingCurl",3,"10-12","90 s"],["legExt",2,"12-15","60-90 s"],["calfStand",3,"10-15","60 s"]]},
  {key:"pushB", name:"Push B — Shoulders", short:"Push B", type:"push", items:[
    ["machOhp",3,"8-12","2 min"],
-   ["dbBench",3,"8-12","2 min"],
+   ["chestPressMach",3,"8-12","2 min"],
    ["pecDeck",3,"12-15","60-90 s"],
    ["cableLatRaise",4,"12-15","60-90 s"],
    ["dipMach",3,"8-12","90 s"],
-   ["skull",2,"10-12","60-90 s"]]},
+   ["triMach",2,"10-12","60-90 s"]]},
  {key:"pullB", name:"Pull B — Back Thickness", short:"Pull B", type:"pull", items:[
    ["assistPull",3,"6-10","2 min"],
-   ["dbRow",3,"8-12 per arm","2 min"],
+   ["isoRow",3,"8-12","2 min"],
    ["revFly",3,"12-15","60-90 s"],
    ["incCurl",3,"10-12","60-90 s"],
    ["straightArm",2,"12-15","60-90 s"]]},
  {key:"legsB", name:"Legs B — Glutes", short:"Legs B", type:"legs", items:[
    ["legPress",3,"10-12","2 min"],
-   ["splitSquat",3,"8-10 per leg","2 min"],
+   ["smithSplit",3,"8-10 per leg","2 min"],
    ["pullThrough",3,"10-12","90 s"],
    ["seatedCurl",2,"10-12","90 s"],
    ["calfSeat",3,"12-15","60 s"],
@@ -1791,6 +1791,37 @@ Object.assign(HOWTO,{
     upperBack:[["upperBack","Upper Back machine (black)"],["revFly","Pectoral / reverse fly machine (black)"],["dbRearDelt","Dumbbells + incline bench"],["facePull","Cable station + rope (high)"]]
   });
 })();
+// ===== Plan v4: machines lead (black = pin-loaded, yellow = plate-loaded) =====
+delete ALTS.machOhp; // B days lead with the machine; dumbbells stay in the switch list
+Object.assign(EX,{triMach:{name:"Triceps Machine",img:"Machine_Triceps_Extension",q:"",cue:"Elbows on the pad and still, extend fully, return slowly."}});
+EX.smithIncline.cue=EX.smithIncline.cue||"Bench at about 30°, bar to the upper chest.";
+Object.assign(MUSCLES,{triMach:["Triceps"]});
+Object.assign(FORM,{triMach:["Elbows","On the pad, in line with the machine's pivot.","Sit tall, back against the pad."]});
+Object.assign(HOWTO,{
+  triMach:{s:["Set the seat so the elbows sit on the pad in line with the pivot.","Grip the handles, back against the pad.","Push the handles down/out until the arms are straight, squeeze the triceps.","Return slowly until the forearms are just past 90°."],
+   m:[["Elbows lifting off the pad","keep them still; only the forearms move."],["Bouncing at the bottom","slow return, no rest on the stack."]]},
+  smithIncline:{s:["Set an incline bench at about 30° under the Smith bar so the bar lines up with the upper chest.","Grip a little wider than shoulders, shoulder blades back and down.","Unhook by turning the bar, lower slowly to the upper chest.","Press up, then re-hook by turning the bar at the top."],
+   m:[["Bar touching the neck or mid-chest","move the bench so the bar meets the upper chest."],["Forgetting the safety stops","set them just below chest level before you start."]]},
+  machCurl:{s:["Set the seat so the upper arms lie flat on the pad and the elbows line up with the pivot.","Grip the handles palms up.","Curl up and squeeze the biceps at the top.","Lower slowly until the arms are nearly straight."],
+   m:[["Lifting the hips or leaning back","sit tall; lower the weight."],["Half reps at the bottom","lower until the arms are nearly straight."]]},
+  isoRow:{s:["Set the seat so the handles are at mid-chest, chest on the pad.","Grip the handles with straight arms.","Pull the elbows back close to the body and squeeze the shoulder blades.","Return slowly until the arms are straight."],
+   m:[["Leaning off the pad","chest stays on the pad; let the back do the work."],["Shrugging","shoulders down, elbows lead."]]},
+  chestPressMach:HOWTO.chestPressMach||HOWTO.bench
+});
+(function(){
+  function O(k,rows){ OPTIONS[k]=rows; }
+  O("smithIncline",[["smithIncline","Smith machine + incline bench"],["incDb","Dumbbells + incline bench"],["incBarbell","Barbell + incline bench"],["chestPressMach","Chest press machine (black)"]]);
+  O("plateOhp",[["plateOhp","Shoulder press (yellow plate-loaded)"],["machOhp","Shoulder press machine (black)"],["dbOhp","Dumbbells + upright bench"],["smithOhp","Smith machine + upright bench"]]);
+  O("machCurl",[["machCurl","Arm curl machine (black)"],["bbCurl","Barbell or EZ bar"],["cableCurl","Cable station (low pulley)"],["dbCurl","Dumbbells"]]);
+  O("hipThrustMach",[["hipThrustMach","Hip thrust machine (yellow)"],["hipThrust","Barbell + bench"],["gluteBridgeBB","Barbell (floor)"],["slBridge","Bodyweight (floor)"]]);
+  O("chestPressMach",[["chestPressMach","Chest press machine (black)"],["dbBench","Dumbbells + flat bench"],["smithBench","Smith machine + flat bench"],["bench","Barbell + flat bench"]]);
+  O("triMach",[["triMach","Triceps machine"],["skull","EZ bar + flat bench"],["cableTriExt","Cable station + rope (kneeling)"],["dbTriExt","One dumbbell"]]);
+  O("isoRow",[["isoRow","Row machine (yellow) or Low Row (black)"],["dbRow","One dumbbell + flat bench"],["cableRow","Pulley row (black, seated)"],["oneArmCableRow","Pulley row (black), one handle"]]);
+  O("smithSplit",[["smithSplit","Smith machine"],["splitSquat","Dumbbells"],["dbLunge","Dumbbells (walking or in place)"],["legPress","Leg press (yellow)"]]);
+  OPTIONS.upperBack=[["upperBack","Upper Back machine (black)"],["facePull","Cable station + rope (high)"],["revFly","Pectoral / reverse fly machine (black)"],["dbRearDelt","Dumbbells + incline bench"]];
+  OPTIONS.skull.splice(1,0,["triMach","Triceps machine"]);
+  OPTIONS.dipMach.splice(2,0,["triMach","Triceps machine"]);
+})();
 if(typeof BUILD_MAP!=="undefined") BUILD_MAP.Core=[["abMach",2,"10-15","60 s"],["plank",2,"20-40 s","60 s"],["rotaryTorso",2,"10-12 per side","60 s"]];
 </script>
 <script>// ===== Recovery links (secondary muscles of compound lifts; Core tracked) =====
@@ -2166,11 +2197,12 @@ var STATION=(function(){ var o={}, g={
  cable:["pushdown","vbarPush","ohExt","cableTriExt","facePull","cableRearFly","cableLatRaise","crossover","lowCable","cableCurl","cableHammer","cableShPress","pullThrough","cableCrunch","pallof","straightArm","cablePreacher"],
  pulley:["cableRow","oneArmCableRow"], latMachine:["pulldown","vbarPulldown"], pectoral:["pecDeck","revFly"],
  smith:["smithBench","smithIncline","smithOhp","smithSquat","smithSplit","smithCalf"], legPress:["legPress","legPressCalf"],
- abMach:["abMach"], rotary:["rotaryTorso"], upperBack:["upperBack"], chestPress:["chestPressMach"], shoulderPress:["machOhp"],
+ abMach:["abMach"], rotary:["rotaryTorso"], triMach:["triMach"], dipMach:["dipMach"], hackSquat:["hackSquat"], upperBack:["upperBack"], chestPress:["chestPressMach"], shoulderPress:["machOhp"],
  plateOhp:["plateOhp"], platePulldown:["platePulldown"], hipThrustMach:["hipThrustMach"], armCurl:["machCurl"], row:["isoRow"] };
  for(var s in g) g[s].forEach(function(k){ o[k]=s; }); return o; })();
 /* slots added on this date: older sessions' picks for these slots are not reused as "last time" */
-var NEW_SLOT={abMach:"2026-11-24",rotaryTorso:"2026-11-24",pecDeck:"2026-11-24",upperBack:"2026-11-24"};
+var NEW_SLOT={abMach:"2026-11-24",rotaryTorso:"2026-11-24",pecDeck:"2026-11-24",upperBack:"2026-11-24",
+ smithIncline:"2026-11-25",machOhp:"2026-11-25",plateOhp:"2026-11-25",machCurl:"2026-11-25",hipThrustMach:"2026-11-25",chestPressMach:"2026-11-25",triMach:"2026-11-25",isoRow:"2026-11-25",smithSplit:"2026-11-25"};
 function stationOf(key){ return STATION[key]||null; }
 /* picks another option for any slot whose machine is already used earlier in the same workout.
    Plan exercises keep their machine first; recommended or last-time swaps move. */
