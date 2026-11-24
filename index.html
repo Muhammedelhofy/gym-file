@@ -1088,27 +1088,27 @@ const FIRST_MEASURE = {date:"2026-10-21", weight:79.3, fatPct:27.7, fatKg:22.0, 
 // xt = extras category set to offer on that day (push / pull / legs / upper / full).
 const PLAN_UL4 = [
  {key:"upA", name:"Upper A — Chest & Back", short:"Upper A", type:"push", xt:"upper", items:[
-   ["bench",3,"6-8","2-3 min"],["pulldown",3,"8-12","2 min"],["dbOhp",3,"8-12","2 min"],
-   ["cableRow",3,"8-12","2 min"],["latRaise",2,"12-15","60-90 s"],["pushdown",2,"10-15","60-90 s"],["bbCurl",2,"8-12","60-90 s"]]},
+   ["bench",3,"6-8","2-3 min"],["pulldown",3,"8-12","2 min"],["plateOhp",3,"8-12","2 min"],
+   ["cableRow",3,"8-12","2 min"],["latRaise",2,"12-15","60-90 s"],["pushdown",2,"10-15","60-90 s"],["machCurl",2,"8-12","60-90 s"]]},
  {key:"loA", name:"Lower A — Squat", short:"Lower A", type:"legs", xt:"legs", items:[
    ["squat",3,"6-8","2-3 min"],
    ["rdl",3,"8-10","2-3 min"],
-   ["hipThrust",2,"8-12","2 min"],
+   ["hipThrustMach",2,"8-12","2 min"],
    ["legExt",2,"12-15","60-90 s"],
    ["lyingCurl",2,"10-12","90 s"],
    ["calfStand",3,"10-15","60 s"],
    ["abMach",3,"10-15","60 s"]]},
  {key:"upB", name:"Upper B — Shoulders & Arms", short:"Upper B", type:"pull", xt:"upper", items:[
-   ["incDb",3,"8-12","2 min"],
+   ["smithIncline",3,"8-12","2 min"],
    ["assistPull",3,"6-10","2 min"],
    ["machOhp",3,"8-12","2 min"],
-   ["dbRow",3,"8-12 per arm","2 min"],
+   ["isoRow",3,"8-12","2 min"],
    ["upperBack",2,"12-15","60-90 s"],
    ["cableLatRaise",2,"12-15","60-90 s"],
    ["hammer",2,"10-12","60-90 s"]]},
  {key:"loB", name:"Lower B — Glutes", short:"Lower B", type:"legs", xt:"legs", items:[
    ["legPress",3,"10-12","2 min"],
-   ["splitSquat",3,"8-10 per leg","2 min"],
+   ["smithSplit",3,"8-10 per leg","2 min"],
    ["pullThrough",3,"10-12","90 s"],
    ["seatedCurl",2,"10-12","90 s"],
    ["calfSeat",3,"12-15","60 s"],
@@ -1125,20 +1125,20 @@ const PLAN_FB3 = [
    ["abMach",3,"10-15","60 s"]]},
  {key:"fbB", name:"Full Body B", short:"Full B", type:"pull", xt:"full", items:[
    ["legPress",3,"10-12","2 min"],
-   ["dbOhp",3,"8-12","2 min"],
+   ["machOhp",3,"8-12","2 min"],
    ["cableRow",3,"8-12","2 min"],
-   ["incDb",2,"8-12","2 min"],
+   ["smithIncline",2,"8-12","2 min"],
    ["lyingCurl",2,"10-12","90 s"],
-   ["bbCurl",2,"8-12","60-90 s"],
+   ["machCurl",2,"8-12","60-90 s"],
    ["rotaryTorso",2,"10-12 per side","60 s"]]},
  {key:"fbC", name:"Full Body C", short:"Full C", type:"legs", xt:"full", items:[
-   ["hipThrust",3,"8-12","2 min"],
-   ["dbBench",3,"8-12","2 min"],
+   ["hipThrustMach",3,"8-12","2 min"],
+   ["chestPressMach",3,"8-12","2 min"],
    ["assistPull",3,"6-10","2 min"],
-   ["splitSquat",2,"8-10 per leg","2 min"],
+   ["smithSplit",2,"8-10 per leg","2 min"],
    ["facePull",2,"12-15","60-90 s"],
    ["calfStand",3,"10-15","60 s"],
-   ["hangKnee",3,"8-12","60 s"]]}
+   ["abMach",3,"10-15","60 s"]]}
 ];
 const PROGRAMS = {
  ppl6:{name:"6-day Push / Pull / Legs", short:"Push / Pull / Legs ×2", days:6, note:"Fixed order: Push A → Pull A → Legs A → Push B → Pull B → Legs B. Every muscle twice a week. Best if you can train 5-6 days."},
@@ -1822,6 +1822,48 @@ Object.assign(HOWTO,{
   OPTIONS.skull.splice(1,0,["triMach","Triceps machine"]);
   OPTIONS.dipMach.splice(2,0,["triMach","Triceps machine"]);
 })();
+// ===== How-to for every "Equipment busy? Switch exercise" option (steps + common mistakes) =====
+(function(){ var H={
+ smithBench:{s:["Set a flat bench under the Smith bar so the bar meets mid-chest; set the safety stops just below the chest.","Grip a little wider than shoulders, shoulder blades back and down, feet flat.","Unhook by turning the bar, lower slowly to mid-chest.","Press up, then re-hook by turning the bar at the top."],m:[["Bar landing on the neck or belly","move the bench until the bar meets mid-chest."],["Elbows flared straight out","keep them about 45° from the body."]]},
+ pushups:{s:["Hands a little wider than shoulders, body straight from head to heels.","Brace the abs and squeeze the glutes.","Lower until the chest is a fist above the floor.","Push back up without letting the hips sag."],m:[["Hips sagging or piking","brace the abs; body moves as one plank."],["Too easy or too hard","feet up on a bench to make it harder, hands on a bench to make it easier."]]},
+ incPressMach:{s:["Set the seat so the handles start at upper-chest height.","Back flat on the pad, shoulder blades back.","Press up and forward until the arms are nearly straight.","Return slowly until you feel a chest stretch."],m:[["Shoulders rolling forward at the top","keep the shoulder blades on the pad."],["Dropping the weight","2 seconds down."]]},
+ incBarbell:{s:["Incline bench at about 30°, eyes under the bar.","Grip a little wider than shoulders, shoulder blades back and down.","Lower the bar to the upper chest under control.","Press up over the shoulders."],m:[["Bench set too steep","30° keeps it a chest exercise; steeper turns it into a shoulder press."],["Bouncing off the chest","light touch, then press."]]},
+ smithOhp:{s:["Set an upright bench under the Smith bar so the bar passes just in front of the face.","Grip a little wider than shoulders, core braced, back on the pad.","Lower to chin height.","Press up until the arms are nearly straight."],m:[["Arching the lower back","brace the abs; keep the back on the pad."],["Bar too far forward","move the bench so the bar passes close to the face."]]},
+ cableShPress:{s:["Set two pulleys at the lowest point, sit or stand between them.","Hold the handles at shoulder height, palms forward.","Press up until the arms are nearly straight.","Lower slowly to shoulder height."],m:[["Leaning back","brace the abs; stand or sit tall."],["Locking out hard","stop just short of locking."]]},
+ vbarPush:{s:["Attach the V-bar high, stand close with a slight forward lean.","Pin the elbows to your sides.","Push down until the arms are straight and squeeze.","Let the bar come up slowly to just above 90° at the elbow."],m:[["Elbows drifting forward","keep them pinned beside the ribs."],["Leaning over the bar to push","stand taller and use less weight."]]},
+ benchDips:{s:["Hands on the edge of a bench behind you, fingers forward, legs out in front.","Slide the hips just off the bench.","Bend the elbows to about 90°, keeping the back close to the bench.","Press back up until the arms are straight."],m:[["Going too deep","stop at 90°; deeper strains the front of the shoulder."],["Elbows flaring out","point them straight back."]]},
+ cableTriExt:{s:["Attach a rope high, face away and kneel, rope held behind the head.","Elbows point forward, upper arms still.","Straighten the arms forward and slightly up.","Bend the elbows slowly back to the stretch."],m:[["Elbows moving up and down","keep the upper arms fixed."],["Arching the back","brace the abs."]]},
+ dbTriExt:{s:["Sit tall, hold one dumbbell with both hands overhead.","Elbows point up, close to the head.","Lower the dumbbell behind the head slowly.","Straighten the arms back up."],m:[["Elbows flaring wide","keep them close to the head."],["Arching the lower back","sit with the back supported, abs braced."]]},
+ vbarPulldown:{s:["Attach the V-bar, thigh pad snug, palms facing each other.","Sit tall with a slight lean back.","Pull the handle to the upper chest, elbows down and back.","Let it rise slowly until the arms are straight."],m:[["Leaning far back and swinging","small lean, no momentum."],["Stopping short at the top","let the lats stretch each rep."]]},
+ oneArmCableRow:{s:["Single handle on the seated pulley row, feet on the platform, knees soft.","Sit tall, arm straight, slight reach forward.","Pull the elbow back past the body, squeezing the shoulder blade.","Return slowly to a full stretch; do all reps, then switch arms."],m:[["Twisting the torso to pull","keep the shoulders square."],["Rounding the back on the way forward","reach with the arm, not the spine."]]},
+ dbRow2:{s:["Hold dumbbells, hinge at the hips until the torso is about 45°, knees soft.","Flat back, arms hanging straight.","Row the dumbbells to the lower ribs, elbows close.","Lower slowly."],m:[["Rounding the back","flat back; lighter weight if needed."],["Standing up as you row","keep the hinge angle fixed."]]},
+ cableRearFly:{s:["Set both pulleys at shoulder height, cross the cables (left hand holds right cable).","Step back to the middle, arms straight in front.","Open the arms out wide to the sides in an arc.","Return slowly to the crossed position."],m:[["Using the back and swinging","light weight, slow arc."],["Bending the elbows into a row","keep a fixed slight bend."]]},
+ dbRearDelt:{s:["Lie chest-down on an incline bench, a light dumbbell in each hand.","Arms hanging, slight bend in the elbows.","Raise the arms out to the sides to shoulder height.","Lower slowly."],m:[["Going too heavy","rear delts are small; light weight, 12-15 reps."],["Squeezing the shoulder blades only","think of moving the hands wide, not back."]]},
+ cableCurl:{s:["Attach a straight bar or EZ bar low, stand close.","Elbows at your sides, palms up.","Curl up and squeeze the biceps.","Lower slowly until the arms are straight."],m:[["Elbows moving forward","keep them pinned."],["Leaning back to lift","stand tall; lighter weight."]]},
+ dbCurl:{s:["Stand tall, a dumbbell in each hand, palms forward.","Elbows at your sides.","Curl up, both arms or one at a time, and squeeze.","Lower slowly to straight arms."],m:[["Swinging the body","stand still; lighter weight."],["Half reps","straighten the arm at the bottom each rep."]]},
+ cableHammer:{s:["Attach a rope low, grip the ends with thumbs up.","Elbows at your sides.","Curl the rope up toward the shoulders.","Lower slowly."],m:[["Elbows drifting forward","keep them pinned."],["Using momentum","2 seconds down."]]},
+ crossHammer:{s:["Stand tall, dumbbells at your sides, thumbs up.","Curl one dumbbell across the body toward the opposite shoulder.","Squeeze, then lower slowly.","Alternate arms."],m:[["Twisting the torso","only the arm moves."],["Dropping the weight","control the way down."]]},
+ smithSquat:{s:["Bar on the upper back, feet slightly in front of the hips, shoulder-width.","Unhook by turning the bar, brace the abs.","Sit down until the thighs are about parallel.","Drive up through the whole foot, then re-hook at the top."],m:[["Knees caving in","push the knees out over the toes."],["Feet too far back","feet slightly forward so the knees and back stay comfortable."]]},
+ gobletSquat:{s:["Hold one dumbbell vertically at the chest, feet shoulder-width.","Chest up, elbows down.","Sit down between the heels as deep as you can with a flat back.","Stand up through the whole foot."],m:[["Heels lifting","sit back more; widen the stance slightly."],["Chest dropping","keep the dumbbell against the chest."]]},
+ gluteBridgeBB:{s:["Lie on the floor with a padded bar over the hips, knees bent, feet flat.","Brace the abs, chin slightly tucked.","Drive the hips up until the body is straight from shoulders to knees.","Squeeze 1 second, lower slowly."],m:[["Arching the lower back","stop when the hips are level; ribs down."],["Pushing through the toes","press through the heels."]]},
+ slBridge:{s:["Lie on your back, one knee bent with the foot flat, the other leg straight.","Arms on the floor by your sides.","Drive the hips up through the bent leg's heel.","Hold 1 second, lower slowly; finish one side, then the other."],m:[["Hips tilting to one side","keep the pelvis level."],["Arching the back","squeeze the glutes, not the lower back."]]},
+ standLegCurl:{s:["Stand facing the machine, pad just above the back of the ankle.","Hold the handles, hips against the pad.","Curl the heel up toward the glutes.","Lower slowly; finish one leg, then the other."],m:[["Hips moving back","keep them on the pad."],["Rushing the way down","2 seconds down."]]},
+ ballLegCurl:{s:["Lie on your back, heels on a stability ball, arms out to the sides.","Lift the hips so the body is straight.","Roll the ball toward you by bending the knees.","Roll it back out slowly while keeping the hips up."],m:[["Hips dropping","keep them up the whole set."],["Too hard at first","start with the hips down, then progress."]]},
+ slLegExt:{s:["Set the leg extension machine as usual, pad on the lower shin.","Work one leg, the other relaxed.","Straighten the leg and squeeze the thigh for 1 second.","Lower slowly; finish one leg, then the other."],m:[["Kicking the weight up","slow and controlled."],["Lifting the hips","hold the handles and sit back."]]},
+ smithCalf:{s:["Stand on a plate or step under the Smith bar, bar on the upper back.","Balls of the feet on the edge, heels free.","Rise up as high as you can and pause.","Lower until you feel a calf stretch."],m:[["Bouncing","pause at the top and bottom."],["Bending the knees","keep them almost straight."]]},
+ legPressCalf:{s:["Sit in the leg press, balls of the feet on the bottom edge of the platform.","Legs almost straight, safety handles locked.","Push the platform away with the toes as far as you can.","Let it come back slowly for a full stretch."],m:[["Bending the knees","keep the legs almost straight."],["Feet slipping","only the balls of the feet on the edge, shoes on."]]},
+ dbCalf:{s:["Hold a dumbbell in one hand, stand on a step on the balls of the feet.","Use the free hand on a wall for balance.","Rise up as high as you can and pause.","Lower until the heels drop below the step."],m:[["Bouncing","pause at the top and bottom."],["Half reps","full stretch at the bottom."]]},
+ lowCable:{s:["Set both pulleys at the lowest point, step forward between them.","Slight bend in the elbows, palms up.","Bring the hands up and together in front of the upper chest.","Lower slowly back to the sides."],m:[["Curling with the arms","keep the elbow bend fixed."],["Too heavy","light weight; feel the upper chest."]]},
+ dbFly:{s:["Lie on a flat bench, dumbbells above the chest, palms facing.","Slight bend in the elbows.","Open the arms out wide in an arc until you feel a chest stretch.","Bring them back together over the chest."],m:[["Going too deep","stop at the stretch, not lower."],["Pressing instead of hugging","keep the same elbow bend."]]},
+ parDips:{s:["Grip the bars, arms straight, body upright (or knees on the assist pad).","Lean slightly forward.","Lower until the elbows reach about 90°.","Push back up to straight arms."],m:[["Dropping too deep","stop at 90° to protect the shoulders."],["Shrugging up","keep the shoulders down."]]},
+ cgBench:{s:["Lie under the bar, grip about shoulder-width.","Shoulder blades back, feet flat.","Lower to the lower chest with the elbows close to the body.","Press up by straightening the arms."],m:[["Grip too narrow","shoulder-width is enough; narrower hurts the wrists."],["Elbows flaring","keep them close."]]},
+ preacherMach:{s:["Set the seat so the armpits rest on the top of the pad.","Upper arms flat on the pad, grip the handles palms up.","Curl up and squeeze.","Lower slowly until the arms are nearly straight."],m:[["Lifting the elbows off the pad","keep them down."],["Dropping into the bottom","slow, controlled stretch."]]},
+ cablePreacher:{s:["Place a preacher bench in front of a low pulley with a bar.","Upper arms flat on the pad, palms up.","Curl up and squeeze.","Lower slowly until the arms are nearly straight."],m:[["Elbows lifting off","keep them on the pad."],["Using the shoulders","only the forearms move."]]},
+ dbLunge:{s:["Hold dumbbells at your sides, stand tall.","Step forward into a long stride.","Lower until the back knee nearly touches the floor.","Push through the front heel to step back (or forward for walking lunges)."],m:[["Front knee caving in","keep it in line with the toes."],["Short steps","a long enough stride so the front shin stays fairly upright."]]},
+ bbSeatCalf:{s:["Sit on a bench, balls of the feet on a plate, padded bar across the knees.","Hold the bar steady.","Raise the heels as high as you can and pause.","Lower until you feel a calf stretch."],m:[["Bouncing","pause at the top and bottom."],["Bar slipping","use a pad and keep both hands on the bar."]]},
+ dbSeatCalf:{s:["Sit on a bench, balls of the feet on a plate, dumbbell on the knees.","Hold the dumbbell in place.","Raise the heels as high as you can and pause.","Lower until you feel a calf stretch."],m:[["Bouncing","pause at the top and bottom."],["Too light to feel it","do more reps or add a second dumbbell."]]},
+ deadBug:{s:["Lie on your back, arms up to the ceiling, knees bent at 90° above the hips.","Press the lower back gently into the floor.","Slowly lower one arm and the opposite leg toward the floor.","Return and switch sides."],m:[["Lower back arching off the floor","move less far; keep the back down."],["Rushing","slow, with the breath."]]}
+}; for(var k in H) if(!HOWTO[k]) HOWTO[k]=H[k]; })();
 if(typeof BUILD_MAP!=="undefined") BUILD_MAP.Core=[["abMach",2,"10-15","60 s"],["plank",2,"20-40 s","60 s"],["rotaryTorso",2,"10-12 per side","60 s"]];
 </script>
 <script>// ===== Recovery links (secondary muscles of compound lifts; Core tracked) =====
@@ -3025,7 +3067,8 @@ function xRow(x){
 var hint=extraHint(x[0]);
 return h("button",{class:"optrow",type:"button","data-key":x[0],onclick:function(){ addExtra(x[0]); }},thumbEl(x[0],true,true),
 h("span",{class:"optmain"},h("span",{class:"optname"},EX[x[0]].name),
-h("span",{class:"optbadges"},EXTRAS_REC[x[0]]?h("span",{class:"segrec"},"Recommended"):null,hint?eqTag(hint):null,h("span",{class:"num",style:"color:var(--muted);font-size:.85rem"},x[1]+" \u00d7 "+x[2]))));
+h("span",{class:"optbadges"},EXTRAS_REC[x[0]]&&!stationClash(null,x[0])?h("span",{class:"segrec"},"Recommended"):null,hint?eqTag(hint):null,h("span",{class:"num",style:"color:var(--muted);font-size:.85rem"},x[1]+" \u00d7 "+x[2])),
+stationClash(null,x[0])?h("span",{class:"segclash"},"Same machine as "+stationClash(null,x[0])+" today"):null));
 }
 pk.appendChild(h("div",{class:"xcat"},"Focus: any muscle"));
 var fc=h("div",{class:"fchips xfocus",id:"xFocus",role:"group","aria-label":"Focus muscle"});
